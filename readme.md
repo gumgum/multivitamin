@@ -1,4 +1,6 @@
-#CVAPIs
+![](https://i.imgur.com/EEpn6iv.png)
+
+# vitaminCV
 
 ## Installation
 ```
