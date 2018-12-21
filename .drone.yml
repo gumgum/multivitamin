@@ -1,9 +1,4 @@
 pipeline:
-  verify:
-    image: python:3.4.9-alpine
-    commands:
-      - python setup.py verify
-
   plugin:
     image: gjtempleton/drone-pypi
     repository: https://gumgum.jfrog.io/gumgum/api/pypi/pypi-local
