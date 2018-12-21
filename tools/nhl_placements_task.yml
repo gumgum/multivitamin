@@ -1,0 +1,23 @@
+labels:
+    - PenaltyBox#BenchGlass
+    - Jumbotron#JumbotronNamingRights
+    - In-IceLogo#In-IceNamingRights
+    - LEDDasherboard#StaticDasherboard
+    - ArenaLED#Vomitory
+    - BroadcastGraphic
+video_files:
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_PHINYI_M2_HOME_20180403_1520699011014.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_VGKVAN_M2_HOME_20180404_1522091153565.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_WSHSTL_M2_HOME_20180403_1520698624919.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_EDMMIN_M2_HOME_20180403_1520698737610.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2_NATIONAL_20180401_1520698069177.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NSHWSH_M2_NATIONAL_20180405_1522960713639.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_CGYWPG_M2_HOME_20180406_1520700822131.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_COLLAK_M2_HOME_20180403_1520698809197.t.mp4"
+    - "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_DALSJS_M2_HOME_20180404_1520699787553.t.mp4"
+fps: 0.01666666666
+batch_size: 100
+template: "template-Placement-ham.json"
+temp_folder: ./tmp-aug9
+property_type: "Placement"

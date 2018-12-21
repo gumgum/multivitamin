@@ -1,0 +1,6 @@
+site_name: py-vision-server Documentation
+theme: material
+docs_dir: sources
+repo_url:
+site_url:
+site_description: 'Documentation for

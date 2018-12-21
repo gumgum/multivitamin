@@ -1,0 +1,6 @@
+{"script":
+    {
+        "lang":"painless",
+        "source":"if(! ctx._source.media_annotation.frames_annotation.contains(params.entry)) {ctx._source.media_annotation.frames_annotation.add(params.entry)}"
+    }
+}

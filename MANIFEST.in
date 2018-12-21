@@ -1,0 +1,7 @@
+include requirements.txt
+include readme.md
+recursive-include cvapis/comm_apis/painless_scripts *
+include cvapis/comm_apis/es_mapping.json
+include cvapis/avro_api/image-science-response.avsc
+include cvapis/data/jsons/dummy.json
+recursive-include data/ *
