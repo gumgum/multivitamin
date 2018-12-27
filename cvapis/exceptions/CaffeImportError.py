@@ -1,0 +1,2 @@
+class CaffeImportError(ImportError):
+    pass

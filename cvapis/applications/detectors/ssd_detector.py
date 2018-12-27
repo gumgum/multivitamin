@@ -4,43 +4,64 @@ import glog as log
 import numpy as np
 import traceback
 
-log.info('Setting GLOG_minloglevel to '+ os.environ['GLOG_minloglevel'] +". If you want less verbosity, set GLOG_minloglevel=3")
-try:
+import importlib.util
+
+from cvapis.exceptions import CaffeImportError
+
+glog_level = os.environ.get("GLOG_minloglevel", None)
+
+if glog_level is None:
+    os.environ["GLOG_minloglevel"] = "1"
+    log.info("GLOG_minloglevel isn't set. Setting level to 1 (info)")
+    log.info("\nGLOG_minloglevel levels are...\n\
+                0 -- Debug\n\
+                1 -- Info\n\
+                2 -- Warning\n\
+                3 -- Error")
+
+
+SSD_CAFFE_PYTHON = os.environ.get('SSD_CAFFE_PYTHON')
+if SSD_CAFFE_PYTHON:
+    sys.path.append(os.path.abspath(SSD_CAFFE_PYTHON))
+
+
+if importlib.util.find_spec("caffe"):
     import caffe
-except:
-    try:
-        SSD_CAFFE_PYTHON=os.environ['SSD_CAFFE_PYTHON']
-        sys.path.append(os.path.abspath(SSD_CAFFE_PYTHON))
-        import caffe
-        from caffe.proto import caffe_pb2 as cpb2
-    except:
-        sys.exit("Install caffe, set PYTHONPATH to point to caffe, or set \
-                  enviroment variable SSD_CAFFE_PYTHON.")
+elif SSD_CAFFE_PYTHON:
+    raise CaffeImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(SSD_CAFFE_PYTHON))
+else:
+    raise CaffeImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable SSD_CAFFE_PYTHON.")
 
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
 from cvapis.module_api.cvmodule import CVModule
-import cvapis.module_api.server as Server
 from cvapis.avro_api.cv_schema_factory import *
 
-import cv2
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
-import pickle
-
-GPU=True
-DEVICE_ID=0
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN=0.3
 
 class SSDDetector(CVModule):
-    def __init__(self, server_name, version, net_data_dir,prop_type=None,prop_id_map=None,module_id_map=None):
-        super().__init__(server_name, version,prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
+    def __init__(self, 
+                server_name, 
+                version, 
+                net_data_dir,
+                prop_type = None,
+                prop_id_map = None,
+                module_id_map = None):
+        super().__init__(server_name, 
+                            version,
+                            prop_type = prop_type,
+                            prop_id_map = prop_id_map,
+                            module_id_map = module_id_map)
+        
         if not self.prop_type:
             self.prop_type="object"      
             
-        if GPU:
+        gpu_util = GPUUtility(**kwargs)
+        available_devices = gpu_util.get_gpus()
+        if available_devices:
             caffe.set_mode_gpu()
-            caffe.set_device(DEVICE_ID)
+            caffe.set_device(available_devices[0]) # py-caffe only supports 1 GPU
 
         labelmap_file=os.path.join(net_data_dir, "labelmap.prototxt")
         try:
@@ -100,7 +121,7 @@ class SSDDetector(CVModule):
                                  create_point(xmax, ymax),
                                  create_point(xmin, ymax)],
                         property_type=self.prop_type,
-		        		value=label,
+                        value=label,
                         confidence=detections[0,0,det_idx, 2],
                         t=tstamp
                     )
