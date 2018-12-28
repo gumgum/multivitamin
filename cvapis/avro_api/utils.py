@@ -186,7 +186,7 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
     listfile.close()
 
 
-def p0p1_from_bbox_contour(contour, w = 1, h = 1, dtype=int):
+def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     """Convert cv_schema `contour` into p0 and p1 of a bounding box.
 
     Args:
