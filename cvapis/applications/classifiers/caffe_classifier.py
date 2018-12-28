@@ -202,13 +202,13 @@ class CaffeClassifier(CVModule):
 
         """
         if tstamps is None:
-            tstamps = [None for _ in range(len(images))]
+            tstamps = [None for _ in range(len(prediciton_batch))]
         tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
 
 
         default_det = create_detection()
         if previous_detections is None:
-            previous_detections = [None for _ in range(len(images))]
+            previous_detections = [None for _ in range(len(prediciton_batch))]
 
         baseline_det = create_detection(
                         server = self.name,
