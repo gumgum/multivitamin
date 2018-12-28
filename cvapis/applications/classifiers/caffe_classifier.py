@@ -188,7 +188,7 @@ class CaffeClassifier(CVModule):
 
         return n_top_preds
 
-    def append_detections(self, prediciton_batch, tstamps=None, previous_detections=None):
+    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
         """Appends results to detections
 
         Args:
@@ -202,13 +202,13 @@ class CaffeClassifier(CVModule):
 
         """
         if tstamps is None:
-            tstamps = [None for _ in range(len(prediciton_batch))]
+            tstamps = [None for _ in range(len(prediction_batch))]
         tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
 
 
         default_det = create_detection()
         if previous_detections is None:
-            previous_detections = [None for _ in range(len(prediciton_batch))]
+            previous_detections = [None for _ in range(len(prediction_batch))]
 
         baseline_det = create_detection(
                         server = self.name,
@@ -217,7 +217,7 @@ class CaffeClassifier(CVModule):
                     )
         previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
 
-        for image_preds, tstamp, prev_det in zip(prediciton_batch, tstamps, previous_detections):
+        for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
                     label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
