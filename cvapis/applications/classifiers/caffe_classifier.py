@@ -205,8 +205,6 @@ class CaffeClassifier(CVModule):
             tstamps = [None for _ in range(len(prediction_batch))]
         tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
 
-
-        default_det = create_detection()
         if previous_detections is None:
             previous_detections = [None for _ in range(len(prediction_batch))]
 
@@ -217,6 +215,9 @@ class CaffeClassifier(CVModule):
                     )
         previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
 
+        if not (len(prediction_batch)==len(tstamps)==len(previous_detections)):
+            raise ValueError("len(prediction_batch)==len(tstamps)==len(previous_detections) is False")
+            
         for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
