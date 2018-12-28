@@ -215,9 +215,7 @@ class CaffeClassifier(CVModule):
                     )
         previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
 
-        if not (len(prediction_batch)==len(tstamps)==len(previous_detections)):
-            raise ValueError("len(prediction_batch)==len(tstamps)==len(previous_detections) is False")
-            
+        assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
         for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
