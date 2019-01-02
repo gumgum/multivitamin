@@ -156,6 +156,7 @@ class CVModule(ABC):
 
             for det in dets:
                 yield frame, tstamp, det 
+            log.info("TSTAMP: {} | DET: {}".format(tstamp, det))
 
     def process(self, message):
         """Process the message, calls process_images(batch, tstamps, contours=None)
@@ -183,6 +184,10 @@ class CVModule(ABC):
 
         self.detections = []
         for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
+            log.info("TSTAMP BATCH")
+            log.info(tstamp_batch)
+            log.info("DET BATCH")
+            log.info(det_batch)
             if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                 log.error("Too Many Problematic Iterations")
                 log.error("Returning with error code: "+str(self.code))
