@@ -229,12 +229,10 @@ class CVModule(ABC):
     def preprocess_images(self, images, contours = None):
         return images
 
-    @abstractmethod
     def process_images(self, images, tstamps, detections_of_interest=None):
         """Abstract method to be implemented by child module"""
         pass
 
-    @abstractmethod
     def process_properties(self):
         """Abstract method to be implemented by child module"""
         pass

@@ -190,7 +190,7 @@ class CaffeClassifier(CVModule):
 
         return n_top_preds
 
-    def append_detections(self, prediciton_batch, tstamps=None, previous_detections=None):
+    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
         """Appends results to detections
 
         Args:
@@ -204,13 +204,11 @@ class CaffeClassifier(CVModule):
 
         """
         if tstamps is None:
-            tstamps = [None for _ in range(len(images))]
+            tstamps = [None for _ in range(len(prediction_batch))]
         tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
 
-
-        default_det = create_detection()
         if previous_detections is None:
-            previous_detections = [None for _ in range(len(images))]
+            previous_detections = [None for _ in range(len(prediction_batch))]
 
         baseline_det = create_detection(
                         server = self.name,
@@ -219,7 +217,8 @@ class CaffeClassifier(CVModule):
                     )
         previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
 
-        for image_preds, tstamp, prev_det in zip(prediciton_batch, tstamps, previous_detections):
+        assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
+        for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
                     label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
@@ -236,98 +235,3 @@ class CaffeClassifier(CVModule):
                         t = tstamp
                     )
                 self.detections.append(det)
-
-    # def process_images(self, images, tstamps, prev_detections=None):
-    #     log.debug("Processing images")
-    #     log.debug("tstamps: "  + str(tstamps))
-    #     log.check_eq(len(images), len(tstamps))
-    #     if prev_detections:
-    #         log.check_eq(len(images), len(prev_detections))
-    #     for i,(frame, tstamp) in enumerate(zip(images, tstamps)):
-    #         log.debug("tstamp: " +str(tstamp))
-    #         crop=frame
-    #         contour_prev=[create_point(0.0, 0.0),
-    #                              create_point(1.0, 0.0),
-    #                              create_point(1.0, 1.0),
-    #                              create_point(0.0, 1.0)]
-    #         region_id_prev=""
-    #         if prev_detections:
-    #             prev_det=prev_detections[i]
-    #             #log.debug("prev_det: " + str(prev_det))
-    #             #we get region_id_prev
-    #             region_id_prev=prev_det['region_id']
-    #             log.debug("region_id_prev: " + str(region_id_prev))
-    #             #we get the contour_prev
-    #             contour_prev=prev_det['contour']
-    #             height = frame.shape[0]
-    #             width = frame.shape[1]
-    #             #we get the crop
-    #             xmin=1.0
-    #             xmax=0.0
-    #             ymin=1.0
-    #             ymax=0.0
-    #             for p in contour_prev:
-    #                 x=p['x']
-    #                 y=p['y']
-    #                 if x<xmin:
-    #                     xmin=x
-    #                 if x>xmax:
-    #                     xmax=x
-    #                 if y<ymin:
-    #                     ymin=y
-    #                 if y>ymax:
-    #                     ymax=y
-    #             log.debug('[xmin,ymin,xmax,ymax]: ' + str([xmin,ymin,xmax,ymax]))
-    #             xmin=int(xmin*(width-1))
-    #             ymin=int(ymin*(height-1))
-    #             xmax=int(xmax*(width-1))
-    #             ymax=int(ymax*(height-1))
-    #             log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
-    #             crop=frame[ymin:ymax, xmin:xmax]
-    #         try:    
-    #             im = self.transformer.preprocess('data', crop)
-    #             self.net.blobs['data'].data[...] = im
-            
-    #             probs = self.net.forward()[LAYER_NAME]
-    #             log.debug('probs: ' + str(probs))
-    #             for p in probs:
-    #                 log.debug('p: ' + str(p))
-    #                 p_indexes = np.argsort(p)
-    #                 p_indexes = np.flip(p_indexes,0)
-    #                 while True:
-    #                     if len(p_indexes)==1:
-    #                         break
-    #                     index=p_indexes[0]
-    #                     label=self.labels[index]                            
-    #                     log.debug("label: " + str(label))
-    #                     if label in LOGOEXCLUDE:
-    #                         p_indexes=np.delete(p_indexes,0)
-    #                     else:
-    #                         break
-    #                 p_indexes = p_indexes[:N_TOP]
-                    
-    #                 log.debug("p_indexes: " + str(p_indexes))
-    #                 for i,property_id in enumerate(p_indexes):
-    #                     if i==N_TOP:
-    #                         break
-    #                     index=p_indexes[i]
-    #                     label=self.labels[index]                            
-    #                     confidence=p[index]
-                        
-    #                     if confidence<CONFIDENCE_MIN:
-    #                         label='Unknown'
-    #                     det = create_detection(
-    #                         server=self.name,
-    #                         ver=self.version,
-    #                         value=label,
-    #                         region_id=region_id_prev,
-    #                         contour=contour_prev,
-    #                         property_type=self.prop_type,
-    #                         confidence=confidence,
-    #                         t=tstamp
-    #                     )
-    #                     log.debug("det: " + str(det))                        
-    #                     self.detections.append(det)
-                        
-    #         except Exception as e:
-    #             log.error(e)
