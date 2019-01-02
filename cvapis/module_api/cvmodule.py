@@ -95,30 +95,6 @@ class CVModule(ABC):
             log.debug("Creating self.detections_t_map.")
             self.detections_t_map=self.avro_api.create_detections_tstamp_map(self.detections_of_interest)
 
-    def min_conf_filter_predictions(self, preds, confs):
-        """ Filter our predictions based on per label confidence thresholds
-
-        Args:
-            preds (list): A list of predicted labels (strings) or classes (ints)
-            confs (list): A list of floats associated to confidence 
-                            values for each predicted class 
-
-        Returns:
-            qualifying_preds (list): A list of elements from preds 
-                                        that have qualifying confidence
-        """
-        qualifying_preds = []
-        for pred, conf in zip(preds, confs):
-            min_conf = self.min_conf_filter.get(pred)
-            if min_conf is None:
-                min_conf = self.min_conf_filter.get(self.labels.get(pred))
-
-            if min_conf is None:
-                min_conf = 0
-            if conf >= min_conf:
-                qualifying_preds.append(pred)
-        return qualifying_preds
-
     def batch_generator(self, iterator):
         """Take an iterator, convert it to a chunking generator
         
