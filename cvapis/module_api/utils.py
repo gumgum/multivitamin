@@ -33,7 +33,7 @@ def load_idmap(idmap_filepath):
         raise ValueError("Problems parsing " + idmap_filepath)
     return idmap
 
-def min_conf_filter_predictions(filter_dict, preds, confs, label_dict={}):
+def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
     """ Filter our predictions based on per label confidence thresholds
 
     Args:
@@ -48,6 +48,9 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict={}):
         qualifying_preds (list): A list of elements from preds 
                                     that have qualifying confidence
     """
+    if label_dict is None:
+        label_dict = {}
+        
     qualifying_preds = []
     for pred, conf in zip(preds, confs):
         min_conf = filter_dict.get(pred)
