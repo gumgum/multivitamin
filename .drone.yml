@@ -3,8 +3,12 @@ pipeline:
     image: python:3.4.9-alpine
     commands:
       - python setup.py verify
-
+    when:
+      event: [ tag ]
+  
   plugin:
     image: gjtempleton/drone-pypi
     repository: https://gumgum.jfrog.io/gumgum/api/pypi/pypi-local
     secrets: [ username, password ]
+    when:
+      event: [ tag ]
