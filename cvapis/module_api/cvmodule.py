@@ -24,12 +24,12 @@ class CVModule(ABC):
         log.info('Constructing cvmodule')
         self.name = server_name
         self.version = version        
-        self.batch_size = 2 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
+        self.batch_size = 10 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
         self.prop_type=prop_type
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
 
-        self.min_conf_filter = {}
+        self.min_conf_filter = {}        
  
         #To be overwritten, if needed, by the child
         self.process_properties_flag = process_properties_flag
@@ -71,16 +71,15 @@ class CVModule(ABC):
         if self.request_api.is_in("prev_pois"):#if not, the child will have defined them
             self.prev_pois=self.request_api.get("prev_pois")
         self.code='SUCCESS'
-
+    
     def get_request_api(self):
         return self.request_api
-
+            
     def get_avro_api(self):
         return self.avro_api
     
     def findrois(self):
         log.info("Looking for rois.")
-        self.has_previous_detections = False
         if len(self.prev_pois)==0:
             log.debug("No previous properties of interest to be searched.")
             self.detections_of_interest=[]
@@ -95,7 +94,6 @@ class CVModule(ABC):
             log.debug("len(self.detections_of_interest): " + str(len(self.detections_of_interest)))
             log.debug("Creating self.detections_t_map.")
             self.detections_t_map=self.avro_api.create_detections_tstamp_map(self.detections_of_interest)
-            self.has_previous_detections = True
 
     def batch_generator(self, iterator):
         """Take an iterator, convert it to a chunking generator
@@ -195,7 +193,6 @@ class CVModule(ABC):
             except Exception as e:
                 log.error("Image Preprocessing Failed")
                 log.error(e)
-                log.error(traceback.print_exc())
                 self.code = e
                 self.num_problematic_frames += 1
                 continue
@@ -205,7 +202,6 @@ class CVModule(ABC):
             except Exception as e:
                 log.error("Image Inferencing Failed")
                 log.error(e)
-                log.error(traceback.print_exc())
                 self.num_problematic_frames += 1
                 continue
 
@@ -214,7 +210,6 @@ class CVModule(ABC):
             except Exception as e:
                 log.error("Inference Postprocssing Failed")
                 log.error(e)
-                log.error(traceback.print_exc())
                 self.code = e
                 self.num_problematic_frames += 1
                 continue
@@ -224,7 +219,6 @@ class CVModule(ABC):
             except Exception as e:
                 log.error("Appending Detections Failed")
                 log.error(e)
-                log.error(traceback.print_exc())
                 self.code = e
                 self.num_problematic_frames += 1
                 continue
