@@ -1,11 +1,15 @@
+"""Single shot multi-box detector in Caffe
+
+Currently, does not support modules in sequence"""
 import os
 import sys
 import glog as log
 import numpy as np
 import traceback
-
+import inspect
 import importlib.util
 
+from cvapis.module_api.GPUUtilities import GPUUtility
 from cvapis.exceptions import CaffeImportError
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
@@ -24,7 +28,6 @@ SSD_CAFFE_PYTHON = os.environ.get('SSD_CAFFE_PYTHON')
 if SSD_CAFFE_PYTHON:
     sys.path.append(os.path.abspath(SSD_CAFFE_PYTHON))
 
-
 if importlib.util.find_spec("caffe"):
     import caffe
 elif SSD_CAFFE_PYTHON:
@@ -36,9 +39,11 @@ from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
 from cvapis.module_api.cvmodule import CVModule
 from cvapis.avro_api.cv_schema_factory import *
+from cvapis.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from cvapis.applications.utils import load_idmap
 
 LAYER_NAME = "detection_out"
-CONFIDENCE_MIN=0.3
+CONFIDENCE_MIN = 0.3
 
 class SSDDetector(CVModule):
     def __init__(self, 
@@ -47,86 +52,142 @@ class SSDDetector(CVModule):
                 net_data_dir,
                 prop_type = None,
                 prop_id_map = None,
-                module_id_map = None):
+                module_id_map = None,
+                **gpukwargs):
         super().__init__(server_name, 
                             version,
                             prop_type = prop_type,
                             prop_id_map = prop_id_map,
                             module_id_map = module_id_map)
-        
+
         if not self.prop_type:
-            self.prop_type="object"      
+            self.prop_type="object"
             
-        gpu_util = GPUUtility(**kwargs)
+        gpu_util = GPUUtility(**gpukwargs)
         available_devices = gpu_util.get_gpus()
+        log.info("Found GPU devices: {}".format(available_devices))
         if available_devices:
             caffe.set_mode_gpu()
-            caffe.set_device(available_devices[0]) # py-caffe only supports 1 GPU
+            caffe.set_device(int(available_devices[0])) # py-caffe only supports 1 GPU
 
-        labelmap_file=os.path.join(net_data_dir, "labelmap.prototxt")
-        try:
-            with open(labelmap_file) as f:
-                labelmap_aux = cpb2.LabelMap()
-                text_format.Merge(str(f.read()), labelmap_aux)
-                num_labels=len(labelmap_aux.item)
-                self.labelmap={}
-                for item in labelmap_aux.item:
-                    index=item.label
-                    label=item.display_name
-                    self.labelmap[index]=label                    
-                log.info(str(len(self.labelmap.keys()))+ " labels parsed.")                
-        except:
-            log.error("Unable to parse file: " + labelmap_file)
-            log.error(traceback.format_exc())
-            exit(1)
-            
+        idmap_file = os.path.join(net_data_dir, 'idmap.txt')
+        self.labelmap = load_idmap(idmap_file)
+        log.info(str(len(self.labelmap.keys())) + " labels parsed.")
+
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
         
-        mean_file=os.path.join(net_data_dir, 'mean.binaryproto')
+        mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
             data_meanfile = open(mean_file , 'rb' ).read()
             blob_meanfile.ParseFromString(data_meanfile)
             meanfile = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
             self.transformer.set_mean('data', meanfile)
-        
         self.transformer.set_transpose('data', (2,0,1))
 
-    def process_images(self, images, tstamps, prev_detections=None):
-        for frame, tstamp in zip(images, tstamps):
-            im = self.transformer.preprocess('data', frame)
-            self.net.blobs['data'].data[...] = im
+    def preprocess_images(self, images, previous_detections=None):
+        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
 
-            detections = self.net.forward()[LAYER_NAME]
+        Args:
+            images (list): A list of images to be preprocessed
+            previous_detections (list): A list of previous detections of interest
 
-            _detections = []
-            for det_idx in range(detections.shape[2]):                
-                try:
-                    confidence= detections[0,0,det_idx,2]
-                    if confidence<CONFIDENCE_MIN:
-                        continue
-                    index=int(detections[0,0,det_idx,1])
-                    label=self.labelmap[index]
-                    xmin = float(detections[0,0,det_idx,3])
-                    ymin = float(detections[0,0,det_idx,4])
-                    xmax = float(detections[0,0,det_idx,5])
-                    ymax = float(detections[0,0,det_idx,6])
+        Returns:
+            list: A list of transformed images
+        """
+        if not self.has_previous_detections:
+            return np.array([self.transformer.preprocess('data', image) for image in images])
 
-                    det = create_detection(
-                        contour=[create_point(xmin, ymin),
-                                 create_point(xmax, ymin),
-                                 create_point(xmax, ymax),
-                                 create_point(xmin, ymax)],
-                        property_type=self.prop_type,
-                        value=label,
-                        confidence=detections[0,0,det_idx, 2],
-                        t=tstamp
+        transformed_images = []
+        assert(len(images) == len(previous_detections))
+        for image, det in zip(images, previous_detections):
+            if det:
+                image = crop_image_from_bbox_contour(image, det.get("contour"))
+            transformed_images.append(self.transformer.preprocess('data', image))
+        return np.array(transformed_images)
+
+    def process_images(self, images):
+        """Network forward pass
+        
+        Args: 
+            images (np.array): A numpy array of images
+    
+        Returns:
+            list: List of tuples corresponding to each detection in the format of
+                  (frame_index, label, confidence, xmin, ymin, xmax, ymax)
+        """
+        self.net.blobs['data'].reshape(*images.shape)
+        self.net.reshape()
+        self.net.blobs['data'].data[...] = images
+        preds = self.net.forward()[LAYER_NAME]
+        return np.squeeze(preds)
+
+    def postprocess_predictions(self, predictions):
+        """Filters out predictions out per class based on confidence
+
+        Args:
+            predictions (list): List of tuples corresponding to confidences between 
+                    0 and 1, where each index represents a class
+
+        Returns:
+            list: A list of tuples (label, confidence, xmin, ymin, xmax, ymax)
+        """
+        frame_indexes = np.unique(predictions[:, 0])
+        filtered_preds = [[]]*frame_indexes.shape[0]
+        
+        for pred in predictions:
+            frame_index = int(pred[0])
+            if pred[2] >= CONFIDENCE_MIN:
+                filtered_preds[frame_index].append(pred)
+        return np.array(filtered_preds)
+
+    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
+        """Appends results to detections
+
+        Args:
+            prediction_batch (list): A list of lists of prediction tuples 
+                    (<class index>, <confidence>) for an image
+
+            tstamps (list): A list of timestamps corresponding to the timestamp of an image
+
+            previous_detections (list): A list of previous detections corresponding
+                    to the previous detection of interest of an image
+        """
+        if tstamps is None:
+            raise ValueError("tstamps is None")
+        if self.has_previous_detections:
+            raise NotImplementedError("previous detections not yet implemented for SSD")
+
+        # if previous_detections is None:
+            # previous_detections = [None]* len(prediction_batch)
+
+        baseline_det = create_detection(
+                        server = self.name,
+                        ver = self.version,
+                        property_type = self.prop_type
                     )
-                    self.detections.append(det)
-                    _detections.append(det)
-                except:
-                    log.error(traceback.format_exc())
-            log.debug("frame tstamp: {}".format(tstamp))            
+        # previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
+
+        log.debug("len(prediction_batch): {}".format(len(prediction_batch)))
+        log.debug("len(tstamps): {}".format(len(tstamps)))
+        log.debug("len(previous_detections): {}".format(len(previous_detections)))
+        # assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
+        assert(len(prediction_batch)==len(tstamps))
+        for image_preds, tstamp in zip(prediction_batch, tstamps):
+            for batch_index, pred, confidence, xmin, ymin, xmax, ymax in image_preds:
+                if not isinstance(pred, str):
+                    label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
+                contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
+                det = create_detection(
+                        server = self.name,
+                        ver = self.version,
+                        value = label,
+                        contour = contour,
+                        property_type = self.prop_type,
+                        confidence = confidence,
+                        t = tstamp
+                    )
+                self.detections.append(det)

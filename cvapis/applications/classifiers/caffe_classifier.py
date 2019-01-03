@@ -34,7 +34,7 @@ else:
 from caffe.proto import caffe_pb2
 from cvapis.module_api.cvmodule import CVModule
 from cvapis.avro_api.cv_schema_factory import * 
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
+from cvapis.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
 
 from cvapis.module_api.utils import min_conf_filter_predictions
 from cvapis.module_api.GPUUtilities import GPUUtility
@@ -113,7 +113,6 @@ class CaffeClassifier(CVModule):
             blob_meanfile.ParseFromString(data_meanfile)
             meanfile = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
             self.transformer.set_mean('data', meanfile)
-
         self.transformer.set_transpose('data', (2,0,1))
 
     def preprocess_images(self, images,  previous_detections = None):
@@ -205,7 +204,7 @@ class CaffeClassifier(CVModule):
         """
         if tstamps is None:
             tstamps = [None for _ in range(len(prediction_batch))]
-        tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
+        # tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
 
         if previous_detections is None:
             previous_detections = [None for _ in range(len(prediction_batch))]
@@ -215,13 +214,16 @@ class CaffeClassifier(CVModule):
                         ver = self.version,
                         property_type = self.prop_type
                     )
+        print("prev dets len: {}".format(len(previous_detections)))
         previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
-
+        print("prev dets len: {}".format(len(previous_detections)))
         assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
         for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
                     label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+                print("prev_det")
+                print(prev_det)
                 region_id = prev_det["region_id"]
                 contour = prev_det["contour"]
                 det = create_detection(

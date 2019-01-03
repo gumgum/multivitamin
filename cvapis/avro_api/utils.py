@@ -221,6 +221,21 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     y1 = dtype(y1 * h_max_px_ind)
     return (x0, y0), (x1, y1)
 
+def crop_image_from_bbox_contour(image, contour):
+    """Crop an image given a bounding box contour
+    
+    Args:  
+        image (np.array): image
+        contour (dict[float]): points of a bounding box countour
+    
+    Returns:
+        np.array: image
+    """
+    if contour is None:
+        return image
+    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour)
+    return image[y0:y1, x0:x1]
+
 def create_region_id(tstamp, contour):
     """Create a region_id
 
