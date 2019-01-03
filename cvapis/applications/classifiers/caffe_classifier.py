@@ -162,9 +162,6 @@ class CaffeClassifier(CVModule):
         preds = self.net.forward()[LAYER_NAME]
         return preds
 
-    def process_properties(self):
-        pass
-
     def postprocess_predictions(self, predictions_batch):
         """Filters out predictions out per class based on confidence, 
             and returns the top-N qualifying labels
