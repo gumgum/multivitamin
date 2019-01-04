@@ -1,14 +1,36 @@
+import boto3
+import cv2
+import json
+
+import numpy as np
+
+from utils import generate_fileobj_from_s3_folder
+
 from cvapis.applications.classifiers.caffe_classifier import CaffeClassfier
+
+
+S3_BUCKET_NAME = "vitamin-cv-test-data"
+S3_IMAGES_FOLDER = "data/media/images/generic/"
+S3_PREV_DETECTIONS_FOLDER = "data/sample_detections/random_boxes/"
+S3_NET_DATA_FOLDER = "models/caffe/SportsNHLLogoClassifier-v1.2/"
 
 def test_init():
     global cc
 
     server_name = "TestClassifier"
     version = "0.0.0"
-    net_data_dir = "/tmp/net_data"
+    net_data_dir = "/tmp/test_caffe_classifier/net_data"
     # prop_type = "label"
     # prop_id_map = {}
     # module_id_map
+
+    if not os.path.exists(net_data_dir):
+        os.makedirs(net_data_dir)
+        for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+            filename = os.path.basename(key)
+            with open("{}/{}".format(net_data_dir, filename), "wb") as file:
+                file.write(net_data.getvalue())
+
     cc = CaffeClassfier(server_name, version, net_data_dir)
 
 def test_preprocess_images():
@@ -16,7 +38,13 @@ def test_preprocess_images():
 
     # Load Batch of Images
     images = []
+    for _, im_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_IMAGES_FOLDER):
+        im_flat = np.fromstring(im_bytes.getvalue())
+        images.append(cv2.imdecode(im_flat, cv2.IMREAD_COLOR))
+
     sample_prev_detections = []
+    for _, det_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_PREV_DETECTIONS_FOLDER):
+        sample_prev_detections.append(json.loads(det_bytes.getvalue().decode("utf-8")))
 
     assert(len(images) == len(sample_prev_detections))
 
@@ -31,7 +59,7 @@ def test_preprocess_images():
 def test_process_images():
     global preds, preds_from_crops
     preds = cc.process_images(images_)
-    preds_from_crops = cc.process_images(images_cropped)
+    preds_from_crops = cc.process_images(images_cropped, sample_prev_detections)
 
     assert(preds.shape == preds_from_crops.shape)
     assert(preds.shape[0] == images_.shape[0])
