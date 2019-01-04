@@ -14,6 +14,5 @@ def generate_fileobj_from_s3_folder(s3_bucket_name, s3_folder_key):
     for obj in s3_bucket.objects.filter(Prefix=s3_folder_key):
         if obj.key == s3_folder_key:
             continue
-
         bytes_obj = load_fileobj(obj.bucket_name, obj.key)
         yield obj.key, bytes_obj

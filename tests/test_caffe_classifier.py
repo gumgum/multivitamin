@@ -1,6 +1,7 @@
 import boto3
 import cv2
 import json
+import os
 
 import numpy as np
 
@@ -23,15 +24,22 @@ def test_init():
     # prop_type = "label"
     # prop_id_map = {}
     # module_id_map
-
-    if not os.path.exists(net_data_dir):
+    if os.path.exists(net_data_dir):
+        try:
+           cc = CaffeClassifier(server_name, version, net_data_dir)
+           return
+        except:
+            pass
+    else:
         os.makedirs(net_data_dir)
-        for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
-            filename = os.path.basename(key)
-            with open("{}/{}".format(net_data_dir, filename), "wb") as file:
-                file.write(net_data.getvalue())
 
-    cc = CaffeClassfier(server_name, version, net_data_dir)
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+        filename = os.path.basename(key)
+        print("{}/{}".format(net_data_dir, filename))
+        with open("{}/{}".format(net_data_dir, filename), "wb") as file:
+            file.write(net_data_bytes.getvalue())
+
+    cc = CaffeClassifier(server_name, version, net_data_dir)
 
 def test_preprocess_images():
     global images_, images_cropped
@@ -39,22 +47,26 @@ def test_preprocess_images():
     # Load Batch of Images
     images = []
     for _, im_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_IMAGES_FOLDER):
-        im_flat = np.fromstring(im_bytes.getvalue())
-        images.append(cv2.imdecode(im_flat, cv2.IMREAD_COLOR))
+        _ = im_bytes.seek(0)
+        im_flat = np.frombuffer(im_bytes.read(), np.uint8)
+        images.append(cv2.imdecode(im_flat, -1))
 
     sample_prev_detections = []
     for _, det_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_PREV_DETECTIONS_FOLDER):
         sample_prev_detections.append(json.loads(det_bytes.getvalue().decode("utf-8")))
 
+    max_len = min(len(images), len(sample_prev_detections))
+    images = images[:max_len]
+    sample_prev_detections = sample_prev_detections[:max_len]
     assert(len(images) == len(sample_prev_detections))
 
     # Test preprocessing
     images_ = cc.preprocess_images(images)
     assert(len(images) == images_.shape[0])
 
-    images_cropped = cc.preprocess_images(images)
+    images_cropped = cc.preprocess_images(images, sample_prev_detections)
     assert(images_.shape == images_cropped.shape)
-    assert(images_ != images_cropped)
+    assert(not np.array_equal(images_, images_cropped))
 
 def test_process_images():
     global preds, preds_from_crops
