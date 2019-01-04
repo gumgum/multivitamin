@@ -6,24 +6,25 @@ from cvapis.avro_api.cv_schema_factory import *
 from cvapis.avro_api.avro_api import AvroAPI
 from cvapis.avro_api.avro_io import AvroIO
 
-def merge(self, a1, a2):
+def merge(a1, a2):
     """Merge two AvroAPI"""
     log.info("merging")
     log.info("We get the footprints")
     c1=a1.doc["media_annotation"]["codes"]
     c2=a2.doc["media_annotation"]["codes"]
+    ret=AvroAPI()
     log.info("merging footprints, we are assuming they are different. At some point.")
     codes=c1+c2
-    self.doc=a1.doc
-    self.set_codes(codes)
+    ret.doc=a1.doc
+    ret.set_footprints(codes)
     dets2=a2.get_detections_from_frame_anns()
     log.info("Appending detections")
     log.debug("len(dets2): " + str(len(dets2)))
-    for ds in dets2:
-        log.debug("len(ds): " + str(len(ds)))
-        for d in ds:
-            #log.info("d[\"t\"]:" + str(d["t"]))
-            self.append_detection(d)
+    for d in dets2:
+        #log.info(str(d))
+        #log.info("d[\"t\"]:" + str(d["t"]))
+        ret.append_detection(d)
+    return ret
 
 def transform(json_dict, schema_str):
     #log.setLevel("DEBUG")
