@@ -6,7 +6,7 @@ import numpy as np
 
 from utils import generate_fileobj_from_s3_folder
 
-from cvapis.applications.classifiers.caffe_classifier import CaffeClassfier
+from cvapis.applications.classifiers.caffe_classifier import CaffeClassifier
 
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"
