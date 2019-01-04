@@ -136,8 +136,9 @@ class CaffeClassifier(CVModule):
             contours = [None for _ in range(len(images))]
 
         images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-
+        
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
+
         return np.array(transformed_images)
 
     def _crop_image_from_contour(self, image, contour):
@@ -163,7 +164,7 @@ class CaffeClassifier(CVModule):
         """
         self.net.blobs['data'].reshape(*images.shape)
         self.net.blobs['data'].data[...] = images
-        preds = self.net.forward()[LAYER_NAME]
+        preds = self.net.forward()[LAYER_NAME].copy()
         return preds
 
     def postprocess_predictions(self, predictions_batch):
@@ -220,7 +221,6 @@ class CaffeClassifier(CVModule):
         for tstamp, prev_det in zip(tstamps, previous_detections):
             prev_det.update({"t":tstamp})
 
-        print(previous_detections)
         assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
         for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
