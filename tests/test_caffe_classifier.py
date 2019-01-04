@@ -71,10 +71,11 @@ def test_preprocess_images():
 def test_process_images():
     global preds, preds_from_crops
     preds = cc.process_images(images_)
-    preds_from_crops = cc.process_images(images_cropped, sample_prev_detections)
+    preds_from_crops = cc.process_images(images_cropped)
 
     assert(preds.shape == preds_from_crops.shape)
     assert(preds.shape[0] == images_.shape[0])
+    #assert(not np.array_equal(preds, preds_from_crops))
 
 def test_postprocess_predictions():
     global postprocessed_preds, postprocessed_preds_from_crops

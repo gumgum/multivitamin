@@ -216,8 +216,11 @@ class CaffeClassifier(CVModule):
                         ver = self.version,
                         property_type = self.prop_type
                     )
-        previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
+        previous_detections = [baseline_det.copy() if prev_det is None else prev_det for prev_det in previous_detections]
+        for tstamp, prev_det in zip(tstamps, previous_detections):
+            prev_det.update({"t":tstamp})
 
+        print(previous_detections)
         assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
         for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
             for pred, confidence in image_preds:
