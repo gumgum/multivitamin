@@ -143,7 +143,11 @@ class CaffeClassifier(CVModule):
     def _crop_image_from_contour(self, image, contour):
         if contour is None:
             return image
-        (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour)
+
+        h = image.shape[0]
+        w = image.shape[1]
+        (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
+        
         crop = image[y0:y1, x0:x1]
         return crop
 
