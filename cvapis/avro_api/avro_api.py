@@ -590,12 +590,15 @@ class AvroAPI():
     def get_timestamps(self):
         return [x['t'] for x in self.doc["media_annotation"]["frames_annotation"]]
     
-    def get_timestamps_from_footprints(self):
+    def get_timestamps_from_footprints(self,server=None):
         tstamps=[]        
         for c in self.doc["media_annotation"]["codes"]:
             log.info(str(c))
             if not c["tstamps"]:
                 continue
+            if server:
+                if c["server"] != server:
+                    continue
             if not tstamps:
                 log.info("Assigning timestamps: " + str(c["tstamps"]))
                 tstamps=c["tstamps"]
