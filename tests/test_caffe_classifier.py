@@ -42,7 +42,7 @@ def test_init():
     cc = CaffeClassifier(server_name, version, net_data_dir)
 
 def test_preprocess_images():
-    global images_, images_cropped
+    global images_, images_cropped, sample_prev_detections
 
     # Load Batch of Images
     images = []
@@ -84,23 +84,35 @@ def test_postprocess_predictions():
 
 def test_append_detections():
     current_detections = cc.detections.copy()
+    tstamps = [det["t"] for det in sample_prev_detections]
     
     # Vanilla Append
     cc.append_detections(postprocessed_preds)
+    assert(len(current_detections) < cc.detections)
     cc.detections = current_detections.copy()
 
     cc.append_detections(postprocessed_preds_from_crops)
+    assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
     # Append with Tstamps
+    cc.append_detections(postprocessed_preds)
+    assert(len(current_detections) < len(cc.detections))
+    cc.detections = current_detections.copy()
 
     # Append with previous_detections
+    cc.append_detections(postprocessed_preds_from_crops, previous_detections=sample_prev_detections)
+    assert(len(current_detections) < len(cc.detections))
+    cc.detections = current_detections.copy()
 
     # Append with both
-
+    cc.append_detections(postprocessed_preds_from_crops, tstamps=tstamps, previous_detections=sample_prev_detections)
+    assert(len(current_detections) < len(cc.detections))
+    cc.detections = current_detections.copy()
 
 def test_process():
     # Test on short video
-    # message = None
-    # cc.process(message)
-    pass
+    message = {
+        "url":"https://s3.amazonaws.com/vitamin-cv-test-data/data/media/videos/generic-short/kitti-clip.mp4"
+    }
+    cc.process()
