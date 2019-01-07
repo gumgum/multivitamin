@@ -188,7 +188,7 @@ class CaffeClassifier(CVModule):
             # Get Top N
             n_top_pred = pred_idxs_max2min[:N_TOP]
             n_top_conf = pred[n_top_pred]
-            n_top_preds.append(zip(n_top_pred, n_top_conf))
+            n_top_preds.append(list(zip(n_top_pred, n_top_conf)))
 
         return n_top_preds
 
@@ -207,7 +207,7 @@ class CaffeClassifier(CVModule):
         """
         if tstamps is None:
             tstamps = [None for _ in range(len(prediction_batch))]
-        tstamps = [inspect.signature(create_detection).parameters["t"].default for tstamp in tstamps if tstamp is None]
+        tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
 
         if previous_detections is None:
             previous_detections = [None for _ in range(len(prediction_batch))]
