@@ -1,6 +1,7 @@
 import pprint
 import glog as log
 import json
+import copy
 
 from cvapis.avro_api.cv_schema_factory import *
 from cvapis.avro_api.avro_api import AvroAPI
@@ -10,20 +11,31 @@ def merge(a1, a2):
     """Merge two AvroAPI"""
     log.info("merging")
     log.info("We get the footprints")
-    c1=a1.doc["media_annotation"]["codes"]
-    c2=a2.doc["media_annotation"]["codes"]
+    c1=a1.doc["media_annotation"]["codes"].copy()
+    c2=a2.doc["media_annotation"]["codes"].copy()
     ret=AvroAPI()
     log.info("merging footprints, we are assuming they are different. At some point.")
     codes=c1+c2
-    ret.doc=a1.doc
+    ret.doc=copy.deepcopy(a1.doc)
     ret.set_footprints(codes)
+    dets1=a1.get_detections_from_frame_anns()
     dets2=a2.get_detections_from_frame_anns()
     log.info("Appending detections")
-    log.debug("len(dets2): " + str(len(dets2)))
-    for d in dets2:
-        #log.info(str(d))
-        #log.info("d[\"t\"]:" + str(d["t"]))
+    log.info("len(dets1): " + str(len(dets1)))
+    log.info("len(dets2): " + str(len(dets2)))
+    for i_d,d in enumerate(dets2):
+        #if i_d>100:
+        #    break
+        if i_d%1000==0:
+            log.info("i_d: " + str(i_d))
         ret.append_detection(d)
+    dets1=a1.get_detections_from_frame_anns()
+    dets2=a2.get_detections_from_frame_anns()
+    dets_ret=ret.get_detections_from_frame_anns()
+    log.info("After merging")
+    log.info("len(dets1): " + str(len(dets1)))
+    log.info("len(dets2): " + str(len(dets2)))
+    log.info("len(dets_ret): " + str(len(dets_ret)))
     return ret
 
 def transform(json_dict, schema_str):
