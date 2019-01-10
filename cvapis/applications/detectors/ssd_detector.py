@@ -166,6 +166,7 @@ class SSDDetector(CVModule):
             previous_detections (list): A list of previous detections corresponding
                     to the previous detection of interest of an image
         """
+        print(previous_detections)
         if tstamps is None:
             tstamps = [None for _ in range(len(prediction_batch))]
         
