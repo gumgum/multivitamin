@@ -147,13 +147,10 @@ class SSDDetector(CVModule):
                     0 and 1, where each index represents a class
 
         Returns:
-            nd.array: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
+            list: A list of nd.arrays given by number of detections against (label, confidence, xmin, ymin, xmax, ymax)
         """
         frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
-        print(frame_indexes)
-        print(indicies_of_first_occurance)
         predictions = np.split(predictions, indicies_of_first_occurance[1:])
-        print(predictions[0].shape)
         filtered_preds = [preds[preds[:,2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
 
@@ -169,8 +166,6 @@ class SSDDetector(CVModule):
             previous_detections (list): A list of previous detections corresponding
                     to the previous detection of interest of an image
         """
-        log.info(prediction_batch.shape)
-        
         if tstamps is None:
             tstamps = [None for _ in range(len(prediction_batch))]
         
