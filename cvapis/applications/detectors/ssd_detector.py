@@ -98,16 +98,31 @@ class SSDDetector(CVModule):
         Returns:
             list: A list of transformed images
         """
-        if not self.has_previous_detections:
-            return np.array([self.transformer.preprocess('data', image) for image in images])
-
+        contours = None
+        if previous_detections:
+            contours = [det.get("contour") if det is not None else None for det in previous_detections]
+        
         transformed_images = []
-        assert(len(images) == len(previous_detections))
-        for image, det in zip(images, previous_detections):
-            if det:
-                image = crop_image_from_bbox_contour(image, det.get("contour"))
-            transformed_images.append(self.transformer.preprocess('data', image))
+
+        if type(contours) is not list:
+            contours = [None for _ in range(len(images))]
+
+        images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
+        
+        transformed_images = [self.transformer.preprocess('data', image) for image in images]
+
         return np.array(transformed_images)
+
+    def _crop_image_from_contour(self, image, contour):
+        if contour is None:
+            return image
+
+        h = image.shape[0]
+        w = image.shape[1]
+        (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
+        
+        crop = image[y0:y1, x0:x1]
+        return crop
 
     def process_images(self, images):
         """Network forward pass
@@ -120,10 +135,9 @@ class SSDDetector(CVModule):
                   (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         self.net.blobs['data'].reshape(*images.shape)
-        self.net.reshape()
         self.net.blobs['data'].data[...] = images
-        preds = self.net.forward()[LAYER_NAME]
-        return np.squeeze(preds)
+        preds = self.net.forward()[LAYER_NAME].copy()
+        return preds
 
     def postprocess_predictions(self, predictions):
         """Filters out predictions out per class based on confidence
