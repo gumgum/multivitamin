@@ -150,8 +150,8 @@ class SSDDetector(CVModule):
             nd.array: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         frame_indexes = np.unique(predictions[:, 0])
-        predictions = predictions[predictions[:,2] > CONFIDENCE_MIN]
-        return np.array(filtered_preds)
+        filtered_preds = predictions[predictions[:,2] > CONFIDENCE_MIN]
+        return filtered_preds
 
     def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
         """Appends results to detections
