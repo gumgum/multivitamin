@@ -137,7 +137,7 @@ class SSDDetector(CVModule):
         self.net.blobs['data'].reshape(*images.shape)
         self.net.blobs['data'].data[...] = images
         preds = self.net.forward()[LAYER_NAME].copy()
-        return preds
+        return np.squeeze(preds)
 
     def postprocess_predictions(self, predictions):
         """Filters out predictions out per class based on confidence
