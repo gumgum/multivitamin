@@ -172,23 +172,25 @@ class SSDDetector(CVModule):
         
         tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
 
-        if previous_detections:
-            raise NotImplementedError("previous detections not yet implemented for SSD")
 
-        # if previous_detections is None:
-            # previous_detections = [None]* len(prediction_batch)
+        # if previous_detections:
+        #     raise NotImplementedError("previous detections not yet implemented for SSD")
 
-        baseline_det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        property_type = self.prop_type
-                    )
-        # previous_detections = [baseline_det.copy().update({"t": tstamp}) if prev_det is None else prev_det for tstamp, prev_det in zip(tstamps, previous_detections)]
+
+        # previous_detections = [None for _ in range(len(prediction_batch))]
+        # baseline_det = create_detection(
+        #                 server = self.name,
+        #                 ver = self.version,
+        #                 property_type = self.prop_type
+        #             )
+        # previous_detections = [baseline_det.copy() if prev_det is None else prev_det for prev_det in previous_detections]
+        # for tstamp, prev_det in zip(tstamps, previous_detections):
+        #     prev_det.update({"t":tstamp})
+
 
         log.debug("len(prediction_batch): {}".format(len(prediction_batch)))
         log.debug("len(tstamps): {}".format(len(tstamps)))
-        log.debug("len(previous_detections): {}".format(len(previous_detections)))
-        # assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
+
         assert(len(prediction_batch)==len(tstamps))
         for image_preds, tstamp in zip(prediction_batch, tstamps):
             for batch_index, pred, confidence, xmin, ymin, xmax, ymax in image_preds:
