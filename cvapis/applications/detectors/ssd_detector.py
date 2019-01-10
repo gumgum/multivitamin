@@ -150,9 +150,10 @@ class SSDDetector(CVModule):
             nd.array: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
-        log.info(indicies_of_first_occurance)
+        print(frame_indexes)
+        print(indicies_of_first_occurance)
         predictions = np.split(predictions, indicies_of_first_occurance[1:])
-        log.info(predictions[0])
+        print(predictions[0].shape)
         filtered_preds = [preds[preds[:,2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
 
