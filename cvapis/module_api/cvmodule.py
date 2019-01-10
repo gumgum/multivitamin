@@ -9,7 +9,6 @@ from cvapis.comm_apis.request_api import RequestAPI
 from cvapis.avro_api.avro_api import AvroAPI, AvroIO
 from cvapis.avro_api.utils import get_current_time
 from cvapis.avro_api.cv_schema_factory import *
-from cvapis.media_api.media import MediaRetriever
 MAX_PROBLEMATIC_FRAMES=10
 
 class CVModule(ABC):
@@ -29,7 +28,8 @@ class CVModule(ABC):
         self.prop_type=prop_type
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
-        
+
+        self.min_conf_filter = {}        
  
         #To be overwritten, if needed, by the child
         self.process_properties_flag = process_properties_flag
@@ -95,6 +95,68 @@ class CVModule(ABC):
             log.debug("Creating self.detections_t_map.")
             self.detections_t_map=self.avro_api.create_detections_tstamp_map(self.detections_of_interest)
 
+    def batch_generator(self, iterator):
+        """Take an iterator, convert it to a chunking generator
+        
+
+        Args:
+            iterator: Any iterable object where each element is a list or a tuple of length N
+
+        Yields:
+            list: A list of N batches of size `self.batch_size`. The last 
+                    batch may be smaller than the others
+        """
+        batch = []
+        for iteration in iterator:
+            batch.append(iteration)
+            if len(batch) >= self.batch_size:
+                yield zip(*batch)
+                batch = []
+        if len(batch) > 0:
+            yield zip(*batch)
+
+    def preprocess_message(self):
+        """Parses HTTP message for data
+
+        Yields:
+            frame: An image a time tstamp of a video or image
+            tstamp: The timestamp associated with the frame
+            det: The matching detection object 
+        """
+        log.info("Processing frames")
+        frames_iterator=[]
+        try:
+            frames_iterator = self.media_api.get_frames_iterator(self.request_api.sample_rate)
+        except ValueError as e:
+            log.error(e)                
+            self.code = "ERROR_NO_IMAGES_LOADED"
+            return self.code
+
+        images = []
+        tstamps = []
+        detections_of_interest = []
+        for i, (frame, tstamp) in enumerate(frames_iterator):
+            if frame is None:
+                log.warning("Invalid frame")
+                continue
+
+            if tstamp is None:
+                log.warning("Invalid tstamp")
+                continue
+
+            log.info('tstamp: ' + str(tstamp))
+            dets = [None]
+            if len(self.prev_pois) > 0: #We are expected to focus on previous detections
+                if tstamp in self.detections_t_map:
+                    dets = self.detections_t_map[tstamp]
+
+                if len(dets) == 0:
+                    log.debug("No detections for tstamp " + str(tstamp))
+                    continue
+
+            for det in dets:
+                yield frame, tstamp, det 
+
     def process(self, message):
         """Process the message, calls process_images(batch, tstamps, contours=None)
 
@@ -104,87 +166,68 @@ class CVModule(ABC):
         log.info("Setting message")
         self.set_message(message)
         log.info("Processing message")
-        if self.process_properties_flag:#if the module is a "properties's processor, we call and return the correspondent child method.
+
+        #if the module is a "properties's processor, we call and return the correspondent child method.
+        if self.process_properties_flag:
             log.info("Processing properties")
             try:
                 self.process_properties()
             except ValueError as e:
                 log.error(e)
                 log.error("Problems processing properties")
-                self.code=e
+                self.code = e
             return self.code
 
-        self.num_problematic_frames=0
-        self.findrois()#This will update self.detections_of_interest
+        self.num_problematic_frames = 0
+        self.findrois() #This will update self.detections_of_interest
+
         self.detections = []
-        batch_images = []
-        batch_tstamps = []
-        batch_detections_of_interest = []             
-        log.info("Processing frames")
-        frames_iterator=[]
-        try:
-            frames_iterator=self.media_api.get_frames_iterator(self.request_api.sample_rate)
-        except ValueError as e:
-            log.error(e)                
-            self.code="ERROR_NO_IMAGES_LOADED"
-            return self.code
-        
-        #we go thru the frames
-        for i, (frame, tstamp) in enumerate(frames_iterator):
-            if frame is None:
-                log.warning("Invalid frame")
+        for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
+            if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
+                log.error("Too Many Problematic Iterations")
+                log.error("Returning with error code: "+str(self.code))
+                return self.code
+
+            try:
+                image_batch = self.preprocess_images(image_batch, det_batch)
+            except Exception as e:
+                log.error("Image Preprocessing Failed")
+                log.error(e)
+                self.code = e
+                self.num_problematic_frames += 1
                 continue
-            if tstamp is None:
-                log.warning("Invalid tstamp")
+
+            try:
+                prediction_batch_raw = self.process_images(image_batch)
+            except Exception as e:
+                log.error("Image Inferencing Failed")
+                log.error(e)
+                self.num_problematic_frames += 1
                 continue
-            log.info('tstamp: ' + str(tstamp))
-            if len(self.prev_pois)>0:#We are expected1 to focus on previous detections
-                dets=[]
-                if tstamp in self.detections_t_map:
-                    dets=self.detections_t_map[tstamp]
-                if len(dets)==0:
-                    #log.debug("No detections for tstamp " + str(tstamp))
-                    continue
-                batch_detections_of_interest.extend(dets)
-                #we append the frame and the tstamps as many times as necessary to fit the length of dets
-                log.debug('len(dets): ' + str(len(dets)))
-                batch_images.extend([frame] * len(dets))
-                batch_tstamps.extend([tstamp] * len(dets))
-                log.debug('len(batch_detections_of_interest): ' + str(len(batch_detections_of_interest)))
-                log.debug('len(batch_images): ' + str(len(batch_images)))
-                log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-            else:#if there is no previous detections of interest we simply append frame and timestamp to the batches.
-                batch_images.append(frame)
-                batch_tstamps.append(tstamp)            
-            while len(batch_images)>=self.batch_size:
-                log.debug("batch ready to be processed.")
-                try:
-                    log.debug("Processing batch")
-                    self.process_images(batch_images[:self.batch_size], batch_tstamps[:self.batch_size],batch_detections_of_interest[:self.batch_size])
-                except ValueError as e:
-                    self.num_problematic_frames+=1
-                    log.warning('Problem processing frames')
-                    if self.num_problematic_frames>=MAX_PROBLEMATIC_FRAMES:
-                        log.error(e)
-                        self.code=e
-                        return self.code
-                log.debug("Updating batch")
-                batch_images=batch_images[self.batch_size:]
-                batch_tstamps=batch_tstamps[self.batch_size:]
-                batch_detections_of_interest=batch_detections_of_interest[self.batch_size:]
-                log.debug('***************')
-                log.debug('len(batch_detections_of_interest): ' + str(len(batch_detections_of_interest)))
-                log.debug('len(batch_images): ' + str(len(batch_images)))
-                log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-        log.debug("We are done frame iterating.")
-        if len(batch_images)>0:
-            log.debug('len(batch_detections_of_interest): ' + str(len(batch_detections_of_interest)))
-            log.debug('len(batch_images): ' + str(len(batch_images)))
-            log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-            log.debug('len(batch_images): ' + str(len(batch_images)))
-            self.process_images(batch_images, batch_tstamps,batch_detections_of_interest)
+
+            try:
+                prediction_batch = self.postprocess_predictions(prediction_batch_raw)
+            except Exception as e:
+                log.error("Inference Postprocssing Failed")
+                log.error(e)
+                self.code = e
+                self.num_problematic_frames += 1
+                continue
+
+            try:
+                self.append_detections(prediction_batch, tstamp_batch, det_batch)
+            except Exception as e:
+                log.error("Appending Detections Failed")
+                log.error(e)
+                self.code = e
+                self.num_problematic_frames += 1
+                continue
+
         log.debug("Finished processing.")
         return self.code
+
+    def preprocess_images(self, images, contours = None):
+        return images
 
     def process_images(self, images, tstamps, detections_of_interest=None):
         """Abstract method to be implemented by child module"""
@@ -192,6 +235,13 @@ class CVModule(ABC):
 
     def process_properties(self):
         """Abstract method to be implemented by child module"""
+        pass
+
+    def postprocess_predictions(self, predictions):
+        return predictions
+
+    @abstractmethod
+    def append_detections(self, predicitons, tstamps=None, previous_detections=None):
         pass
 
     def update_response(self):

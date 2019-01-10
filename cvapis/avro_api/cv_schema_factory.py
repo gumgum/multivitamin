@@ -69,6 +69,42 @@ def create_segment(server="", property_type="label", value="", value_verbose="",
         "company": company
     }
 
+def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
+    """Helper function to create bounding box contour from 4 extrema points"""
+    return [create_point(xmin, ymin),
+            create_point(xmax, ymin),
+            create_point(xmax, ymax),
+            create_point(xmin, ymax)
+            ]
+
+def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
+    """Create x, y point
+
+    Args:
+        x (float): pt x
+        y (float): pt y
+        bound (bool): if True, enforces [0, 1]
+        ub_x (float): upperbound on x if check == True
+        ub_y (float): upperbound on y if check == True
+    
+    Returns:
+        dict: x,y 
+    """
+    if not isinstance(x, float):
+        log.warning("x should be a float")
+        x = float(x)
+    if not isinstance(y, float):
+        log.warning("y should be a float")
+        y = float(y)
+    lowerbound = 0.0
+    if bound:
+        x = min(max(lowerbound, x), ub_x)
+        y = min(max(lowerbound, y), ub_y)
+
+    return {
+        "x": x, 
+        "y": y
+    }
 
 ########################################################################
 ## "private" functions
@@ -165,35 +201,6 @@ def create_image_ann(t=0.0, regions=None):
     return {
         "t" : t,
         "regions" : regions
-    }
-
-def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
-    """Create x, y point
-
-    Args:
-        x (float): pt x
-        y (float): pt y
-        bound (bool): if True, enforces [0, 1]
-        ub_x (float): upperbound on x if check == True
-        ub_y (float): upperbound on y if check == True
-    
-    Returns:
-        dict: x,y 
-    """
-    if not isinstance(x, float):
-        log.warning("x should be a float")
-        x=float(x)
-    if not isinstance(y, float):
-        log.warning("y should be a float")
-        y=float(y)
-    lowerbound = 0.0
-    if bound:
-        x = min(max(lowerbound, x), ub_x)
-        y = min(max(lowerbound, y), ub_y)
-
-    return {
-        "x": x, 
-        "y": y
     }
 
 def create_region(contour=None, props=None, father_id="", features="", id=""):
