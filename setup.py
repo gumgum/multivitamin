@@ -1,6 +1,10 @@
-from setuptools import setup, find_packages
 import subprocess
 import os
+import sys
+from setuptools import setup, find_packages
+from setuptools.command.install import install
+
+VERSION = '1.0.17'
 
 reqs = None
 with open('requirements.txt') as rf:
@@ -14,12 +18,28 @@ if os.path.exists('/usr/local/cuda/version.txt'):
     if cuda_ver in cupy_supported_cuda_vers:
         reqs.append("cupy-cuda"+cuda_ver.replace(".",""))
 
+class VerifyVersionCommand(install):
+    """Custom command to verify that the git tag matches our version"""
+    description = 'Verify that the git tag matches the version'
+
+    def run(self):
+        tag = os.getenv('DRONE_TAG', 'unknown')
+
+        if tag != VERSION:
+            info = "Git tag: {0} does not match the version of this app: {1}".format(
+                tag, VERSION
+            )
+            sys.exit(info)
+
 setup(name="cvapis",
-      version="1.0.11",
+      version=VERSION,
       description="Common CV APIs",
       url="https://bitbucket.org/gumgum/cvapis/",
       author="GumGum Computer Vision",
       packages=find_packages(exclude=['docs*','tests*','examples*','docker*','tools*','cvapis/data/*']),
       install_requires=reqs,
       include_package_data=True,
-      zip_safe=False)
+      zip_safe=False,
+      cmdclass={
+        'verify': VerifyVersionCommand,
+      })

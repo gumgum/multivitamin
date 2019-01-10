@@ -71,22 +71,21 @@ class AvroAPI():
         log.debug("Appending detection w/ tstamp: {}".format(detection["t"]))
 
         value=detection.get("value")
-        if value is None:
-            log.error(traceback.format_exc())
-            log.error("detection with no value, not appending it.")
-            return
         property_id=detection.get("property_id")
-        if not property_id is None:
-            log.warning("property_id is not expected to already have a value at this point. It wont be used.")
+        if value is None and property_id is None:
+            log.error("detection with no value or property id.")
+            return
 
-        property_id=0
-        if prop_id_map==None:
-            log.warning("No prop_id_map. Using property_id=0")
-        else:
+        if value and property_id and prop_id_map:
+            log.warning("Both value and property_id are not None. But there is a property_id map. property_id will be overwritten")          
+        if prop_id_map and value:
             property_id=prop_id_map.get(value, 0)
-            if not property_id:
-                log.warning("No prop_id was found for value " + value + ". Using property_id=0")
-
+                
+        if value is None:
+            value=""
+        if property_id is None:
+            property_id=0        
+            
         region_id_query=detection['region_id']
         if len(region_id_query)>0:
             region=self.get_region_from_region_id(region_id_query)
@@ -591,12 +590,15 @@ class AvroAPI():
     def get_timestamps(self):
         return [x['t'] for x in self.doc["media_annotation"]["frames_annotation"]]
     
-    def get_timestamps_from_footprints(self):
+    def get_timestamps_from_footprints(self,server=None):
         tstamps=[]        
         for c in self.doc["media_annotation"]["codes"]:
             log.info(str(c))
             if not c["tstamps"]:
                 continue
+            if server:
+                if c["server"] != server:
+                    continue
             if not tstamps:
                 log.info("Assigning timestamps: " + str(c["tstamps"]))
                 tstamps=c["tstamps"]
