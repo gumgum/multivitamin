@@ -83,30 +83,31 @@ def test_postprocess_predictions():
     postprocessed_preds_from_crops = cc.postprocess_predictions(preds_from_crops)
 
 def test_append_detections():
+    global postprocessed_preds, postprocessed_preds_from_crops
     current_detections = cc.detections.copy()
     tstamps = [det["t"] for det in sample_prev_detections]
     
     # Vanilla Append
-    cc.append_detections(postprocessed_preds)
-    assert(len(current_detections) < cc.detections)
+    cc.append_detections(postprocessed_preds.copy())
+    assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
-    cc.append_detections(postprocessed_preds_from_crops)
+    cc.append_detections(postprocessed_preds_from_crops.copy())
     assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
     # Append with Tstamps
-    cc.append_detections(postprocessed_preds)
+    cc.append_detections(postprocessed_preds.copy(), tstamps=tstamps)
     assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
     # Append with previous_detections
-    cc.append_detections(postprocessed_preds_from_crops, previous_detections=sample_prev_detections)
+    cc.append_detections(postprocessed_preds_from_crops.copy(), previous_detections=sample_prev_detections)
     assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
     # Append with both
-    cc.append_detections(postprocessed_preds_from_crops, tstamps=tstamps, previous_detections=sample_prev_detections)
+    cc.append_detections(postprocessed_preds_from_crops.copy(), tstamps=tstamps, previous_detections=sample_prev_detections)
     assert(len(current_detections) < len(cc.detections))
     cc.detections = current_detections.copy()
 
@@ -115,4 +116,4 @@ def test_process():
     message = {
         "url":"https://s3.amazonaws.com/vitamin-cv-test-data/data/media/videos/generic-short/kitti-clip.mp4"
     }
-    cc.process()
+    cc.process(message)
