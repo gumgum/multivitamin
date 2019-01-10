@@ -10,7 +10,6 @@ import inspect
 import importlib.util
 
 from cvapis.module_api.GPUUtilities import GPUUtility
-from cvapis.exceptions import CaffeImportError
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -31,9 +30,9 @@ if SSD_CAFFE_PYTHON:
 if importlib.util.find_spec("caffe"):
     import caffe
 elif SSD_CAFFE_PYTHON:
-    raise CaffeImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(SSD_CAFFE_PYTHON))
+    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(SSD_CAFFE_PYTHON))
 else:
-    raise CaffeImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable SSD_CAFFE_PYTHON.")
+    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable SSD_CAFFE_PYTHON.")
 
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2

@@ -6,7 +6,7 @@ import traceback
 import importlib
 import inspect
 
-from cvapis.exceptions import CaffeImportError, ParseError
+from cvapis.exceptions import ParseError
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -27,9 +27,9 @@ if CAFFE_PYTHON:
 if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
-    raise CaffeImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
+    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
 else:
-    raise CaffeImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
+    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
 
 from caffe.proto import caffe_pb2
 from cvapis.module_api.cvmodule import CVModule
