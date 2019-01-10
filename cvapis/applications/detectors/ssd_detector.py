@@ -137,8 +137,6 @@ class SSDDetector(CVModule):
         self.net.blobs['data'].reshape(*images.shape)
         self.net.blobs['data'].data[...] = images
         preds = self.net.forward()[LAYER_NAME].copy()
-        log.info("*******")
-        log.info(preds.shape)
         return preds
 
     def postprocess_predictions(self, predictions):
@@ -149,12 +147,13 @@ class SSDDetector(CVModule):
                     0 and 1, where each index represents a class
 
         Returns:
-            list: A list of tuples (label, confidence, xmin, ymin, xmax, ymax)
+            list: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         frame_indexes = np.unique(predictions[:, 0])
         filtered_preds = [[]]*frame_indexes.shape[0]
         
         for pred in predictions:
+            log.info(pred)
             frame_index = int(pred[0])
             if pred[2] >= CONFIDENCE_MIN:
                 filtered_preds[frame_index].append(pred)
@@ -172,9 +171,10 @@ class SSDDetector(CVModule):
             previous_detections (list): A list of previous detections corresponding
                     to the previous detection of interest of an image
         """
+        log.info(prediction_batch.shape)
         if tstamps is None:
             raise ValueError("tstamps is None")
-        if self.has_previous_detections:
+        if previous_detections:
             raise NotImplementedError("previous detections not yet implemented for SSD")
 
         # if previous_detections is None:
