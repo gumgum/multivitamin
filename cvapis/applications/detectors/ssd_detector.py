@@ -153,10 +153,11 @@ class SSDDetector(CVModule):
         filtered_preds = [[]]*frame_indexes.shape[0]
         
         for pred in predictions:
-            log.info(pred.shape)
             frame_index = int(pred[0])
             if pred[2] >= CONFIDENCE_MIN:
                 filtered_preds[frame_index].append(pred)
+
+        log.info(frame_index.shape)
         return np.array(filtered_preds)
 
     def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
