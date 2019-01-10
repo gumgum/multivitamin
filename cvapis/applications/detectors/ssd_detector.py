@@ -131,7 +131,7 @@ class SSDDetector(CVModule):
             images (np.array): A numpy array of images
     
         Returns:
-            list: List of tuples corresponding to each detection in the format of
+            nd.array: List of tuples corresponding to each detection in the format of
                   (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         self.net.blobs['data'].reshape(*images.shape)
@@ -147,17 +147,10 @@ class SSDDetector(CVModule):
                     0 and 1, where each index represents a class
 
         Returns:
-            list: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
+            nd.array: A list of tuples (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
         frame_indexes = np.unique(predictions[:, 0])
-        filtered_preds = [[]]*frame_indexes.shape[0]
-        
-        for pred in predictions:
-            frame_index = int(pred[0])
-            if pred[2] >= CONFIDENCE_MIN:
-                filtered_preds[frame_index].append(pred)
-
-        log.info(np.array(filtered_preds).shape)
+        predictions = predictions[predictions[:,2] > CONFIDENCE_MIN]
         return np.array(filtered_preds)
 
     def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
@@ -173,8 +166,12 @@ class SSDDetector(CVModule):
                     to the previous detection of interest of an image
         """
         log.info(prediction_batch.shape)
+        
         if tstamps is None:
-            raise ValueError("tstamps is None")
+            tstamps = [None for _ in range(len(prediction_batch))]
+        
+        tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
+
         if previous_detections:
             raise NotImplementedError("previous detections not yet implemented for SSD")
 
