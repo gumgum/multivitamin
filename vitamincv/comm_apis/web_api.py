@@ -11,7 +11,7 @@ from time import sleep
 #from rq import Queue, Worker, Connection
 #from redis import Redis
 
-from cvapis.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.comm_api import CommAPI
 
 class WebAPI(CommAPI):
     def __init__(self, port=5000):

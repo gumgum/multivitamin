@@ -25,7 +25,7 @@ def test_object_detector():
     log.info("Downloading net_data")
     s3_client = boto3.client('s3')
     log.info("Downloading model.")
-    s3_client.download_file('cvapis-data', 'tf-detector/net_data.zip', tmp_filepath)
+    s3_client.download_file('vitamincv-data', 'tf-detector/net_data.zip', tmp_filepath)
     log.info("Model downloaded.")
 
     with open(tmp_filepath, 'rb') as f:

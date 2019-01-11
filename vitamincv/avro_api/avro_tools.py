@@ -3,9 +3,9 @@ import glog as log
 import json
 import copy
 
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_io import AvroIO
 
 def merge(a1, a2):
     """Merge two AvroAPI"""

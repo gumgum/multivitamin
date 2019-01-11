@@ -2,8 +2,8 @@ import os
 import sys
 import argparse
 
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_io import AvroIO
 
 header = "Broadcast ID,Rightsholder,Sponsor,Placement,Duration,Broadcast Media URL, Start Timestamp, End Timestamp"
 

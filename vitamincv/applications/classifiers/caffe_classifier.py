@@ -6,7 +6,7 @@ import traceback
 import importlib
 import inspect
 
-from cvapis.exceptions import ParseError
+from vitamincv.exceptions import ParseError
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -32,12 +32,12 @@ else:
     raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
 
 from caffe.proto import caffe_pb2
-from cvapis.module_api.cvmodule import CVModule
-from cvapis.avro_api.cv_schema_factory import * 
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
+from vitamincv.module_api.cvmodule import CVModule
+from vitamincv.avro_api.cv_schema_factory import * 
+from vitamincv.avro_api.utils import p0p1_from_bbox_contour
 
-from cvapis.module_api.utils import min_conf_filter_predictions
-from cvapis.module_api.GPUUtilities import GPUUtility
+from vitamincv.module_api.utils import min_conf_filter_predictions
+from vitamincv.module_api.GPUUtilities import GPUUtility
 
 
 LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]

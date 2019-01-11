@@ -1,13 +1,13 @@
 import boto3
 import json
 
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_query import *
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_query import *
 
 
 def test_load_data():
     global dets, segs
-    S3_BUCKET = "cvapis-data"
+    S3_BUCKET = "vitamincv-data"
     S3_KEY = "jsons/Montreal+Canadiens+%40+Toronto+Maple+Leafs+3-17_With_Human_Tracks.json"
 
     S3 = boto3.resource('s3')

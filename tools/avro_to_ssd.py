@@ -1,8 +1,8 @@
 import argparse
 
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_io import AvroIO
-from cvapis.avro_api.utils import to_SSD_ann_format
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.utils import to_SSD_ann_format
 
 if __name__=="__main__":
     a = argparse.ArgumentParser()

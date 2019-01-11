@@ -5,8 +5,8 @@ import json
 import glog as log
 import pkg_resources
 
-from cvapis.comm_apis.es_query_builder import QueryBuilder
-from cvapis.avro_api.avro_api import AvroAPI
+from vitamincv.comm_apis.es_query_builder import QueryBuilder
+from vitamincv.avro_api.avro_api import AvroAPI
 
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions as es_exceptions
@@ -39,7 +39,7 @@ class DocumentUpdater():
     def _upload_scripts(self):
         #curl command to put in the scripts.
         log.info('Uploading scripts:')
-        path_to_painless_scripts = pkg_resources.resource_filename('cvapis', os.path.join('comm_apis', 'painless_scripts/'))
+        path_to_painless_scripts = pkg_resources.resource_filename('vitamincv', os.path.join('comm_apis', 'painless_scripts/'))
         scripts = iglob(path_to_painless_scripts+'/*.painless')
         for script in scripts:
             script_name = script.split('/')[-1].rsplit('.')[0]

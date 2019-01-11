@@ -1,6 +1,6 @@
 import context
-from cvapis.comm_apis.es_api import ESAPI, log
-from cvapis.avro_api.avro_api import AvroAPI
+from vitamincv.comm_apis.es_api import ESAPI, log
+from vitamincv.avro_api.avro_api import AvroAPI
 import pprint
 from glob import glob
 

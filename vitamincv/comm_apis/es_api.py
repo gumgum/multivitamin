@@ -13,19 +13,19 @@ import pkg_resources
 import glog as log
 from elasticsearch import Elasticsearch, helpers
 
-from cvapis.comm_apis.comm_api import CommAPI
-from cvapis.comm_apis.es_query_builder import QueryBuilder
-from cvapis.comm_apis.es_document_updater import DocumentUpdater
-from cvapis.comm_apis import config
+from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.es_query_builder import QueryBuilder
+from vitamincv.comm_apis.es_document_updater import DocumentUpdater
+from vitamincv.comm_apis import config
 
-from cvapis.comm_apis.work_handler import WorkerManager
+from vitamincv.comm_apis.work_handler import WorkerManager
 
 import inspect
 
 class ESAPI(CommAPI):
     """ API for accessing CV ElasticSearch database """
     def __init__(self, vpc_endpoint=config.VPC_ENDPOINT, index=config.ES_INDEX, doc_type="media_annotations",
-                 mapping_file=pkg_resources.resource_filename('cvapis', os.path.join('comm_apis', 'es_mapping.json')), global_timeout=60):
+                 mapping_file=pkg_resources.resource_filename('vitamincv', os.path.join('comm_apis', 'es_mapping.json')), global_timeout=60):
         """ 
         Args:
             vpc_endpoint (str): Web address to ElasticSearch cluster.
@@ -65,7 +65,7 @@ class ESAPI(CommAPI):
     def upload_scripts(self, force=True):
         source_file = inspect.getfile(self.__class__)
         source_dir = os.path.dirname(source_file)
-        painless_scripts_path = pkg_resources.resource_filename('cvapis', os.path.join('comm_apis', 'painless_scripts/'))
+        painless_scripts_path = pkg_resources.resource_filename('vitamincv', os.path.join('comm_apis', 'painless_scripts/'))
         for path in iglob(painless_scripts_path+"/*.painless"):
             name = path.split('/')[-1].replace(".painless", "")
             if not force and self._if_script_exists(name):

@@ -5,9 +5,9 @@ import tempfile
 import shutil
 import boto3
 
-from cvapis.comm_apis.comm_api import CommAPI
-from cvapis.avro_api.utils import get_current_date
-from cvapis.avro_api.avro_io import AvroIO
+from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.avro_api.utils import get_current_date
+from vitamincv.avro_api.avro_io import AvroIO
 INDENTATION=2
 
 class DumpResponse(CommAPI):

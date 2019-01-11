@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 
 reqs = None
 with open('requirements.txt') as rf:
@@ -31,12 +31,12 @@ class VerifyVersionCommand(install):
             )
             sys.exit(info)
 
-setup(name="cvapis",
+setup(name="vitamincv",
       version=VERSION,
       description="Common CV APIs",
-      url="https://bitbucket.org/gumgum/cvapis/",
+      url="https://bitbucket.org/gumgum/vitamincv/",
       author="GumGum Computer Vision",
-      packages=find_packages(exclude=['docs*','tests*','examples*','docker*','tools*','cvapis/data/*']),
+      packages=find_packages(exclude=['docs*','tests*','examples*','docker*','tools*','vitamincv/data/*']),
       install_requires=reqs,
       include_package_data=True,
       zip_safe=False,

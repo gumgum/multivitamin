@@ -12,11 +12,11 @@ import traceback
 
 from datetime import datetime
 
-from cvapis.avro_api import config
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.avro_api.utils import points_equal, times_equal, create_region_id
-from cvapis.avro_api.avro_io import AvroIO
-from cvapis.avro_api.avro_query import *
+from vitamincv.avro_api import config
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.utils import points_equal, times_equal, create_region_id
+from vitamincv.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.avro_query import *
 
 import importlib.util
 if importlib.util.find_spec("cupy"):
