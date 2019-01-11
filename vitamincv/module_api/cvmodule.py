@@ -5,10 +5,10 @@ import datetime
 import os
 import traceback
 
-from cvapis.comm_apis.request_api import RequestAPI
-from cvapis.avro_api.avro_api import AvroAPI, AvroIO
-from cvapis.avro_api.utils import get_current_time
-from cvapis.avro_api.cv_schema_factory import *
+from vitamincv.comm_apis.request_api import RequestAPI
+from vitamincv.avro_api.avro_api import AvroAPI, AvroIO
+from vitamincv.avro_api.utils import get_current_time
+from vitamincv.avro_api.cv_schema_factory import *
 MAX_PROBLEMATIC_FRAMES=10
 
 class CVModule(ABC):

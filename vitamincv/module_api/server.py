@@ -7,11 +7,11 @@ import socket
 
 from flask import Flask, jsonify
 
-from cvapis.comm_apis.comm_api import CommAPI
-from cvapis.comm_apis.sqs_api import SQSAPI
-from cvapis.comm_apis.local_api import LocalAPI
-from cvapis.comm_apis.vertex_api import VertexAPI
-from cvapis.module_api.cvmodule import CVModule
+from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.sqs_api import SQSAPI
+from vitamincv.comm_apis.local_api import LocalAPI
+from vitamincv.comm_apis.vertex_api import VertexAPI
+from vitamincv.module_api.cvmodule import CVModule
 
 PORT = os.environ.get('PORT', 5000)
 

@@ -4,10 +4,10 @@ import argparse
 
 import cv2
 
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
-from cvapis.comm_apis.work_handler import WorkerManager
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.utils import p0p1_from_bbox_contour
+from vitamincv.comm_apis.work_handler import WorkerManager
+from vitamincv.media_api.media import MediaRetriever
 
 from colour import Color
 import random

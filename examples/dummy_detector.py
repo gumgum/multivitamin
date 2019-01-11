@@ -4,7 +4,7 @@ import glog as log
 from collections import defaultdict
 
 import context
-from cvapis.module_api.cvmodule import CVModule
+from vitamincv.module_api.cvmodule import CVModule
 
 class DummyDetector(CVModule):
     def __init__(self, server_name, version, net_data_dir):

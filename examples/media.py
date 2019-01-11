@@ -1,4 +1,4 @@
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.media_api.media import MediaRetriever
 
 video_url = "https://s3.amazonaws.com/video-ann-testing/Tampa-Bay-Lightning-vs-Montreal-Canadians_03102018_112_108-5min-clip.mp4"
 image_url = "https://i.imgur.com/sFTMl2T.jpg"

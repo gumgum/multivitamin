@@ -2,9 +2,9 @@ import os
 import json
 import glog as log
 import urllib
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_io import AvroIO
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_io import AvroIO
+from vitamincv.media_api.media import MediaRetriever
 
 import boto3
 

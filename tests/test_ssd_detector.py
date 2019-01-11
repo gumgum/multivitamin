@@ -1,7 +1,7 @@
 import sys
 import os
 import glog as log
-from cvapis.applications.detectors.ssd_detector import SSDDetector
+from vitamincv.applications.detectors.ssd_detector import SSDDetector
 import boto3
 import zipfile
 

@@ -2,7 +2,7 @@ import numbers
 import numpy as np
 import GPUtil
 import collections
-from cvapis.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.cv_schema_factory import *
 import glog as log
 
 import importlib.util

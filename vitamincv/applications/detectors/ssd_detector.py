@@ -9,7 +9,7 @@ import traceback
 import inspect
 import importlib.util
 
-from cvapis.module_api.GPUUtilities import GPUUtility
+from vitamincv.module_api.GPUUtilities import GPUUtility
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -36,10 +36,10 @@ else:
 
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
-from cvapis.module_api.cvmodule import CVModule
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
-from cvapis.applications.utils import load_idmap
+from vitamincv.module_api.cvmodule import CVModule
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from vitamincv.applications.utils import load_idmap
 
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3

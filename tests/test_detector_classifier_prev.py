@@ -12,9 +12,9 @@ import glog as log
 import requests
 import boto3
 import zipfile
-from cvapis.comm_apis.request_api import RequestAPI
-from cvapis.applications.detectors.ssd_detector import SSDDetector
-from cvapis.applications.classifiers.caffe_classifier import CaffeClassifier
+from vitamincv.comm_apis.request_api import RequestAPI
+from vitamincv.applications.detectors.ssd_detector import SSDDetector
+from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 
 
 test_video = "https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"

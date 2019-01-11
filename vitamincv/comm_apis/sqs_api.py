@@ -1,10 +1,10 @@
 import glog as log
 import boto3
 import json
-from cvapis.comm_apis.request_api import RequestAPI
-from cvapis.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.request_api import RequestAPI
+from vitamincv.comm_apis.comm_api import CommAPI
 
-from cvapis.comm_apis import config
+from vitamincv.comm_apis import config
 
 boto3.client('iam') #required to expose iam roles to boto3?
 

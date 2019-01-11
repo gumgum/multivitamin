@@ -1,6 +1,6 @@
 import context
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 
 import os
 import csv

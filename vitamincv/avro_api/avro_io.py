@@ -14,7 +14,7 @@ from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegis
 from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
 from confluent_kafka.avro.serializer import SerializerError
 
-from cvapis.avro_api import config
+from vitamincv.avro_api import config
 
 class AvroIO():
     def __init__(self, use_schema_registry=False, use_base64=True):
@@ -171,7 +171,7 @@ class AvroIO():
 class _AvroIOLocal():
     def __init__(self):
         """Private implementation class for Avro IO of local files"""
-        local_schema_file = pkg_resources.resource_filename('cvapis.avro_api', 'image-science-response.avsc')
+        local_schema_file = pkg_resources.resource_filename('vitamincv.avro_api', 'image-science-response.avsc')
         log.debug("Using local schema file {}".format(local_schema_file))
         if not os.path.exists(local_schema_file):
             raise FileNotFoundError("Schema file not found")
