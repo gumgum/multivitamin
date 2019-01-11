@@ -1,0 +1,2 @@
+from vitamincv.exceptions.CaffeImportError import CaffeImportError
+from vitamincv.exceptions.FileExceptions import ParseError

@@ -1,0 +1,16 @@
+def type = params.type;
+def idxs = params.idxs;
+def jdx = params.jdx;
+def new_region = params.entry;
+
+def idx = idxs[0];
+def path = ctx._source[type][idx].regions;
+
+for(int i=1; i<idxs.length; i++){
+    idx = idxs[i];
+    path = path[idx].sub_regions;
+}
+
+if(! path[jdx].props.contains(params.entry)) {
+    path[jdx].props.add(params.entry);
+}

@@ -1,0 +1,377 @@
+{
+            "point_aux": null, 
+            "video_annotation_aux": null, 
+            "image_annotation_aux": null, 
+            "property_aux": null, 
+            "relationship_aux": null, 
+            "version": "1.1", 
+            "media_annotation": {
+                "codes": {
+                    "array": [
+                        {
+                            "code": "SUCCESS", 
+                            "ver": "1.0.1", 
+                            "company": "gumgum", 
+                            "labels": {
+                                "array": []
+                            }, 
+                            "annotator": "machine", 
+                            "server": "LeagueClassifier", 
+                            "date": "20180603165958", 
+                            "tstamps": {
+                                "array": []
+                            }, 
+                            "id": "LeagueClassifier_20180603165958"
+                        }, 
+                        {
+                            "code": "SUCCESS", 
+                            "ver": "2.0.1", 
+                            "company": "gumgum", 
+                            "labels": {
+                                "array": []
+                            }, 
+                            "annotator": "machine", 
+                            "server": "TeamClassifier", 
+                            "date": "20180603165959", 
+                            "tstamps": {
+                                "array": []
+                            }, 
+                            "id": "TeamClassifier_20180603165959"
+                        }, 
+                        {
+                            "code": "SUCCESS", 
+                            "ver": "1.0.0", 
+                            "company": "gumgum", 
+                            "labels": {
+                                "array": []
+                            }, 
+                            "annotator": "machine", 
+                            "server": "nbanhlmlblogosdetector", 
+                            "date": "20180603170005", 
+                            "tstamps": {
+                                "array": []
+                            }, 
+                            "id": "nbanhlmlblogosdetector_20180603170005"
+                        }, 
+                        {
+                            "code": "SUCCESS", 
+                            "ver": "3.2.1", 
+                            "company": "gumgum", 
+                            "labels": {
+                                "array": []
+                            }, 
+                            "annotator": "machine", 
+                            "server": "SportsTeamDecider", 
+                            "date": "20180603170005", 
+                            "tstamps": {
+                                "array": []
+                            }, 
+                            "id": "SportsTeamDecider_20180603170005"
+                        }
+                    ]
+                }, 
+                "url_original": "https://scontent.cdninstagram.com/vp/d975b4e0c161f4c1863f79b0fd13b08a/5BB15670/t51.2885-15/e35/33161602_2106056542962260_4956609206972055552_n.jpg", 
+                "url": "https://sports-cdn.ggops.com/social-posts-images/2c531129a6ba3a2fc166c1065c181698.jpg", 
+                "h": 604, 
+                "frames_annotation": {
+                    "array": [
+                        {
+                            "regions": {
+                                "array": [
+                                    {
+                                        "sub_regions": null, 
+                                        "features": null, 
+                                        "contour": [
+                                            {
+                                                "y": 0, 
+                                                "x": 0
+                                            }, 
+                                            {
+                                                "y": 0, 
+                                                "x": 1
+                                            }, 
+                                            {
+                                                "y": 1, 
+                                                "x": 1
+                                            }, 
+                                            {
+                                                "y": 1, 
+                                                "x": 0
+                                            }
+                                        ], 
+                                        "props": [
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.677211, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "1.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NFL", 
+                                                "server": "LeagueClassifier", 
+                                                "footprint_id": "LeagueClassifier_20180603165958", 
+                                                "fraction": 1, 
+                                                "module_id": 18, 
+                                                "property_type": "league", 
+                                                "value_verbose": "", 
+                                                "property_id": 7
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.259493, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "1.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "Counter", 
+                                                "server": "LeagueClassifier", 
+                                                "footprint_id": "LeagueClassifier_20180603165958", 
+                                                "fraction": 1, 
+                                                "module_id": 18, 
+                                                "property_type": "league", 
+                                                "value_verbose": "", 
+                                                "property_id": 5
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0786779, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewYorkYankees", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 51
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.258673, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "AtlantaHawks", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 4
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0600114, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewYorkKnicks", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 48
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0776152, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "ClevelandBrowns", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 14
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0746385, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewOrleansSaints", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 46
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }, 
+                            "t": 0
+                        }
+                    ]
+                }, 
+                "w": 604, 
+                "tracks_summary": null, 
+                "media_summary": {
+                    "array": [
+                        {
+                            "regions": {
+                                "array": [
+                                    {
+                                        "sub_regions": null, 
+                                        "features": null, 
+                                        "contour": [
+                                            {
+                                                "y": 0, 
+                                                "x": 0
+                                            }, 
+                                            {
+                                                "y": 0, 
+                                                "x": 1
+                                            }, 
+                                            {
+                                                "y": 1, 
+                                                "x": 1
+                                            }, 
+                                            {
+                                                "y": 1, 
+                                                "x": 0
+                                            }
+                                        ], 
+                                        "props": [
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.259493, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "1.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "Counter", 
+                                                "server": "LeagueClassifier", 
+                                                "footprint_id": "LeagueClassifier_20180603165958", 
+                                                "fraction": 1, 
+                                                "module_id": 18, 
+                                                "property_type": "league", 
+                                                "value_verbose": "", 
+                                                "property_id": 5
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.677211, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "1.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NFL", 
+                                                "server": "LeagueClassifier", 
+                                                "footprint_id": "LeagueClassifier_20180603165958", 
+                                                "fraction": 1, 
+                                                "module_id": 18, 
+                                                "property_type": "league", 
+                                                "value_verbose": "", 
+                                                "property_id": 7
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.258673, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "AtlantaHawks", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 4
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0776152, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "ClevelandBrowns", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 14
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0746385, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewOrleansSaints", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 46
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0600114, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewYorkKnicks", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 48
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.0786779, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "2.0.1", 
+                                                "company": "gumgum", 
+                                                "value": "NewYorkYankees", 
+                                                "server": "TeamClassifier", 
+                                                "footprint_id": "TeamClassifier_20180603165959", 
+                                                "fraction": 1, 
+                                                "module_id": 19, 
+                                                "property_type": "team", 
+                                                "value_verbose": "", 
+                                                "property_id": 51
+                                            }, 
+                                            {
+                                                "relationships": null, 
+                                                "confidence": 0.677211, 
+                                                "confidence_min": 0.05, 
+                                                "ver": "3.2.1", 
+                                                "company": "gumgum", 
+                                                "value": "NoRightsHolders", 
+                                                "server": "SportsTeamDecider", 
+                                                "footprint_id": "SportsTeamDecider_20180603165933", 
+                                                "fraction": 1, 
+                                                "module_id": 29, 
+                                                "property_type": "TeamName", 
+                                                "value_verbose": "", 
+                                                "property_id": 274
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }, 
+                            "t2": 0, 
+                            "t1": 0
+                        }
+                    ]
+                }
+            }, 
+            "footprint_aux": null, 
+            "region_aux": null
+        }
