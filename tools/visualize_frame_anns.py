@@ -22,7 +22,7 @@ def get_rand_bgr():
 def get_props_from_region(region):
     prop_strs = []
     for prop in region["props"]:
-        out = "{}_{}".format(prop["value"], prop["confidence"])
+        out = "{}_{:.2f}".format(prop["value"], prop["confidence"])
         prop_strs.append(out)
     return prop_strs
 
@@ -54,8 +54,8 @@ class FrameDrawer():
 
     def process(self):
         face = cv2.FONT_HERSHEY_SIMPLEX
-        scale = 0.5
-        thickness = 1
+        scale = 0.65
+        thickness = 2
 
         for image_ann in self.avro_api.get_image_anns():
             tstamp = image_ann["t"]
@@ -64,7 +64,7 @@ class FrameDrawer():
             for region in image_ann["regions"]:
                 rand_color = get_rand_bgr()
                 p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
-                img = cv2.rectangle(img, p0, p1, rand_color)
+                img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                 prop_strs = get_props_from_region(region)
                 for i, prop in enumerate(prop_strs):
                     img = cv2.putText(img, prop, (p0[0]+3, p1[1]-3+i*25), face, scale, rand_color, thickness)
