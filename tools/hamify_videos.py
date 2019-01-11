@@ -7,7 +7,7 @@ import yaml
 import requests
 import cv2
 
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.media_api.media import MediaRetriever
 
 random.seed(1234567890)
 

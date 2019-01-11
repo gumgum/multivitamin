@@ -1,6 +1,6 @@
 import context
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 
 import os
 import csv
@@ -135,7 +135,7 @@ def append_trackssummary_to_goldstrandard():
     #videos_list='/home/fjm/sandbox/nhllogoclassifier/list_nhlgoldstandard.txt'
     #jsons_folder='/home/fjm/sandbox/nhllogoclassifier/output_jsons_v1.0/'
     #jsons_folder='/home/fjm/nfs_drive/ComputerVision/sports/nhlplacementAndLogoJsonsv1.4/'
-    jsons_folder='/home/fjm/sandbox/cvapis/tests/data/output_nhl_historical/20181026/'
+    jsons_folder='/home/fjm/sandbox/vitamincv/tests/data/output_nhl_historical/20181026/'
     videos_list=jsons_folder + '/list_videos.txt'
     #csvs_folder='/home/fjm/nfs_drive/ComputerVision/sports/nhlGoldStandard/'
     #csvs_folder='/home/fjm/nfs_drive/ComputerVision/sports/csvbackup/'
@@ -171,9 +171,9 @@ def append_trackssummary_to_goldstrandard():
 if __name__=="__main__":
     #########################
     # append_trackssummary_to_goldstrandard()
-    input_json_filepath="/mnt/ldrive/gg/cvapis/tests/json_output/20181108/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.json"
-    input_csv_filepath="/mnt/ldrive/gg/cvapis/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.csv"
-    output_json_filepath="/mnt/ldrive/gg/cvapis/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k_With_Human_Tracks.json"
+    input_json_filepath="/mnt/ldrive/gg/vitamincv/tests/json_output/20181108/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.json"
+    input_csv_filepath="/mnt/ldrive/gg/vitamincv/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.csv"
+    output_json_filepath="/mnt/ldrive/gg/vitamincv/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k_With_Human_Tracks.json"
     append_trackssummary_from_csv(input_json_filepath,input_csv_filepath,output_json_filepath)
     
     

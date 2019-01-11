@@ -1,5 +1,5 @@
 import warnings
-from cvapis.module_api.GPUUtilities import GPUUtility, CupyUtility
+from vitamincv.module_api.GPUUtilities import GPUUtility, CupyUtility
 
 def test_init():
     gpu_utility = GPUUtility()

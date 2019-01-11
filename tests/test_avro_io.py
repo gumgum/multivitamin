@@ -2,7 +2,7 @@ import os
 import sys
 import json 
 
-from cvapis.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.avro_io import AvroIO
 
 local_json = "data/placement.json"
 

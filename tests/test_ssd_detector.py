@@ -1,7 +1,7 @@
 import sys
 import os
 import glog as log
-from cvapis.applications.detectors.ssd_detector import SSDDetector
+from vitamincv.applications.detectors.ssd_detector import SSDDetector
 import boto3
 import zipfile
 
@@ -22,7 +22,7 @@ def test_object_detector():
     s3_client = boto3.client('s3')
     log.info("Downloading model.")
     tmp_filepath='/tmp/net_data.zip'
-    s3_client.download_file('cvapis-data', 'ssd-detector/nhlplacementdetector/net_data_v1.1.zip', tmp_filepath)
+    s3_client.download_file('vitamincv-data', 'ssd-detector/nhlplacementdetector/net_data_v1.1.zip', tmp_filepath)
     log.info("Model downloaded.")
     with open(tmp_filepath, 'rb') as f:
         log.info("Unzipping it.")    

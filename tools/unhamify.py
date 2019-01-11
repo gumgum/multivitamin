@@ -4,9 +4,9 @@ import argparse
 import yaml
 import json
 
-from cvapis.avro_api.avro_api import AvroAPI, AvroIO
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api.avro_api import AvroAPI, AvroIO
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.media_api.media import MediaRetriever
 
 """ Combine annotations
 """

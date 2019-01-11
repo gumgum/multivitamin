@@ -1,6 +1,6 @@
 import context
-from cvapis.comm_apis.es_api import ESAPI, log
-from cvapis.avro_api.avro_api import AvroAPI
+from vitamincv.comm_apis.es_api import ESAPI, log
+from vitamincv.avro_api.avro_api import AvroAPI
 import pprint
 from glob import glob
 
@@ -14,7 +14,7 @@ if False:
     input()
 x=ESAPI()
 def transform(json_dict):
-    schema_filepath="/home/fjm/sandbox/cvapis/avro_api/image-science-response.avsc"
+    schema_filepath="/home/fjm/sandbox/vitamincv/avro_api/image-science-response.avsc"
     with open(schema_filepath, 'r') as myfile:
         schema=myfile.read()
     return AvroAPI.transform(json_dict,schema)

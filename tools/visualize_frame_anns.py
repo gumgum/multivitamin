@@ -7,9 +7,9 @@ import random
 import json
 import glog as log
 
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.utils import p0p1_from_bbox_contour
+from vitamincv.media_api.media import MediaRetriever
 
 COLORS = ['darkorchid', 'darkgreen', 'coral', 'darkseagreen', 
             'forestgreen', 'firebrick', 'olivedrab', 'steelblue', 
