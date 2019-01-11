@@ -26,8 +26,8 @@ ZXQ2xhc3NpZmllcgAKNC4wLjEOU1VDQ0VTUwxndW1ndW0cMjAxODEwMTYxNzIzMjAObWFjaGluZQAAOk
 MCwwLjAwMDApKDEuMDAwMCwwLjAwMDApKDEuMDAwMCwxLjAwMDApKDAuMDAwMCwxLjAwMDApAAgAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwACEgIcTlNGV0NsYXNzaWZpZXIACjQuMC4xDGd1bWd1bQxzYWZldHkIc2FmZQAc1nk/CtcjPAAAgD8AOk5TRldDb\
 GFzc2lmaWVyXzIwMTgxMDE2MTcyMzIwAAAAAAIAAAAAAAAAAAISAhxOU0ZXQ2xhc3NpZmllchJoaXN0b2dyYW0KNC4wLjEMZ3VtZ3VtDHNhZmV0eQhzYWZlABzWeT8K1yM8AACAPwA6TlNGV0NsYXNzaWZpZXJfMjAxODEwMTYxNzIzMjAAAAAAAAA=","bin_encoding":"\
 true","bin_decoding":"true"}'
-request2='{"url":"https://s3.amazonaws.com/vitamincv-media/images/Hackathon-Group.jpg","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=41&moduleId=1000&imageUrl=https://s3.amazonaws.com/vitamincv-media/images/Hackathon-Group.jpg&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
-request3='{"url":"https://s3.amazonaws.com/vitamincv-media/images/Hackathon-Group.jpg","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=26&moduleId=1004&imageUrl=https://s3.amazonaws.com/vitamincv-media/images/Hackathon-Group.jpg&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
+request2='{"url":"https://s3.amazonaws.com/cvapis-media/images/Hackathon-Group.jpg","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=41&moduleId=1000&imageUrl=https://s3.amazonaws.com/cvapis-media/images/Hackathon-Group.jpg&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
+request3='{"url":"https://s3.amazonaws.com/cvapis-media/images/Hackathon-Group.jpg","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=26&moduleId=1004&imageUrl=https://s3.amazonaws.com/cvapis-media/images/Hackathon-Group.jpg&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
 
 message=""
 
@@ -41,7 +41,7 @@ def pull_net_data():
     s3_client = boto3.client('s3')
     log.info("Downloading model.")
     tmp_filepath='/tmp/net_data.zip'
-    s3_client.download_file('vitamincv-data', 'ssd-detector/net_data.zip', tmp_filepath)
+    s3_client.download_file('cvapis-data', 'ssd-detector/net_data.zip', tmp_filepath)
     log.info("Model downloaded.")
     with open(tmp_filepath, 'rb') as f:
         log.info("Unzipping it.")    
@@ -53,7 +53,7 @@ def pull_net_data():
 
 def test_server_vertex_ssddetector():
     log.info("Testing a server with SSDDetector and SQSAPI")
-    queue_name='vitamincv-testing'
+    queue_name='cvapis-testing'
     log.info("Sending test requests to queue named " + queue_name)
     sqs_api =SQSAPI(queue_name=queue_name)
     sqs_api.push([request1])

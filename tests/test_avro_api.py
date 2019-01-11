@@ -32,7 +32,7 @@ def test_get_detections_from_frame_anns():
     s3_client = boto3.client('s3')
     log.info("Downloading json.")
     tmp_filepath='/tmp/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json'
-    s3_client. download_file('vitamincv-data', 'jsons/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json', tmp_filepath)
+    s3_client. download_file('cvapis-data', 'jsons/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json', tmp_filepath)
     log.info("JSON downloaded.")
     x = AvroAPI(AvroIO.read_json(tmp_filepath))
     print(json.dumps(x.get_detections_from_frame_anns(), indent=2))
@@ -65,13 +65,13 @@ def test_create_avro_bin_w_registry():
 
 """
 Example function to test reading json from S3
-Json located at https://s3.amazonaws.com/vitamincv-data/jsons/Threatpipeline_response0_C.json in SX/AI account
+Json located at https://s3.amazonaws.com/cvapis-data/jsons/Threatpipeline_response0_C.json in SX/AI account
 """
 def test_read_avro_json():
     s3_client = boto3.client('s3')
     log.info("Downloading json.")
     tmp_filepath='/tmp/Threatpipeline_response0_C.json'
-    s3_client. download_file('vitamincv-data', 'jsons/Threatpipeline_response0_C.json', tmp_filepath)
+    s3_client. download_file('cvapis-data', 'jsons/Threatpipeline_response0_C.json', tmp_filepath)
     log.info("JSON downloaded.")
     avro_io = AvroIO()
     avro_str = avro_io.read_json(tmp_filepath)
@@ -83,13 +83,13 @@ def test_read_avro_json():
 
 """
 Example function to get detections from json (parsing)
-Json located at https://s3.amazonaws.com/vitamincv-data/jsons/Threatpipeline_response0_C.json in SX/AI account
+Json located at https://s3.amazonaws.com/cvapis-data/jsons/Threatpipeline_response0_C.json in SX/AI account
 """
 def test_query_properties():
     s3_client = boto3.client('s3')
     log.info("Downloading json.")
     tmp_filepath='/tmp/Threatpipeline_response0_C.json'
-    s3_client. download_file('vitamincv-data', 'jsons/Threatpipeline_response0_C.json', tmp_filepath)
+    s3_client. download_file('cvapis-data', 'jsons/Threatpipeline_response0_C.json', tmp_filepath)
     log.info("JSON downloaded.")
     avro_io = AvroIO()
     avro_str = avro_io.read_json(tmp_filepath)
@@ -108,14 +108,14 @@ def test_query_properties():
 """
 Example function to read folder (zipped) of jsons from S3, and get detections from
 them based on a filter property; here, server_name
-Zipped folder at https://s3.amazonaws.com/vitamincv-data/jsons/threat_eg_jsons.zip in SX/AI account
+Zipped folder at https://s3.amazonaws.com/cvapis-data/jsons/threat_eg_jsons.zip in SX/AI account
 """
 def test_parse_jsons_from_folder():
     s3_client = boto3.client('s3')
     log.info("Downloading zipped jsons.")
     name ="threat_eg_jsons"
     tmp_filepath='/tmp/' + name +'.zip'
-    s3_client. download_file('vitamincv-data', 'jsons/'+name+'.zip', tmp_filepath)
+    s3_client. download_file('cvapis-data', 'jsons/'+name+'.zip', tmp_filepath)
     log.info("Zipped jsons downloaded.")
     with open(tmp_filepath, 'rb') as f:
         log.info("Unzipping it.")    
@@ -167,7 +167,7 @@ def test_append_annotation_task():
     AvroIO.write_json(response,annotation_task_1['id']+'.json' ,2)
 
 def test_append_trackssummary_from_csv():
-    jsons_folder='../vitamincv/data/jsons/'
+    jsons_folder='../cvapis/data/jsons/'
     #input_json_filepath=jsons_folder + 'Tampa-Bay-Lightning-vs-Montreal-Canadians_03102018_112_108.json'
     #input_csv_filepath=jsons_folder + 'Tampa-Bay-Lightning-vs-Montreal-Canadians_03102018_112_108_GT.csv'
     input_json_filepath=jsons_folder + 'NHL_GAME_VIDEO_ANACHI_M2_HOME_20182016_1518124767584.json'

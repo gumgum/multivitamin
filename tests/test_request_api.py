@@ -15,7 +15,7 @@ request3='{"url":"http://pbs.twimg.com/media/Dpq40egWkAAtocH.jpg:large","dst_url
 request4='kk:kk'
 
 
-request5='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"vitamincv-data","s3Key":"f2d9a5d0-06e6-4975-8889-3fe79508972b"}]'
+request5='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"cvapis-data","s3Key":"f2d9a5d0-06e6-4975-8889-3fe79508972b"}]'
 
 
 def test_request_api():

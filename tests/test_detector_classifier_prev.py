@@ -58,7 +58,7 @@ def _download_obj_det():
     dl_file = '{}/net_data.zip'.format(tmp_folder)
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
-    s3_client. download_file('vitamincv-data', 'ssd-detector/objectdetector/net_data.zip', dl_file)
+    s3_client. download_file('cvapis-data', 'ssd-detector/objectdetector/net_data.zip', dl_file)
     log.info("Model downloaded")
     with open(dl_file, 'rb') as f:
         log.info("Unzipping")
@@ -74,7 +74,7 @@ def _download_clf():
     dl_file = '{}/net_data.zip'.format(tmp_folder)
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
-    s3_client. download_file('vitamincv-data', 'classifiers/makemodelclassifier/net_data.zip', dl_file)
+    s3_client. download_file('cvapis-data', 'classifiers/makemodelclassifier/net_data.zip', dl_file)
     log.info("Model downloaded")
     with open(dl_file, 'rb') as f:
         log.info("Unzipping")

@@ -6,8 +6,8 @@ from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 import boto3
 import zipfile
 
-#request1='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"vitamincv-data","s3Key":"f2d9a5d0-06e6-4975-8889-3fe79508972b"}]'
-request1='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"vitamincv-data","s3Key":"1be661e2-4190-4d05-a4a4-156ddf9967fc"}]'
+#request1='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"cvapis-data","s3Key":"f2d9a5d0-06e6-4975-8889-3fe79508972b"}]'
+request1='["com.amazon.sqs.javamessaging.MessageS3Pointer",{"s3BucketName":"cvapis-data","s3Key":"1be661e2-4190-4d05-a4a4-156ddf9967fc"}]'
 
 
 message=""
@@ -19,7 +19,7 @@ def test_classifier():
     s3_client = boto3.client('s3')
     log.info("Downloading model.")
     tmp_filepath='/tmp/net_data.zip'
-    s3_client. download_file('vitamincv-data', 'classifiers/nhllogoclassifier/net_data.zip', tmp_filepath)
+    s3_client. download_file('cvapis-data', 'classifiers/nhllogoclassifier/net_data.zip', tmp_filepath)
     log.info("Model downloaded.")
     with open(tmp_filepath, 'rb') as f:
         log.info("Unzipping it.")    
