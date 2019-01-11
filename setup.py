@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 
 reqs = None
 with open('requirements.txt') as rf:
