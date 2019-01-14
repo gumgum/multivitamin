@@ -7,7 +7,7 @@ import glog as log
 from vitamincv.media_api import media
 
 VIDEO_URL = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2_NATIONAL_20180401_1520698069177.t.mp4"
-
+IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/0/0b/Cat_poster_1.jpg"
 
 def test_bad_url():
     log.info("Testing erronous URL")
@@ -32,7 +32,12 @@ def test_attributes():
     assert(efficient_mr.get_fps() == fast_mr.get_fps())
     assert(efficient_mr.get_num_frames() == fast_mr.get_num_frames())
     assert(efficient_mr.get_length() == fast_mr.get_length())
+    assert(efficient_mr.get_w_h() == fast_mr.get_w_h())
 
+def test_image():
+    mr = media.MediaRetriever(IMAGE_URL)
+    im = mr.frame
+    assert(im is not None)
 
 def test_get_frame():
     assert(efficient_mr.get_length() == fast_mr.get_length())
