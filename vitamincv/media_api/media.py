@@ -90,19 +90,41 @@ class FileRetriever():
     def is_remote(self):
         return not self.is_local if isinstance(self.is_local, bool) else False
 
-    def download(self, filepath=None):
+    @property
+    def filename(self):
+        return os.path.basename(self.url)
+
+    def download(self, filepath=None, return_filelike=False):
         '''Download file to filepath
 
         Args:
-            filepath (str): Filepath to write file to.
-                                If None, it will take it's original filename
-                                and save to current working directory
+            filepath (str | optional): Filepath to write file to.
                                 If directory, it will take it's original filename
                                 and save to that directory
+            filelike (bool | optional): To return a filelike object or not
 
-        NOTE: NOT YET IMPLIMENTED
+        Returns:
+            filelike_obj: A BytesIO object containing the file bytes
+                            (only if return_filelike is True)
         '''
-        pass
+        if self.is_remote:
+            response = requests.get(self.url)
+            filelike_obj = BytesIO(response.content)
+        else:
+            with open(self.filepath, "rb") as f:
+                filelike_obj = BytesIO(f.read())
+
+        path = None
+        if isinstance(filepath, str):
+            if os.path.isdir(filepath):
+                path = "{}/{}".format(filepath, self.filename)
+            else:
+                path = filepath
+            while open(path, "wb") as f:
+                f.write(filelike_obj.read())
+
+        if return_filelike is True:
+            return filelike_obj.seek(0)
 
 class MediaRetriever(FileRetriever):
     def __init__(self, url=None, limitation="memory"):
@@ -209,24 +231,12 @@ class MediaRetriever(FileRetriever):
         if self._image is not None:
             return self._image
 
-        if self.is_local:
-            tmp = cv2.imread(self.url)
-            if tmp is None:
-                log.warning("Unable to read: {}".format(self.url))
-                self.image = None
-            else:
-                self._image = tmp
-        else:
-            response = requests.get(self.url)
-            if response:
-                _tmp = np.array(Image.open(BytesIO(response.content)))
-                if _tmp.shape[2] > 3:
-                  log.warning("Image has >3 channels. Cropping to 3.")
-                  _tmp = _tmp[:,:,:3]
-                self.image = _tmp[:,:,::-1].copy() #rgb->bgr
-            else:
-                log.warning("Response: {}, unable to download: {}".format(response, self.url))
-                self._image = None
+        filelike_obj = self.download(return_filelike=True)
+        image = np.array(Image.open(filelike_obj))
+        if image.shape[2] > 3:
+            log.warning("Image has >3 channels. Cropping to 3.")
+            image = image[:,:,:3]
+        self._image = image[:,:,::-1].copy()
         return self._image
 
     def tstamp_to_frame_index(self, tstamp):
