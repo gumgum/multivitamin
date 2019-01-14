@@ -120,11 +120,12 @@ class FileRetriever():
                 path = "{}/{}".format(filepath, self.filename)
             else:
                 path = filepath
-            while open(path, "wb") as f:
+            with open(path, "wb") as f:
                 f.write(filelike_obj.read())
 
         if return_filelike is True:
-            return filelike_obj.seek(0)
+            filelike_obj.seek(0)
+            return filelike_obj
 
 class MediaRetriever(FileRetriever):
     def __init__(self, url=None, limitation="memory"):
@@ -214,12 +215,15 @@ class MediaRetriever(FileRetriever):
 
     @property
     def frame_shape(self):
+        '''Gets height by width by channels for frames
+        '''
         if isinstance(self.video_capture, cv2.VideoCapture):
             if not self.video_capture.isOpened():
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width  = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
             channels = 3 # This shouldn't be hard coded
+            return (height, width, channels)
         if isinstance(self.video_capture, pims.Video):
             return self.video_capture.frame_shape
 
@@ -306,7 +310,7 @@ class MediaRetriever(FileRetriever):
         return self.fps
 
     def get_w_h(self):
-        return frame_shape[2:4]
+        return self.frame_shape[0:2][::-1]
 
 class FramesIterator():
     """Frames iterator object for videos

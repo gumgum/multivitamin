@@ -36,12 +36,12 @@ def test_attributes():
 
 def test_image():
     mr = media.MediaRetriever(IMAGE_URL)
-    im = mr.frame
+    im = mr.image
     assert(im is not None)
 
 def test_download():
     mr = media.MediaRetriever(IMAGE_URL)
-    filelike_obj = mr.download(return_filelike=True
+    filelike_obj = mr.download(return_filelike=True)
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
 
