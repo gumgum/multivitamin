@@ -47,7 +47,6 @@ def test_get_frame():
     im2 = fast_mr.get_frame(random_tstamp)
     assert(np.array_equal(im1, im2))
 
-
 def test_frames_iterator():
     assert(efficient_mr.get_length() == fast_mr.get_length())
     length = efficient_mr.get_length()
@@ -57,7 +56,6 @@ def test_frames_iterator():
     sample_rate2 = 10*efficient_mr.get_fps()
     _run_frames_iterator(sample_rate1, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
     _run_frames_iterator(sample_rate2, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
-
 
 def _run_frames_iterator(sample_rate, start, stop):
     efficient_iterator = efficient_mr.get_frames_iterator(sample_rate=sample_rate,
@@ -85,7 +83,6 @@ def _run_frames_iterator(sample_rate, start, stop):
         assert(stopped1 == stopped2)
         assert(t1 == t2)
         assert(np.array_equal(im1, im2))
-
 
 def test_consistency_between_get_frame_and_frames_iterator():
     assert(efficient_mr.get_length() == fast_mr.get_length())
