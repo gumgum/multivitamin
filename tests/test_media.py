@@ -11,7 +11,7 @@ VIDEO_URL = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2
 
 def test_bad_url():
     log.info("Testing erronous URL")
-    with pytest.raises(requests.exceptions.MissingSchema):
+    with pytest.raises(FileNotFoundError):
         med_ret = media.MediaRetriever("blah")
 
 def test_not_a_media_url():
@@ -27,7 +27,7 @@ def test_not_a_valid_filepath():
 def test_attributes():
     global efficient_mr, fast_mr
     efficient_mr = media.MediaRetriever(VIDEO_URL)
-    fast_mr = media.FastMediaRetriever(VIDEO_URL)
+    fast_mr = media.MediaRetriever(VIDEO_URL, limitation="cpu")
 
     assert(efficient_mr.get_fps() == fast_mr.get_fps())
     assert(efficient_mr.get_num_frames() == fast_mr.get_num_frames())
@@ -55,10 +55,10 @@ def test_frames_iterator():
 
 
 def _run_frames_iterator(sample_rate, start, stop):
-    efficient_iterator = efficient_mr.get_frames_iterator(sample_rate=sample_rate, 
+    efficient_iterator = efficient_mr.get_frames_iterator(sample_rate=sample_rate,
                                                 start_tstamp=start,
                                                 end_tstamp=stop)
-    fast_iterator = fast_mr.get_frames_iterator(sample_rate=sample_rate, 
+    fast_iterator = fast_mr.get_frames_iterator(sample_rate=sample_rate,
                                                 start_tstamp=start,
                                                 end_tstamp=stop)
     stopped1 = False
