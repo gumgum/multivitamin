@@ -4,10 +4,6 @@ import numpy as np
 import cv2
 import requests
 import magic
-import hashlib
-import requests
-import boto3
-import botocore
 from io import BytesIO
 from PIL import Image
 import glog as log
@@ -15,7 +11,6 @@ import pims
 import urllib.parse
 from enum import Enum
 
-LOCALFILE_PREFIX = "file://" #TODO: use Pathlib Path objects
 FRAME_EPS = 0.001
 DECIMAL_SIGFIG = 3
 
