@@ -11,6 +11,7 @@ import botocore
 from io import BytesIO
 from PIL import Image
 import glog as log
+import pims
 
 LOCALFILE_PREFIX = "file://" #TODO: use Pathlib Path objects
 FRAME_EPS = 0.001
@@ -40,6 +41,8 @@ class FramesIterator():
         log.info("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
+        self.cur_tstamp = self.start_tstamp
+        self.first_frame = True
         if start_tstamp != 0.0:
             self.cap.set(cv2.CAP_PROP_POS_MSEC, start_tstamp*1000)
             log.info("Setting start_tstamp of iterator to {}".format(start_tstamp))
@@ -124,6 +127,14 @@ class MediaRetriever():
             if not ret:
                 return ret
             return frame
+
+    def get_length(self):
+        if not self.is_video:
+            return 0
+        if not self.cap:
+            log.error("VideoCapture is None")
+            return None
+        return float(self.get_num_frames())/self.get_fps()
 
     def get_num_frames(self):
         if not self.is_video:
@@ -319,20 +330,21 @@ class FastFramesIterator():
             end_tstamp (float): end time condition for iterating
         """
         self.cap = video_cap
-        self.period = 1.0/sample_rate
+        self.period = max(1.0/sample_rate, 1.0/self.cap.frame_rate)
         log.info("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
-        self.cur_tstamp = self.start_tstamp.copy()
+        self.cur_tstamp = self.start_tstamp
 
     def __iter__(self):
-        self.cur_tstamp = self.start_tstamp.copy()
+        self.cur_tstamp = self.start_tstamp
         return self
 
     def __next__(self):
         while self.cur_tstamp <= self.end_tstamp:
             frame_idx = round(self.cur_tstamp*self.cap.frame_rate)
             frame = self.cap[frame_idx]
+            frame = np.array(frame)[:, :, ::-1] # RGB to BGR
             self.cur_tstamp += self.period
             return frame, round(frame_idx/self.cap.frame_rate, DECIMAL_SIGFIG)
 
@@ -394,9 +406,17 @@ class FastMediaRetriever():
         if self.is_image:
             return self.image
         elif self.is_video:
-            frame = self.cap[round(tstamp*self.natural_fps)]
+            frame = self.cap[round(tstamp*self.get_fps())]
             frame = np.array(frame)[:, :, ::-1] # RGB to BGR
             return frame
+
+    def get_length(self):
+        if not self.is_video:
+            return 0
+        if not self.cap:
+            log.error("VideoCapture is None")
+            return None
+        return float(self.get_num_frames())/self.get_fps()
 
     def get_num_frames(self):
         if not self.is_video:
