@@ -19,6 +19,8 @@ class Limitation(Enum):
     CPU="cpu"
 
 class FileRetriever():
+    '''A generic object for retrieving files
+    '''
     def __init__(self, url=None):
         self._url = None
         self._is_local = None
