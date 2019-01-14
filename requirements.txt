@@ -54,3 +54,4 @@ zipfile2==0.0.12
 credstash==1.15.0
 mysqlclient==1.3.13
 sphinx-nameko-theme
+tqdm

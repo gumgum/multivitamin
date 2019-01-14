@@ -4,6 +4,7 @@ import glog as log
 import pprint
 import json
 import datetime
+import tqdm
 import cv2
 
 from vitamincv.avro_api import config
@@ -139,6 +140,8 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
                 labels.append(label["value"])
     labels = sorted(set(labels))
     label2idx = {val:i+1 for i, val in enumerate(labels)}
+    log.info("labels: {}".format(labels))
+    log.info("label2idx: {}".format(label2idx))
     
     # create idmap.txt
     with open(os.path.join(out_dir, "idmap.txt"), 'w') as wf:
@@ -151,7 +154,7 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
         wf.write("item {\n\tname: '" + 'background' + "'\n\tlabel: " + str(0) + "\n\tdisplay_name: '" +label+ "'\n}\n")
         for i, label in enumerate(labels):
             wf.write("item {\n\tname: '" + label + "'\n\tlabel: " + str(i+1) + "\n\tdisplay_name: '" +label+ "'\n}\n")
-
+    
     img_dir = os.path.join(out_dir, 'imgs')
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
@@ -164,9 +167,9 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
     detections = avro_api.get_detections()
     w, h = med_ret.get_w_h()
 
-    for det in detections:
+    for det in tqdm.tqdm(detections):
         if det["property_type"] != property_type:
-            print('''det["property_type"] != property_type:''')
+            log.error('''det["property_type"]: {} != property_type: {}'''.format(det["property_type"], property_type))
             continue
 
         tstamp = det["t"]
