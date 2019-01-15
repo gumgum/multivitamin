@@ -219,7 +219,7 @@ class MediaRetriever(FileRetriever):
         '''
         if self.is_image:
             return self.image.shape
-            
+
         if isinstance(self.video_capture, cv2.VideoCapture):
             if not self.video_capture.isOpened():
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -313,7 +313,7 @@ class MediaRetriever(FileRetriever):
         return self.fps
 
     def get_w_h(self):
-        return self.frame_shape[0:2][::-1]
+        return self.shape[0:2][::-1]
 
 class FramesIterator():
     """Frames iterator object for videos
