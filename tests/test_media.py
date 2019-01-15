@@ -36,14 +36,25 @@ def test_attributes():
 
 def test_image():
     mr = media.MediaRetriever(IMAGE_URL)
+<<<<<<< HEAD
     im = mr.image
+=======
+    im = mr.get_frame()
+>>>>>>> 602c03025115001509214ed50ca7739014cd1d82
     assert(im is not None)
 
 def test_download():
     mr = media.MediaRetriever(IMAGE_URL)
+<<<<<<< HEAD
+=======
+    log.info(IMAGE_URL)
+>>>>>>> 602c03025115001509214ed50ca7739014cd1d82
     filelike_obj = mr.download(return_filelike=True)
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
+
+def test_equivalence_inmem_cv2():
+    pass
 
 def test_get_frame():
     assert(efficient_mr.get_length() == fast_mr.get_length())
