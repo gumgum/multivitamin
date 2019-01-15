@@ -55,4 +55,3 @@ credstash==1.15.0
 mysqlclient==1.3.13
 sphinx-nameko-theme
 tqdm
-pims
