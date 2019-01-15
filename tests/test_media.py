@@ -45,10 +45,6 @@ def test_image():
 
 def test_download():
     mr = media.MediaRetriever(IMAGE_URL)
-<<<<<<< HEAD
-=======
-    log.info(IMAGE_URL)
->>>>>>> 602c03025115001509214ed50ca7739014cd1d82
     filelike_obj = mr.download(return_filelike=True)
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
