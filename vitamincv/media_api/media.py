@@ -214,9 +214,12 @@ class MediaRetriever(FileRetriever):
         return float(self.total_frames)/self.fps
 
     @property
-    def frame_shape(self):
+    def shape(self):
         '''Gets height by width by channels for frames
         '''
+        if self.is_image:
+            return self.image.shape
+            
         if isinstance(self.video_capture, cv2.VideoCapture):
             if not self.video_capture.isOpened():
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
