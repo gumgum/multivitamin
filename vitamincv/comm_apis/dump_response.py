@@ -61,7 +61,7 @@ class DumpResponse(CommAPI):
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
 
-            AvroIO.write_json(req.avro_api.get_json(), outfn, indent=INDENTATION)
+            AvroIO.write_json(req.avro_api.get_json(indent=INDENTATION), outfn, indent=INDENTATION)
 
             if self.s3_bucket and self.s3_key:
                 s3client = boto3.client('s3')
