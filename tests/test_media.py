@@ -45,9 +45,6 @@ def test_download():
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
 
-def test_equivalence_inmem_cv2():
-    pass
-
 def test_get_frame():
     assert(efficient_mr.get_length() == fast_mr.get_length())
     length = efficient_mr.get_length()
