@@ -217,9 +217,10 @@ class MediaRetriever(FileRetriever):
         if isinstance(self.video_capture, cv2.VideoCapture):
             if not self.video_capture.isOpened():
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width  = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
             channels = 3 # This shouldn't be hard coded
+            return (height, width, channels)
         if isinstance(self.video_capture, pims.Video):
             return self.video_capture.frame_shape
 
