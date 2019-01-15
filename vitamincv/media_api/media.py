@@ -120,7 +120,7 @@ class FileRetriever():
                 path = "{}/{}".format(filepath, self.filename)
             else:
                 path = filepath
-            while open(path, "wb") as f:
+            with open(path, "wb") as f:
                 f.write(filelike_obj.read())
 
         if return_filelike is True:
