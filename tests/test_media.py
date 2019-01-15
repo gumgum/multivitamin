@@ -36,11 +36,7 @@ def test_attributes():
 
 def test_image():
     mr = media.MediaRetriever(IMAGE_URL)
-<<<<<<< HEAD
     im = mr.image
-=======
-    im = mr.get_frame()
->>>>>>> 602c03025115001509214ed50ca7739014cd1d82
     assert(im is not None)
 
 def test_download():
