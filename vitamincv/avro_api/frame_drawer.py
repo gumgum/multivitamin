@@ -27,7 +27,7 @@ def get_props_from_region(region):
     return prop_strs
 
 class FrameDrawer():
-    def __init__(self, doc_fn, decode=False, dump=False, out="./tmp"):
+    def __init__(self, doc_fn=None,avro_api=None, decode=False, dump=False, out="./tmp"):
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -36,29 +36,46 @@ class FrameDrawer():
             dump (bool): write images to folder instead of visualizing
             out (str): if writing images, output dir
         """
-        doc = None
-        aio = AvroIO()
-        if decode:
-            doc = aio.decode_file(doc_fn)
+        if doc_fn:
+            doc = None
+            aio = AvroIO()
+            if decode:
+                doc = aio.decode_file(doc_fn)
+            else:
+                doc = AvroIO.read_json(doc_fn)
+                
+            if not os.path.exists(out):
+                os.makedirs(out)
+                self.avro_api = AvroAPI(doc)
         else:
-            doc = AvroIO.read_json(doc_fn)
+            self.avro_api=avro_api
             
-        if not os.path.exists(out):
-            os.makedirs(out)
-        self.avro_api = AvroAPI(doc)
         self.dump = dump
         self.out = out
         self.med_ret = MediaRetriever(self.avro_api.get_url())
-        self.w, self.h = self.med_ret.get_w_h()
-        self.process()
+        self.w, self.h = self.med_ret.get_w_h()        
 
-    def process(self):
+    def process(self, dump_folder=None,tstamps=None):
         face = cv2.FONT_HERSHEY_SIMPLEX
         scale = 0.65
         thickness = 2
-
+        log.info('dump_folder: ' + str(dump_folder))
+        log.info('tstamps: ' + str(tstamps))
+        if tstamps == []: #An empty list of timestamps implies no dumping. None implies dump all frames.          
+            return
+        if not dump_folder:
+            dump_folder=self.out
+            dump_flag=self.dump
+        else:
+            dump_flag=True
+            if not os.path.exists(dump_folder):
+                os.makedirs(dump_folder) 
+            
         for image_ann in self.avro_api.get_image_anns():
             tstamp = image_ann["t"]
+            if tstamps: #if not None                
+                if tstamp not in tstamps:
+                    continue
             img = self.med_ret.get_frame(tstamp)
             print(json.dumps(image_ann, indent=2))
             for region in image_ann["regions"]:
@@ -68,8 +85,8 @@ class FrameDrawer():
                 prop_strs = get_props_from_region(region)
                 for i, prop in enumerate(prop_strs):
                     img = cv2.putText(img, prop, (p0[0]+3, p1[1]-3+i*25), face, scale, rand_color, thickness)
-            if self.dump:
-                outfn = "{}/{}.jpg".format(self.out, tstamp)
+            if dump_flag:
+                outfn = "{}/{}.jpg".format(dump_folder, tstamp)
                 cv2.imwrite(outfn, img)
                 log.info("Writing to file: {}".format(outfn))
             else:
