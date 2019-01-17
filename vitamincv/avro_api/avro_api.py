@@ -65,7 +65,7 @@ class AvroAPI():
     def append_footprint(self,code):
         self.doc["media_annotation"]["codes"].append(code)
         
-    def append_detection(self, detection, prop_id_map=None):
+    def append_detection(self, detection, prop_id_map=None,t_eps=None):
         """Append a detection struct (the middleman between avro schema and API user)
         """        
         log.debug("Appending detection w/ tstamp: {}".format(detection["t"]))
@@ -159,15 +159,16 @@ class AvroAPI():
         tstamp_exists = False
         t2=detection["t"]
         i=0
+        #https://stackoverflow.com/questions/21388026/find-closest-float-in-array-for-all-floats-in-another-array
         for i,image_ann in enumerate(list(self.doc["media_annotation"]["frames_annotation"])):
             t1=image_ann["t"]                                  
-            if times_equal(float(t1), float(t2)):
+            if times_equal(float(t1) , float(t2),eps=t_eps):
                 log.debug("Appending new region to existing frame annotation.")
                 image_ann["regions"].append(region)
                 self.doc["media_annotation"]["frames_annotation"][i]=image_ann
                 tstamp_exists = True
                 break
-            if t1>t2 and not times_equal(float(t1), float(t2)):#redundant I know. Just in case we remove the equality check from lines above
+            if t1>t2 and not times_equal(float(t1), float(t2),eps=t_eps):#redundant I know. Just in case we remove the equality check from lines above
                 break
         if not tstamp_exists:
             log.debug("Creating new frame annotation with tstamp: {}".format(detection["t"]))

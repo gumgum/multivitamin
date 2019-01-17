@@ -7,7 +7,7 @@ from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.avro_api.avro_api import AvroAPI
 from vitamincv.avro_api.avro_io import AvroIO
 
-def merge(a1, a2):
+def merge(a1, a2,t_eps=None):
     """Merge two AvroAPI"""
     log.info("merging")
     log.info("We get the footprints")
@@ -28,7 +28,7 @@ def merge(a1, a2):
         #    break
         if i_d%1000==0:
             log.info("i_d: " + str(i_d))
-        ret.append_detection(d)
+        ret.append_detection(d,t_eps=t_eps)
     dets1=a1.get_detections_from_frame_anns()
     dets2=a2.get_detections_from_frame_anns()
     dets_ret=ret.get_detections_from_frame_anns()
