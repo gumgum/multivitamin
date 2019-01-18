@@ -11,9 +11,10 @@ import urllib.parse
 from enum import Enum
 
 import importlib.util
-if importlib.util.find_spec("pims"):
-    log.warning("PIMS not found")
+if importlib.util.find_spec("pims") and importlib.util.find_spec("av"):
     import pims
+else:
+    log.warning("PIMS not found")
 
 FRAME_EPS = 0.001
 DECIMAL_SIGFIG = 3
