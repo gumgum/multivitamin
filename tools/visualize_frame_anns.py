@@ -16,5 +16,5 @@ if __name__=="__main__":
     args = a.parse_args()
 
 
-    fd = FrameDrawer(args.avro, args.decode, args.dump_to_folder, args.dump_dir)
-
+    fd = FrameDrawer(args.avro, None, args.decode, args.dump_to_folder, args.dump_dir)
+    fd.process()

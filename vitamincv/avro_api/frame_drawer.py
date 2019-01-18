@@ -27,7 +27,7 @@ def get_props_from_region(region):
     return prop_strs
 
 class FrameDrawer():
-    def __init__(self, doc_fn=None,avro_api=None, decode=False, dump=False, out="./tmp"):
+    def __init__(self, doc_fn=None, avro_api=None, decode=False, dump=False, out="./tmp"):
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -46,7 +46,7 @@ class FrameDrawer():
                 
             if not os.path.exists(out):
                 os.makedirs(out)
-                self.avro_api = AvroAPI(doc)
+            self.avro_api = AvroAPI(doc)
         else:
             self.avro_api=avro_api
             
