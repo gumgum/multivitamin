@@ -7,9 +7,13 @@ import magic
 from io import BytesIO
 from PIL import Image
 import glog as log
-import pims
 import urllib.parse
 from enum import Enum
+
+import importlib.util
+if importlib.util.find_spec("pims"):
+    log.warning("PIMS not found")
+    import pims
 
 FRAME_EPS = 0.001
 DECIMAL_SIGFIG = 3
@@ -176,7 +180,11 @@ class MediaRetriever(FileRetriever):
             self._cap = cv2.VideoCapture(self.url, cv2.CAP_FFMPEG)
 
         if self._cap is None and self.limitation == Limitation.CPU and self.is_video:
-            self._cap = pims.Video(self.url)
+            try:
+                self._cap = pims.Video(self.url)
+            except NameError:
+                log.warning("PIMS not installed... using OpenCV")
+                self._cap = cv2.VideoCapture(self.url, cv2.CAP_FFMPEG)
 
         return self._cap
 
