@@ -24,7 +24,7 @@ class CVModule(ABC):
         log.info('Constructing cvmodule')
         self.name = server_name
         self.version = version        
-        self.batch_size = 10 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
+        self.batch_size = 1 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
         self.prop_type=prop_type
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
