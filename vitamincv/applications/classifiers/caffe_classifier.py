@@ -33,7 +33,7 @@ else:
 
 from caffe.proto import caffe_pb2
 from vitamincv.module_api.cvmodule import CVModule
-from vitamincv.avro_api.cv_schema_factory import * 
+from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour
 
 from vitamincv.module_api.utils import min_conf_filter_predictions
@@ -55,24 +55,24 @@ class CaffeClassifier(CVModule):
                             files named deploy.prototxt, labels.txt, model.caffemodel, and (optionally)
                             mean.binaryproto
         prop_type (str | optional): The property type returned by the classifier (default: `label`)
-        prop_id_map (dict | optional): Converts predicted label to an int 
+        prop_id_map (dict | optional): Converts predicted label to an int
         module_id_map (dict | optional): Converts a server_name to an int
         gpukwargs: Any added keyword args get passed to the GPUUtility object. Refer to it to see what
                     the keyword args are
 
     """
-    def __init__(self, 
-                server_name, 
-                version, 
+    def __init__(self,
+                server_name,
+                version,
                 net_data_dir,
                 prop_type=None,
                 prop_id_map=None,
                 module_id_map=None,
                 **gpukwargs):
 
-        super().__init__(server_name, 
-                            version, 
-                            prop_type = prop_type, 
+        super().__init__(server_name,
+                            version,
+                            prop_type = prop_type,
                             prop_id_map = prop_id_map,
                             module_id_map = module_id_map)
 
@@ -95,17 +95,17 @@ class CaffeClassifier(CVModule):
             log.error(err)
             log.error(traceback.format_exc())
             raise ParseError(err)
-        
+
         self.labels = {idx:label for idx,label in enumerate(self.labels)}
         # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
-        self.min_conf_filter = {label:CONFIDENCE_MIN if not label in LOGOEXCLUDE else 1 for idx, label in self.labels.items()} 
+        self.min_conf_filter = {label:CONFIDENCE_MIN if not label in LOGOEXCLUDE else 1 for idx, label in self.labels.items()}
 
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
-        
+
         mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
-                
+
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -129,14 +129,14 @@ class CaffeClassifier(CVModule):
         contours = None
         if previous_detections:
             contours = [det.get("contour") if det is not None else None for det in previous_detections]
-        
+
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
         images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-        
+
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
 
         return np.array(transformed_images)
@@ -148,18 +148,18 @@ class CaffeClassifier(CVModule):
         h = image.shape[0]
         w = image.shape[1]
         (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-        
+
         crop = image[y0:y1, x0:x1]
         return crop
 
     def process_images(self, images):
-        """ Network Forward Pass 
+        """ Network Forward Pass
 
         Args:
             images (np.array): A numpy array of images
 
         Returns:
-            list: List of floats corresponding to confidences between 0 and 1, 
+            list: List of floats corresponding to confidences between 0 and 1,
                     where each index represents a class
         """
         self.net.blobs['data'].reshape(*images.shape)
@@ -168,15 +168,15 @@ class CaffeClassifier(CVModule):
         return preds
 
     def postprocess_predictions(self, predictions_batch):
-        """Filters out predictions out per class based on confidence, 
+        """Filters out predictions out per class based on confidence,
             and returns the top-N qualifying labels
 
         Args:
-            predictions (list): List of floats corresponding to confidences between 
+            predictions (list): List of floats corresponding to confidences between
                     0 and 1, where each index represents a class
 
         Returns:
-            list: A list of tuples (<class index>, <confidence>) for the 
+            list: A list of tuples (<class index>, <confidence>) for the
                     best, qualifying  N-predictions
         """
         preds = np.array(predictions_batch)
@@ -196,7 +196,7 @@ class CaffeClassifier(CVModule):
         """Appends results to detections
 
         Args:
-            prediction_batch (list): A list of lists of prediction tuples 
+            prediction_batch (list): A list of lists of prediction tuples
                     (<class index>, <confidence>) for an image
 
             tstamps (list): A list of timestamps corresponding to the timestamp of an image
@@ -226,6 +226,8 @@ class CaffeClassifier(CVModule):
             for pred, confidence in image_preds:
                 if not type(pred) is str:
                     label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+                else:
+                    label = pred
                 region_id = prev_det["region_id"]
                 contour = prev_det["contour"]
                 det = create_detection(
