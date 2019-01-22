@@ -45,15 +45,15 @@ LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3
 
 class SSDDetector(CVModule):
-    def __init__(self, 
-                server_name, 
-                version, 
+    def __init__(self,
+                server_name,
+                version,
                 net_data_dir,
                 prop_type = None,
                 prop_id_map = None,
                 module_id_map = None,
                 **gpukwargs):
-        super().__init__(server_name, 
+        super().__init__(server_name,
                             version,
                             prop_type = prop_type,
                             prop_id_map = prop_id_map,
@@ -61,7 +61,7 @@ class SSDDetector(CVModule):
 
         if not self.prop_type:
             self.prop_type="object"
-            
+
         gpu_util = GPUUtility(**gpukwargs)
         available_devices = gpu_util.get_gpus()
         log.info("Found GPU devices: {}".format(available_devices))
@@ -77,7 +77,7 @@ class SSDDetector(CVModule):
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
-        
+
         mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -100,14 +100,14 @@ class SSDDetector(CVModule):
         contours = None
         if previous_detections:
             contours = [det.get("contour") if det is not None else None for det in previous_detections]
-        
+
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
         images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-        
+
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
 
         return np.array(transformed_images)
@@ -119,16 +119,16 @@ class SSDDetector(CVModule):
         h = image.shape[0]
         w = image.shape[1]
         (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-        
+
         crop = image[y0:y1, x0:x1]
         return crop
 
     def process_images(self, images):
         """Network forward pass
-        
-        Args: 
+
+        Args:
             images (np.array): A numpy array of images
-    
+
         Returns:
             nd.array: List of tuples corresponding to each detection in the format of
                   (frame_index, label, confidence, xmin, ymin, xmax, ymax)
@@ -142,7 +142,7 @@ class SSDDetector(CVModule):
         """Filters out predictions out per class based on confidence
 
         Args:
-            predictions (list): List of tuples corresponding to confidences between 
+            predictions (list): List of tuples corresponding to confidences between
                     0 and 1, where each index represents a class
 
         Returns:
@@ -157,7 +157,7 @@ class SSDDetector(CVModule):
         """Appends results to detections
 
         Args:
-            prediction_batch (list): A list of lists of prediction tuples 
+            prediction_batch (list): A list of lists of prediction tuples
                     (<class index>, <confidence>) for an image
 
             tstamps (list): A list of timestamps corresponding to the timestamp of an image
@@ -168,7 +168,7 @@ class SSDDetector(CVModule):
         print(previous_detections)
         if tstamps is None:
             tstamps = [None for _ in range(len(prediction_batch))]
-        
+
         tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
 
 
@@ -195,6 +195,8 @@ class SSDDetector(CVModule):
             for batch_index, pred, confidence, xmin, ymin, xmax, ymax in image_preds:
                 if not isinstance(pred, str):
                     label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
+                else:
+                    label = pred
                 contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
                 det = create_detection(
                         server = self.name,
