@@ -12,3 +12,23 @@ pipeline:
     secrets: [ username, password ]
     when:
       event: [ tag ]
+
+  notify_slack:
+    image: plugins/slack
+    channel: cv-drone
+    username: dronebot
+    icon_emoji: shipitparrot
+    secrets:
+      - source: slack_webhook_url
+        target: slack_webhook
+    template: >
+      {{#success build.status}}
+        CV Base Images build {{build.number}} for {{build.branch}} succeeded! :tot:
+      {{else}}
+        CV Base Images build {{build.number}} for {{build.branch}} failed :ohno:
+      {{/success}}
+        Commit message: ${DRONE_COMMIT_MESSAGE}
+        {{build.link}}
+    when:
+      status: [ success, failure ]
+      event: [ tag ]
