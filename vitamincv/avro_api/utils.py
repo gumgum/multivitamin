@@ -4,11 +4,12 @@ import glog as log
 import pprint
 import json
 import datetime
+import tqdm
 import cv2
 
-from cvapis.avro_api import config
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api import config
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.media_api.media import MediaRetriever
 
 def round_float(val):
     """Function to round a float to our set number of sigificant digits
@@ -75,7 +76,7 @@ def points_equal(val0, val1):
     """
     return abs(round_float(val0) - round_float(val1)) < config.POINT_EPS
 
-def times_equal(val0, val1):
+def times_equal(val0, val1, eps=config.TIME_EPS):
     """Function for float quality comparison for time values
 
     Args:
@@ -85,7 +86,9 @@ def times_equal(val0, val1):
     Returns:
         bool: equality
     """
-    return abs(round_float(val0) - round_float(val1)) < config.TIME_EPS
+    if eps is None:
+        eps=config.TIME_EPS
+    return abs(round_float(val0) - round_float(val1)) < eps
 
 def get_current_time():
     """Get string YYYYMMDDHHMMSS for current time
@@ -139,6 +142,8 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
                 labels.append(label["value"])
     labels = sorted(set(labels))
     label2idx = {val:i+1 for i, val in enumerate(labels)}
+    log.info("labels: {}".format(labels))
+    log.info("label2idx: {}".format(label2idx))
     
     # create idmap.txt
     with open(os.path.join(out_dir, "idmap.txt"), 'w') as wf:
@@ -151,7 +156,7 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
         wf.write("item {\n\tname: '" + 'background' + "'\n\tlabel: " + str(0) + "\n\tdisplay_name: '" +label+ "'\n}\n")
         for i, label in enumerate(labels):
             wf.write("item {\n\tname: '" + label + "'\n\tlabel: " + str(i+1) + "\n\tdisplay_name: '" +label+ "'\n}\n")
-
+    
     img_dir = os.path.join(out_dir, 'imgs')
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
@@ -164,9 +169,9 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
     detections = avro_api.get_detections()
     w, h = med_ret.get_w_h()
 
-    for det in detections:
+    for det in tqdm.tqdm(detections):
         if det["property_type"] != property_type:
-            print('''det["property_type"] != property_type:''')
+            log.error('''det["property_type"]: {} != property_type: {}'''.format(det["property_type"], property_type))
             continue
 
         tstamp = det["t"]
@@ -189,8 +194,6 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
 def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     """Convert cv_schema `contour` into p0 and p1 of a bounding box.
 
-    Note: This assumes that the contour is a bounding box (list of dicts) with 4 points
-
     Args:
         contour (list): list dict of points x, y
         w (int): width
@@ -203,6 +206,10 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
         log.error("To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour")
         return None
 
+    # Convert number of pixel to max pixel index
+    w_max_px_ind = max(w-1, 1)
+    h_max_px_ind = max(h-1, 1)
+
     x0 = contour[0]['x']
     y0 = contour[0]['y']
     x1 = contour[0]['x']
@@ -213,11 +220,26 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
         x1 = max(x1, pt['x'])
         y1 = max(y1, pt['y'])
 
-    x0 = dtype(x0*w)
-    y0 = dtype(y0*h)
-    x1 = dtype(x1*w)
-    y1 = dtype(y1*h)
+    x0 = dtype(x0 * w_max_px_ind)
+    y0 = dtype(y0 * h_max_px_ind)
+    x1 = dtype(x1 * w_max_px_ind)
+    y1 = dtype(y1 * h_max_px_ind)
     return (x0, y0), (x1, y1)
+
+def crop_image_from_bbox_contour(image, contour):
+    """Crop an image given a bounding box contour
+    
+    Args:  
+        image (np.array): image
+        contour (dict[float]): points of a bounding box countour
+    
+    Returns:
+        np.array: image
+    """
+    if contour is None:
+        return image
+    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour)
+    return image[y0:y1, x0:x1]
 
 def create_region_id(tstamp, contour):
     """Create a region_id

@@ -5,9 +5,9 @@ import tempfile
 import shutil
 import boto3
 
-from cvapis.comm_apis.comm_api import CommAPI
-from cvapis.avro_api.utils import get_current_date
-from cvapis.avro_api.avro_io import AvroIO
+from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.avro_api.utils import get_current_date
+from vitamincv.avro_api.avro_io import AvroIO
 INDENTATION=2
 
 class DumpResponse(CommAPI):
@@ -61,7 +61,7 @@ class DumpResponse(CommAPI):
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
 
-            AvroIO.write_json(req.avro_api.get_json(), outfn, indent=INDENTATION)
+            AvroIO.write_json(req.avro_api.get_json(indent=INDENTATION), outfn, indent=INDENTATION)
 
             if self.s3_bucket and self.s3_key:
                 s3client = boto3.client('s3')

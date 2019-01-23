@@ -1,5 +1,5 @@
 import context
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 import glog as log
 import pprint
 import json

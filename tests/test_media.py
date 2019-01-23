@@ -7,7 +7,7 @@ import requests.exceptions
 import pytest
 import glog as log
 
-from cvapis.media_api import media
+from vitamincv.media_api import media
 
 def test_bad_url():
     log.info("Testing erronous URL")

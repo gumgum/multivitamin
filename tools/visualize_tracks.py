@@ -6,10 +6,10 @@ import argparse
 
 import cv2
 
-from cvapis.avro_api.avro_api import AvroIO, AvroAPI
-from cvapis.avro_api.utils import p0p1_from_bbox_contour
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.media_api.media import MediaRetriever
+from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
+from vitamincv.avro_api.utils import p0p1_from_bbox_contour
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.media_api.media import MediaRetriever
 
 def draw_image_ann(frame, image_ann, w, h, label):
     for region in image_ann["regions"]:

@@ -6,9 +6,9 @@ import cv2
 import boto3
 
 import context
-from cvapis.avro_api.avro_api import AvroAPI
-from cvapis.avro_api.avro_io import AvroIO
-from cvapis.avro_api.cv_schema_factory import *
+from vitamincv.avro_api.avro_api import AvroAPI
+from vitamincv.avro_api.avro_io import AvroIO
+from vitamincv.avro_api.cv_schema_factory import *
 import zipfile2
 
 import glog as log

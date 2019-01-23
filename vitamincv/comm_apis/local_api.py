@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 from queue import Queue
 
-from cvapis.comm_apis.request_api import RequestAPI
-from cvapis.comm_apis.comm_api import CommAPI
-from cvapis.avro_api.utils import get_current_date
+from vitamincv.comm_apis.request_api import RequestAPI
+from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.avro_api.utils import get_current_date
 
 
 FILEEXT=".json"

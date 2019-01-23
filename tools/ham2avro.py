@@ -6,10 +6,10 @@ import json
 import glog as log
 from collections import defaultdict
 
-from cvapis.avro_api.avro_api import AvroAPI, AvroIO
-from cvapis.avro_api.cv_schema_factory import *
-from cvapis.media_api.media import MediaRetriever
-from cvapis.avro_api.utils import round_all_pts_in_contour, round_float, p0p1_from_bbox_contour
+from vitamincv.avro_api.avro_api import AvroAPI, AvroIO
+from vitamincv.avro_api.cv_schema_factory import *
+from vitamincv.media_api.media import MediaRetriever
+from vitamincv.avro_api.utils import round_all_pts_in_contour, round_float, p0p1_from_bbox_contour
 
 """ Combine annotations
 """

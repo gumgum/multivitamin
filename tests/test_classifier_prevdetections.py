@@ -2,7 +2,7 @@ import sys
 import os
 import json
 import glog as log
-from cvapis.applications.classifiers.caffe_classifier import CaffeClassifier
+from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 import boto3
 import zipfile
 

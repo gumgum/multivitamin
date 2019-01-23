@@ -5,7 +5,7 @@ import glog as log
 import credstash
 import requests as sender
 
-from cvapis.comm_apis.sqs_api import SQSAPI
+from vitamincv.comm_apis.sqs_api import SQSAPI
 
 class VertexAPI(SQSAPI):
     def __init__(self, queue_name):
