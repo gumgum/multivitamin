@@ -589,7 +589,7 @@ class AvroAPI():
         pass
 
     def get_timestamps(self):
-        return [x['t'] for x in self.doc["media_annotation"]["frames_annotation"]]
+        return sorted([x['t'] for x in self.doc["media_annotation"]["frames_annotation"]])
     
     def get_timestamps_from_footprints(self,server=None):
         tstamps=[]        
