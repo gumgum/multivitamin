@@ -36,16 +36,15 @@ class FrameDrawer():
             dump (bool): write images to folder instead of visualizing
             out (str): if writing images, output dir
         """
+        if not os.path.exists(out):
+            os.makedirs(out)
         if doc_fn:
             doc = None
             aio = AvroIO()
             if decode:
                 doc = aio.decode_file(doc_fn)
             else:
-                doc = AvroIO.read_json(doc_fn)
-                
-            if not os.path.exists(out):
-                os.makedirs(out)
+                doc = AvroIO.read_json(doc_fn)               
             self.avro_api = AvroAPI(doc)
         else:
             self.avro_api=avro_api
