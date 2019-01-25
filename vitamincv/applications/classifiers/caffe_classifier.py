@@ -5,6 +5,7 @@ import numpy as np
 import traceback
 import importlib
 import inspect
+import numbers
 
 from vitamincv.exceptions import ParseError
 
@@ -40,10 +41,10 @@ from vitamincv.module_api.utils import min_conf_filter_predictions
 from vitamincv.module_api.GPUUtilities import GPUUtility
 
 
-LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
-LAYER_NAME = "prob"
-N_TOP = 1
-CONFIDENCE_MIN = 0.1
+# LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
+# LAYER_NAME = "prob"
+# N_TOP = 1
+# CONFIDENCE_MIN = 0.1
 
 class CaffeClassifier(CVModule):
     """ A generic classifer using the Caffe framework
@@ -57,6 +58,18 @@ class CaffeClassifier(CVModule):
         prop_type (str | optional): The property type returned by the classifier (default: `label`)
         prop_id_map (dict | optional): Converts predicted label to an int
         module_id_map (dict | optional): Converts a server_name to an int
+        confidence_min (float | optional): A float describing the minimum confidence
+                                                   needed to for a prediction to qualify as
+                                                   an output.
+        confidence_min_dict (dict | optional): A dict mapping a label string to a
+                                               confidence value. All undefined
+                                               labels/property_ids will default to
+                                               confidence_min
+        layer_name (str | optinal): The string name of the desired network layer output
+        top_n (int | str): Only use the N most confident, qualifying, predictions
+        postprocess_predictions (func | optional): An optional function to allow for custom
+                                                   postprocessing. Will overwrite default functionality
+        postprocess_args (tuple | optional): Additional args to pass to postprocess_predictions
         gpukwargs: Any added keyword args get passed to the GPUUtility object. Refer to it to see what
                     the keyword args are
 
@@ -68,6 +81,12 @@ class CaffeClassifier(CVModule):
                 prop_type=None,
                 prop_id_map=None,
                 module_id_map=None,
+                confidence_min=0.1,
+                confidence_min_dict=None,
+                layer_name="prob",
+                top_n=1,
+                postprocess_predictions=None,
+                postprocess_args=None,
                 **gpukwargs):
 
         super().__init__(server_name,
@@ -75,6 +94,14 @@ class CaffeClassifier(CVModule):
                             prop_type = prop_type,
                             prop_id_map = prop_id_map,
                             module_id_map = module_id_map)
+
+        self.confidence_min = confidence_min
+        if confidence_min_dict is None:
+            confidence_min_dict = {}
+        self.layer_name = layer_name
+        self.top_n = top_n
+        self.postprocess_override = postprocess_predictions
+        self.postprocess_args = postprocess_args
 
         if not self.prop_type:
             self.prop_type = "label"
@@ -98,7 +125,12 @@ class CaffeClassifier(CVModule):
 
         self.labels = {idx:label for idx,label in enumerate(self.labels)}
         # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
-        self.min_conf_filter = {label:CONFIDENCE_MIN if not label in LOGOEXCLUDE else 1 for idx, label in self.labels.items()}
+        self.min_conf_filter = {}
+        for idx, label in self.labels.items():
+            min_conf = self.confidence_min
+            if isinstance(confidence_min_dict.get(label), numbers.Number):
+                min_conf = confidence_min_dict[label]
+            self.min_conf_filter[label] = min_conf
 
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
@@ -164,7 +196,7 @@ class CaffeClassifier(CVModule):
         """
         self.net.blobs['data'].reshape(*images.shape)
         self.net.blobs['data'].data[...] = images
-        preds = self.net.forward()[LAYER_NAME].copy()
+        preds = self.net.forward()[self.layer_name].copy()
         return preds
 
     def postprocess_predictions(self, predictions_batch):
@@ -186,7 +218,7 @@ class CaffeClassifier(CVModule):
             # Filter by ignore dict
             pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
-            n_top_pred = pred_idxs_max2min[:N_TOP]
+            n_top_pred = pred_idxs_max2min[:self.top_n]
             n_top_conf = pred[n_top_pred]
             n_top_preds.append(list(zip(n_top_pred, n_top_conf)))
 
