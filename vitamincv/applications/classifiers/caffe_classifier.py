@@ -102,6 +102,8 @@ class CaffeClassifier(CVModule):
         self.top_n = top_n
         self.postprocess_override = postprocess_predictions
         self.postprocess_args = postprocess_args
+        if not isinstance(self.postprocess_args, tuple):
+            self.postprocess_args = ()
 
         if not self.prop_type:
             self.prop_type = "label"
@@ -211,6 +213,10 @@ class CaffeClassifier(CVModule):
             list: A list of tuples (<class index>, <confidence>) for the
                     best, qualifying  N-predictions
         """
+        if callable(self.postprocess_override):
+            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
+            return processed_preds
+
         preds = np.array(predictions_batch)
         n_top_preds = []
         for pred in preds:
