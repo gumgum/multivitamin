@@ -230,50 +230,44 @@ class CaffeClassifier(CVModule):
 
         return n_top_preds
 
-    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
-        """Appends results to detections
+    def convert_to_detection(self, predicitons, tstamp=None, previous_detection=None):
+        """Converts predictions to detections
 
         Args:
-            prediction_batch (list): A list of lists of prediction tuples
+            predictions (list): A list of predictions tuples
                     (<class index>, <confidence>) for an image
 
-            tstamps (list): A list of timestamps corresponding to the timestamp of an image
+            tstamp (float): A timestamp corresponding to the timestamp of an image
 
-            previous_detections (list): A list of previous detections corresponding
-                    to the previous detection of interest of an image
+            previous_detection (dict): A previous detections corresponding
+                    to the `previous detection of interest` of an image
 
         """
-        if tstamps is None:
-            tstamps = [None for _ in range(len(prediction_batch))]
-        tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
+        if tstamp is None:
+            tstamp = inspect.signature(create_detection).parameters["t"].default
 
-        if previous_detections is None:
-            previous_detections = [None for _ in range(len(prediction_batch))]
 
-        baseline_det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        property_type = self.prop_type
-                    )
-        previous_detections = [baseline_det.copy() if prev_det is None else prev_det for prev_det in previous_detections]
-        for tstamp, prev_det in zip(tstamps, previous_detections):
-            prev_det.update({"t":tstamp})
+        if previous_detection is None:
+            previous_detection = create_detection(
+                                        server=self.name,
+                                        ver=self.version,
+                                        property_type=self.prop_type
+                                        t=tstamp
+                                    )
 
-        assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
-        for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
-            for pred, confidence in image_preds:
-                if not type(pred) is str:
-                    label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
-                region_id = prev_det["region_id"]
-                contour = prev_det["contour"]
-                det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        value = label,
-                        region_id = region_id,
-                        contour = contour,
-                        property_type = self.prop_type,
-                        confidence = confidence,
-                        t = tstamp
-                    )
-                self.detections.append(det)
+        for pred, confidence in predicitons:
+            if not type(pred) is str:
+                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+            region_id = previous_detection["region_id"]
+            contour = previous_detection["contour"]
+            det = create_detection(
+                    server=self.name,
+                    ver=self.version,
+                    value=label,
+                    region_id=region_id,
+                    contour=contour,
+                    property_type=self.prop_type,
+                    confidence=confidence,
+                    t=tstamp
+                )
+            return det
