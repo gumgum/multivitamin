@@ -36,8 +36,10 @@ class FrameDrawer():
             dump (bool): write images to folder instead of visualizing
             out (str): if writing images, output dir
         """
-        if not os.path.exists(out):
+        try:
             os.makedirs(out)
+        except:
+            log.warning(out + " already exists.")
         if doc_fn:
             doc = None
             aio = AvroIO()
@@ -75,7 +77,7 @@ class FrameDrawer():
         #we get the frame iterator
         frames_iterator=[]
         try:
-            frames_iterator=self.med_ret.get_frames_iterator()
+            frames_iterator=self.med_ret.get_frames_iterator(sample_rate=1.0)
         except:
             log.error(traceback.format_exc())
             exit(1)
