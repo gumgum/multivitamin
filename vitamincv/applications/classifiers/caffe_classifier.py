@@ -258,6 +258,8 @@ class CaffeClassifier(CVModule):
         for pred, confidence in predicitons:
             if not type(pred) is str:
                 label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+            else:
+                label = pred
             region_id = previous_detection["region_id"]
             contour = previous_detection["contour"]
             det = create_detection(
