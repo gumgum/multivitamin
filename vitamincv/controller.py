@@ -9,11 +9,12 @@ from vitamincv.module.cvmodule import CVModule
 from vitamincv.data.request_message import Request
 
 class Controller():
-    def __init__(self):
-        """Controller receives a Request and orchestrates the communication to the CVmodules for processing,
+    def __init__(self, cvmodules):
+        """Controller receives a Request and controls the communication to the CVmodules for processing,
             then returns a response
         """
-        self.converter = DataConverter()
+        # self.converter = DataConverter()
+        self._cvmodules = cvmodules
         
     def process_request(self, request):
         """Send request_message through all the cvmodules
@@ -27,26 +28,13 @@ class Controller():
         if not isinstance(request, Request):
             raise ValueError(f"request_message is of type {type(request)}, not Request")
         
-        response = None
-        if request.get_prev_response():
-            log.info("Request contains previous response")
-            response = Response(
-                    bin_decoding=request.bin_decoding(), 
-                    prev_response=request.get_prev_response()
-                )
-
-        if request.get_prev_response_url():
-            if response is not None:
-                raise ValueError(f"request contains both prev_response and prev_response_url")
-            log.info("Request contains previous response url")
-            response = Response(
-                    bin_decoding=request.bin_decoding(), 
-                    prev_response_url=request.get_prev_response_url()
-                )
+        response = Response(bin_encoding=request.bin_encoding, bin_decoding=request.bin_decoding,
+                            prev_response=request.prev_response, prev_response_url=request.prev_response_url)
 
         for module in self._cvmodules:
             log.info(f"Processing request for cvmodule: {type(module)}")
-            module_data = self.convert_response_to_moduledata(request, response, module)
+            # module_data = self.convert_response_to_moduledata(request, response, module)
+            module_data = response.convert_to_module_data()
             out_moduledata = module.process(request, module_data)
             response = self.convert_moduledata_to_response(out_moduledata)
 
@@ -55,6 +43,7 @@ class Controller():
         return response.to_dict()
 
     def convert_response_to_moduledata(request, response, module):
+        """Convert a response to moduledata"""
         prev_props_of_interest = module.get_prev_props_of_interest()
 
     def _find_detections_from_pois(self):

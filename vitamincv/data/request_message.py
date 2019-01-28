@@ -59,7 +59,7 @@ class Request():
         self.flags = self.request.get("flags")
         log.info(f"Setting self._flags to {self._flags}")
 
-def _cleanse_url(url):
+def _standardize_url(url):
     log.info("Formatting urls in request")
     url=url.replace("&amp;", "&")
     url=url.replace(" ", "\\ ")

@@ -47,7 +47,7 @@ def create_detection(server="",module_id=0, property_type="label", value="", val
         "ver" : ver,
         "region_id" : region_id,
         "contour" : contour,
-        "footprint_id" : footprint_id        
+        "footprint_id" : footprint_id
     }
 
 def create_segment(server="", property_type="label", value="", value_verbose="",

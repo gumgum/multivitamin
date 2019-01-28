@@ -20,9 +20,9 @@ from vitamincv.data.struct import CVData
 
 PORT = os.environ.get('PORT', 5000)
 
-class Server(Flask):
+class AsyncServer(Flask):
     def __init__(self, cvmodules, input_comm, output_comms=None):
-        """Server serves as the public interface for CV services through VitaminCV
+        """AsyncServer serves as the public interface for CV services through VitaminCV
 
         It's role is to start the healthcheck endpoint and initiate the services
 
@@ -59,8 +59,7 @@ class Server(Flask):
             if not isinstance(out, CommAPI):
                 raise TypeError("comm_apis_outputs must be CommAPIs")
             
-        self._controller = Controller()
-        self._cvmodules = cvmodules
+        self._controller = Controller(cvmodules)
         self._input_comm = input_comm
         self._output_comms = output_comms
         log.info("Input comm type: {}".format(type(input_comm)))
@@ -91,9 +90,9 @@ class Server(Flask):
                 request = self.input_comm.pull()
                 response = self._controller.process_request(request)
                 log.info("Pushing reponse to output_comms")
-                for c in self.output_comms:
+                for output_comm in self.output_comms:
                     try:
-                        ret = c.push(response)
+                        ret = output_comm.push(response)
                     except Exception as e:
                         log.info(e)
                         log.info(traceback.format_exc())
