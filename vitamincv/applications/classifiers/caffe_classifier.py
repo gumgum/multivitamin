@@ -221,13 +221,12 @@ class CaffeClassifier(CVModule):
         n_top_preds = []
         for pred in preds:
             pred_idxs_max2min = np.argsort(pred)[::-1]
-            pred = pred[::-1]
+            pred = pred[pred_idxs_max2min]
             # Filter by ignore dict
             pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
-            n_top_pred = pred_idxs_max2min[:self.top_n]
-            n_top_conf = pred[n_top_pred]
-            n_top_preds.append(list(zip(n_top_pred, n_top_conf)))
+            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
+            n_top_preds.append(n_top_pred)
 
         return n_top_preds
 

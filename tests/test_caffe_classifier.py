@@ -137,6 +137,7 @@ def test_consistency2():
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["id"], expected_json["media_annotation"]["codes"][0]["id"])
     print(j2)
+    assert(j1 == j2)
     assert(json.loads(j1) == json.loads(j2))
     assert(cc.avro_api.doc == expected_json)
 
