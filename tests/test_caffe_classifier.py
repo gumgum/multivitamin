@@ -104,6 +104,7 @@ def download_expected_response(path):
     s3 = boto3.client("s3")
     filelike = BytesIO()
     s3.download_fileobj(S3_BUCKET_NAME, S3_EXPECTED_PREV_RESPONSES+"/"+path, filelike)
+    filelike.seek(0)
     expected_json = json.loads(filelike.read().decode())
     return expected_json
 

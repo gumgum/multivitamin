@@ -251,7 +251,7 @@ class CaffeClassifier(CVModule):
             previous_detection = create_detection(
                                         server=self.name,
                                         ver=self.version,
-                                        property_type=self.prop_type
+                                        property_type=self.prop_type,
                                         t=tstamp
                                     )
 

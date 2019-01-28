@@ -215,8 +215,8 @@ class CVModule(ABC):
                 continue
 
             try:
-                for prediction, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
-                    new_det = self.convert_to_detection(prediciton=prediciton,
+                for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
+                    new_det = self.convert_to_detection(predictions=predictions,
                                              tstamp=tstamp,
                                              previous_detection=prev_det)
                     self.detections.append(new_det)                 
@@ -244,7 +244,7 @@ class CVModule(ABC):
     def postprocess_predictions(self, predictions):
         return predictions
 
-    def convert_to_detection(self, prediciton, tstamp=None, previous_detection=None):
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         pass
 
     def update_response(self):
