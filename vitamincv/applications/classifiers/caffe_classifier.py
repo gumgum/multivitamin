@@ -255,7 +255,7 @@ class CaffeClassifier(CVModule):
                                         t=tstamp
                                     )
 
-        for pred, confidence in predicitons:
+        for pred, confidence in predictions:
             if not type(pred) is str:
                 label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
             else:
