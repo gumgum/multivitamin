@@ -36,16 +36,17 @@ class FrameDrawer():
             dump (bool): write images to folder instead of visualizing
             out (str): if writing images, output dir
         """
+        try:
+            os.makedirs(out)
+        except:
+            log.warning(out + " already exists.")
         if doc_fn:
             doc = None
             aio = AvroIO()
             if decode:
                 doc = aio.decode_file(doc_fn)
             else:
-                doc = AvroIO.read_json(doc_fn)
-                
-            if not os.path.exists(out):
-                os.makedirs(out)
+                doc = AvroIO.read_json(doc_fn)               
             self.avro_api = AvroAPI(doc)
         else:
             self.avro_api=avro_api
@@ -69,14 +70,34 @@ class FrameDrawer():
         else:
             dump_flag=True
             if not os.path.exists(dump_folder):
-                os.makedirs(dump_folder) 
+                os.makedirs(dump_folder)
+        #we get the image_annotation tstamps
+        tstamps_dets=self.avro_api.get_timestamps()
+        log.info('tstamps_dets: ' + str(tstamps_dets))
+        #we get the frame iterator
+        frames_iterator=[]
+        try:
+            frames_iterator=self.med_ret.get_frames_iterator(sample_rate=1.0)
+        except:
+            log.error(traceback.format_exc())
+            exit(1)
             
-        for image_ann in self.avro_api.get_image_anns():
-            tstamp = image_ann["t"]
-            if tstamps: #if not None                
-                if tstamp not in tstamps:
-                    continue
-            img = self.med_ret.get_frame(tstamp)
+
+
+        
+        for i, (img, tstamp) in enumerate(frames_iterator):
+            if img is None:
+                log.warning("Invalid frame")
+                continue
+            if tstamp is None:
+                log.warning("Invalid tstamp")
+                continue
+	        #log.info('tstamp: ' + str(tstamp))
+            if tstamp not in tstamps_dets:
+                continue
+            log.info("drawing frame for tstamp: " + str(tstamp))            
+            #we get image_ann for that time_stamps
+            image_ann=self.avro_api.get_image_ann_from_t(tstamp)
             print(json.dumps(image_ann, indent=2))
             for region in image_ann["regions"]:
                 rand_color = get_rand_bgr()
