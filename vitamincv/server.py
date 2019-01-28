@@ -22,7 +22,9 @@ PORT = os.environ.get('PORT', 5000)
 
 class Server(Flask):
     def __init__(self, cvmodules, input_comm, output_comms=None):
-        """Constructor requires 
+        """Server serves as the public interface for CV services through VitaminCV
+
+        It's role is to start the healthcheck endpoint and initiate the services
 
         Args:
             cvmodules (list[CVModule]): list of concrete child implementation of CVModule
@@ -87,7 +89,7 @@ class Server(Flask):
             try:
                 log.info("Pulling request")
                 request = self.input_comm.pull()
-                response = self._process_request(request)
+                response = self._controller.process_request(request)
                 log.info("Pushing reponse to output_comms")
                 for c in self.output_comms:
                     try:
@@ -99,83 +101,3 @@ class Server(Flask):
                 log.info(e)
                 log.info(traceback.format_exc())
                 
-    def _process_request(self, request_message):
-        """Send request_message through all the cvmodules
-
-        Args:
-            request_message (Request): incoming request
-            previous_response_message (Response): previous response message
-        Returns:
-            Response: outgoing response message
-        """"
-        if not isinstance(request_message, Request):
-            raise ValueError(f"request_message is of type {type(request_message)}, not Request")
-        
-        response_message = None
-        if request_message.get_prev_response():
-            log.info("Request contains previous response")
-            response_message = Response(
-                    bin_decoding=request_message.bin_decoding(), 
-                    prev_response=request_message.get_prev_response()
-                )
-
-        if request_message.get_prev_response_url():
-            if response_message is not None:
-                raise ValueError(f"request_message contains both prev_response and prev_response_url")
-            log.info("Request contains previous response url")
-            response_message = Response(
-                    bin_decoding=request_message.bin_decoding(), 
-                    prev_response_url=request_message.get_prev_response_url()
-                )
-
-        for module in self._cvmodules:
-            log.info(f"Processing request for cvmodule: {type(module)}")
-            response_message = Mediator.convert_cvdata_to_response(module, request_message, response_message)
-
-        if request_message.bin_encoding():
-            return response_message.serialize()
-        return response_message.dict()
-
-from abc import abstractmethod, ABC
-
-class DataMediator(ABC):
-    """DataMediator has 1 job: to convert responses to CVData, and CVdata back to responses"""
-    @abstractmethod
-    def convert_response_to_cvdata(response_message):
-        pass
-    
-    @abstractmethod
-    def convert_cvdata_to_response(cvdata):
-        pass
-
-    @abstractmethod
-    def process(request_message, response_message):
-        pass
-        
-class ImageDataMediator(DataMediator):
-    def convert_response_to_cvdata(response_message):
-        print("hi")
-
-    def convert_cvdata_to_response(cvdata):
-        print("ho")
-
-class PropertiesDataMediator(DataMediator):
-    def convert_response_to_cvdata(response_message):
-        print("hi")
-
-    def convert_cvdata_to_response(cvdata):
-        print("ho")
-
-        cvdata = None
-
-        if response_message:
-            if isinstance(cvmodule, PropertiesProcessor):
-                cvdata = getsegments(cvdata)
-                segments = cvmodule.process(request_message, segments)
-            elif isinstance(cvmodule, ImageProcessor):
-                #get detections
-                detections = cvmodule.process(request_message, detections)
-            else:
-                raise ValueError("not a prop proc or image proc")
-
-        return response_message

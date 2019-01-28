@@ -32,9 +32,12 @@ DEVICE_ID=0
 LAYER_NAME = "prob"
 N_TOP = 1
 CONFIDENCE_MIN=0.1
-class CaffeClassifier(CVModule):
-    def __init__(self, server_name, version, net_data_dir,prop_type=None,prop_id_map=None,module_id_map=None):
-        super().__init__(server_name, version, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
+
+class CaffeClassifier(ImageModule):
+    def __init__(self, server_name, version, net_data_dir, 
+                 prop_type=None, prop_id_map=None, module_id_map=None):
+        super().__init__(server_name, version, prop_type=prop_type,
+                         prop_id_map=prop_id_map, module_id_map=module_id_map)
         if not self.prop_type:
             self.prop_type="label"      
         log.info("Constructing CaffeClassifier")
@@ -68,21 +71,12 @@ class CaffeClassifier(CVModule):
 
         self.transformer.set_transpose('data', (2,0,1))
 
-    def process_images(self, images, tstamps, prev_detections=None):
-        log.debug("Processing images")
-        log.debug("tstamps: "  + str(tstamps))
-        log.check_eq(len(images), len(tstamps))
-        if prev_detections:
-            log.check_eq(len(images), len(prev_detections))
-        for i,(frame, tstamp) in enumerate(zip(images, tstamps)):
-            log.debug("tstamp: " +str(tstamp))
-            crop=frame
-            contour_prev=[create_point(0.0, 0.0),
-                                 create_point(1.0, 0.0),
-                                 create_point(1.0, 1.0),
-                                 create_point(0.0, 1.0)]
+    def process_image(self, image, tstamp, prev_det=None):
             region_id_prev=""
-            if prev_detections:
+            x=p['x']
+                    y=p['y']
+                    if x<xmin:
+                          if prev_detections:
                 prev_det=prev_detections[i]
                 #log.debug("prev_det: " + str(prev_det))
                 #we get region_id_prev
@@ -98,10 +92,7 @@ class CaffeClassifier(CVModule):
                 ymin=1.0
                 ymax=0.0
                 for p in contour_prev:
-                    x=p['x']
-                    y=p['y']
-                    if x<xmin:
-                        xmin=x
+                  xmin=x
                     if x>xmax:
                         xmax=x
                     if y<ymin:
@@ -116,7 +107,7 @@ class CaffeClassifier(CVModule):
                 log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
                 crop=frame[ymin:ymax, xmin:xmax]
             try:    
-                im = self.transformer.preprocess('data', crop)
+                im = self.transformer.preprocess('data', image)
                 self.net.blobs['data'].data[...] = im
             
                 probs = self.net.forward()[LAYER_NAME]

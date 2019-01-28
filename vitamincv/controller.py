@@ -8,67 +8,69 @@ from vitamincv.module.cvmodule import CVModule
 
 from vitamincv.data.request_message import Request
 
-class Processor(ABC):
-    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, 
-                 module_id_map=None, process_properties_flag=False):
-        """Abstract base class for CVModules
-        
-        Args:
-            server_name (str): name of server/module
-            version (str): version of module
-            idmap (str): filepath to idmap
+class Controller():
+    def __init__(self):
+        """Controller receives a Request and orchestrates the communication to the CVmodules for processing,
+            then returns a response
         """
-        log.info('Constructing cvmodule')
-        self.name = server_name
-        self.version = version
-        self.prop_type = prop_type
-        self.prop_id_map = prop_id_map
-        self.module_id_map = module_id_map
+        self.converter = DataConverter()
+        
+    def process_request(self, request):
+        """Send request_message through all the cvmodules
 
-        self.process_properties_flag = process_properties_flag
-        self.prev_pois = [] #this are the properties of interest that define the regions of interest, the ones that we'll want to analyze.
-        self.detections_of_interest=[]#A list with the detections of interest, the ones that we'll want to analyze.
-        self.code='SUCCESS'
-        self.num_problematic_frames=0
-        self.detections=[]
-    
-    def _process_module(self, cvmodule, request, response):
-        """Process request message and append to previous response"""
-        codes = cvmodule.process(request)
-        log.info("Updating response")
-        response = self.convert_to_response(cvmodule.get_output())
+        Args:
+            request_message (Request): incoming request
+            previous_response_message (Response): previous response message
+        Returns:
+            Response: outgoing response message
+        """"
+        if not isinstance(request, Request):
+            raise ValueError(f"request_message is of type {type(request)}, not Request")
+        
+        response = None
+        if request.get_prev_response():
+            log.info("Request contains previous response")
+            response = Response(
+                    bin_decoding=request.bin_decoding(), 
+                    prev_response=request.get_prev_response()
+                )
 
-            request=m.get_request_api()
-            if i<len(self.modules)-1:
-                log.info("Reseting media_api in the requests.")
-                if isinstance(request,list):
-                    for r in request:
-                        r.reset_media_api()
-                else:
-                    request.reset_media_api()
+        if request.get_prev_response_url():
+            if response is not None:
+                raise ValueError(f"request contains both prev_response and prev_response_url")
+            log.info("Request contains previous response url")
+            response = Response(
+                    bin_decoding=request.bin_decoding(), 
+                    prev_response_url=request.get_prev_response_url()
+                )
 
-    def process():
-        pass
+        for module in self._cvmodules:
+            log.info(f"Processing request for cvmodule: {type(module)}")
+            module_data = self.convert_response_to_moduledata(request, response, module)
+            out_moduledata = module.process(request, module_data)
+            response = self.convert_moduledata_to_response(out_moduledata)
 
-from vitamincv.media.media import MediaRetriever
+        if request.bin_encoding():
+            return response.to_bytes()
+        return response.to_dict()
 
-class ImageProcessor(Processor):
-    def __init__(self):
-        pass
-    
+    def convert_response_to_moduledata(request, response, module):
+        prev_props_of_interest = module.get_prev_props_of_interest()
 
-class PropertiesProcessor(Processor):
-    def __init__(self):
-        pass
-
-    def convert_response_to_cvdata(response_message):
-        print("hi")
-
-    def convert_cvdata_to_response(cvdata):
-        print("ho")
-
-
-    def update_response(self):
+    def _find_detections_from_pois(self):
+        if len(self.prev_pois)==0:
+            log.info("No previous properties of interest to be searched.")
+            return None
+        if len(self.prev_pois): #properties of interested were defined in the child, or by means of the request.
+            log.debug("There are previous properties of interest to be searched.")
+            try:
+                self.detections_of_interest=self.avro_api.get_detections_from_props(self.prev_pois)
+            except Exception as e:
+                log.warning(e)
+            log.debug("len(self.detections_of_interest): " + str(len(self.detections_of_interest)))
+            log.debug("Creating self.detections_t_map.")
+            
+    def convert_moduledata_to_response(self, module_data):
         """Iterate over self.detections that has been populated by the child,
            and populate response document
         """
@@ -113,3 +115,8 @@ class PropertiesProcessor(Processor):
             log.info("Not appending any detection, this was a property processor module")
         log.debug("We reset the queriers to None. If a caller performs a query they need to be rebuilt with the new detections and segments.")
         self.avro_api.reset_queriers()
+        
+
+
+
+

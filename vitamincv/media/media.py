@@ -24,7 +24,6 @@ class FramesIterator():
         do_something(frame)
 
     Note: Do not use multiple times/attempt to restart from the start of the video. This feature is incomplete.
-    TODO: check to see if start_tstamp & end_tstamp checks cause significant slowing
     """
     def __init__(self, video_cap, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
         """Frames iterator constructor
@@ -64,6 +63,9 @@ class FramesIterator():
 
         log.info("No more frames to read")
         raise StopIteration()
+    
+    def reset(self):
+        pass
 
 class MediaRetriever():
     def __init__(self, url=None):
@@ -71,6 +73,7 @@ class MediaRetriever():
         if url:
             self.set_url(url)
         self.period = 1.0
+
     def set_url(self, url):
         self.is_image = False
         self.is_local = False
@@ -80,6 +83,10 @@ class MediaRetriever():
         self._compute_content_info()
         self._download_media()
         log.info("Loading media from url: {}... COMPLETE".format(url))
+
+    def reset(self):
+        log.info("Resetting media retriever")
+        self.set_url(self.url)
 
     def get_frames_iterator(self, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
         """If image, returns a list of length 0 with a tuple (image, tstamp),

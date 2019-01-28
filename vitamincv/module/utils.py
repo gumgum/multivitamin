@@ -62,3 +62,41 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
         if conf >= min_conf:
             qualifying_preds.append(pred)
     return qualifying_preds
+
+def list_contains_only_none(l):
+    return l==[None]*len(l)
+
+def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
+    """Convert `contour` into p0 and p1 of a bounding box.
+
+    Args:
+        contour (list): list dict of points x, y
+        w (int): width
+        h (int): height
+
+    Returns:
+        Two points dict(x, y): p0 (upper left) and p1 (lower right)
+    """
+    if (len(contour) != 4):
+        log.error("To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour")
+        return None
+
+    # Convert number of pixel to max pixel index
+    w_max_px_ind = max(w-1, 1)
+    h_max_px_ind = max(h-1, 1)
+
+    x0 = contour[0]['x']
+    y0 = contour[0]['y']
+    x1 = contour[0]['x']
+    y1 = contour[0]['y']
+    for pt in contour:
+        x0 = min(x0, pt['x'])
+        y0 = min(y0, pt['y'])
+        x1 = max(x1, pt['x'])
+        y1 = max(y1, pt['y'])
+
+    x0 = dtype(x0 * w_max_px_ind)
+    y0 = dtype(y0 * h_max_px_ind)
+    x1 = dtype(x1 * w_max_px_ind)
+    y1 = dtype(y1 * h_max_px_ind)
+    return (x0, y0), (x1, y1)
