@@ -8,7 +8,7 @@ from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 
 S3_BUCKET = "cv-applications-responses-staging"
 #JSON_NAME="Replay%20Video%20Capture_2018-11-16_11.52.51-2816an1tb0v"
-#JSON_NAME="538_Pelicans+vs+Thunder+11%3A5-fhj713lbrhi.30-31""
+#JSON_NAME="538_Pelicans+vs+Thunder+11%3A5-fhj713lbrhi.30-31"
 JSON_NAME="1%3A3%20Houston%20Rockets%20at%20Golden%20State%20Warriors-6tgm4my1dr6"
 S3_KEY = "SPORTS-NBALeagueDetector_1.0.0/" + JSON_NAME + ".json"
 def test_FrameDrawer():
