@@ -230,7 +230,7 @@ class CaffeClassifier(CVModule):
 
         return n_top_preds
 
-    def convert_to_detection(self, predicitons, tstamp=None, previous_detection=None):
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         """Converts predictions to detections
 
         Args:
@@ -251,7 +251,7 @@ class CaffeClassifier(CVModule):
             previous_detection = create_detection(
                                         server=self.name,
                                         ver=self.version,
-                                        property_type=self.prop_type,
+                                        property_type=self.prop_type
                                         t=tstamp
                                     )
 
