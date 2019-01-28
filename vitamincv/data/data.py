@@ -38,76 +38,72 @@ def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         "y": y
     }
 
-class PseudoDict():
-    def asdict(self):
-        return self.__dict__
+def create_detection(server="",module_id=0, property_type="label", value="", value_verbose="",
+                     confidence=0.0, fraction=1.0, t=0.0, contour=None,
+                     ver="", region_id="", property_id=None, footprint_id="", company="gumgum"):
+    """Factory method to create a detection object
 
-class Detection(PseudoDict):
-    def __init__(self, server="",module_id=0, property_type="label", value="", 
-                 value_verbose="", confidence=0.0, fraction=1.0, t=0.0, contour=None,
-                 ver="", region_id="", property_id=None, footprint_id="", company="gumgum"):
-        """Constructor for Detection data object
+    This object is meant to be used as a "middle man" representation of frame annotations between our avro cv schema and users.
+    Note: type is not enforced.
 
-            This object is meant to be used as a mediator data structure between our cv schema and moduledata
-            
-            Note: type is not enforced.
+    Args:
+        server (str): name of server
+        property_type (str): type of prediction property, e.g. label, placement
+        value (str): value of the prediction property, e.g. benchglass
+        confidence (float): prediction confidence
+        fraction (float): spatial fraction representation region size
+        t (float): timestamp of detection
+        version (str): server version number
+        region_id (str): region identifier
+        contour (list[dict]): list of points [0,1]. defaults to box around entire image. 
+        property_id (int): property id from idmap
 
-            Args:
-                server (str): name of server
-                property_type (str): type of prediction property, e.g. label, placement
-                value (str): value of the prediction property, e.g. benchglass
-                confidence (float): prediction confidence
-                fraction (float): spatial fraction representation region size
-                t (float): timestamp of detection
-                version (str): server version number
-                region_id (str): region identifier
-                contour (list[dict]): list of points [0,1]. defaults to box around entire image. 
-                property_id (int): property id from idmap
+    Returns:
+        dict: with the above properties
+    """
+    if not contour:
+        contour = [create_point(0.0, 0.0),
+                   create_point(1.0, 0.0),
+                   create_point(1.0, 1.0),
+                   create_point(0.0, 1.0)]
+    return {
+        "server" : server,
+        "module_id" : module_id,
+        "property_type" : property_type,
+        "value" : value,
+        "value_verbose" : value_verbose,
+        "property_id" : property_id,
+        "confidence" : confidence,
+        "fraction" : fraction,
+        "t" : t,
+        "company":company,
+        "ver" : ver,
+        "region_id" : region_id,
+        "contour" : contour,
+        "footprint_id" : footprint_id
+    }
 
-            Returns:
-                dict: with the above properties
-            """
-            if not contour:
-                self.contour = [create_point(0.0, 0.0),
-                        create_point(1.0, 0.0),
-                        create_point(1.0, 1.0),
-                        create_point(0.0, 1.0)]
-             self.server = server
-             self.module_id = module_id
-             self.property_type = property_type
-             self.value = value
-             self.value_verbose = value_verbose
-             self.property_id = property_id
-             self.confidence = confidence
-             self.fraction = fraction
-             self.t = t
-             self.company = company
-             self.ver = ver
-             self.region_id = region_id
-             self.contour = contour
-             self.footprint_id = footprint_id
-
-class Segment(PseudoDict):
-    def __init__(self, server="", property_type="label", value="", value_verbose="",
-                 confidence=0.0, fraction=1.0, t1=0.0, t2=0.0, region_ids=None,
-                 version="", property_id=0, track_id=None, company="gumgum"):
-    
-        if not region_ids:
-            region_ids = []
-
-        self.server = server
-        self.property_type = property_type
-        self.value = value
-        self.value_verbose = value_verbose
-        self.property_id = property_id
-        self.confidence = confidence
-        self.fraction = fraction
-        self.t1 = t1
-        self.t2 = t2
-        self.ver = version
-        self.region_ids = region_ids
-        self.track_id = track_id
-        self.company = company
+def create_segment(server="", property_type="label", value="", value_verbose="",
+                   confidence=0.0, fraction=1.0, t1=0.0, t2=0.0, region_ids=None,
+                   version="", property_id=0, track_id=None, company="gumgum"):
+    if not region_ids:
+        region_ids = []
+        
+    return {
+        "server" : server,
+        "property_type" : property_type,
+        "value" : value,
+        "value_verbose" : value_verbose,
+        "property_id" : property_id,
+        "confidence" : confidence,
+        "fraction" : fraction,
+        "t1" : t1,
+        "t2": t2,
+        "ver" : version,
+        "region_ids" : region_ids,
+        "track_id": track_id,
+        "company": company
+    }
 
 class ModuleData():
     def __init__(self, detections=None, segments=None):

@@ -1,9 +1,10 @@
 import os
 import sys
-import glog as log
-import numpy as np
 import traceback
 
+import glog as log
+import numpy as np
+from google.protobuf import text_format
 
 try:
     log.info("GLOG_minloglevel:" + os.environ['GLOG_minloglevel.'] +" 0 - debug, 1 - info, 2 - warnings, 3 - errors")
@@ -19,14 +20,10 @@ except:
     except:
         sys.exit("Install caffe, set PYTHONPATH to point to caffe, or set \
                   enviroment variable SSD_CAFFE_PYTHON.")
-from google.protobuf import text_format
 from caffe.proto import caffe_pb2
-from vitamincv.module_api.cvmodule import CVModule
-import vitamincv.module_api.server as Server
-from vitamincv.avro_api.cv_schema_factory import *
 
+from vitamincv.module.cvmodule import ImageModule
 
-LOGOEXCLUDE=["Garbage", "Messy", "MessyDark"]
 GPU=True
 DEVICE_ID=0
 LAYER_NAME = "prob"
@@ -38,10 +35,10 @@ class CaffeClassifier(ImageModule):
                  prop_type=None, prop_id_map=None, module_id_map=None):
         super().__init__(server_name, version, prop_type=prop_type,
                          prop_id_map=prop_id_map, module_id_map=module_id_map)
+
         if not self.prop_type:
-            self.prop_type="label"      
+            self.prop_type = "label"
         log.info("Constructing CaffeClassifier")
-        #log.setLevel("DEBUG")
         if GPU:
             caffe.set_mode_gpu()
             caffe.set_device(DEVICE_ID)
@@ -68,92 +65,51 @@ class CaffeClassifier(ImageModule):
             blob_meanfile.ParseFromString(data_meanfile)
             meanfile = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
             self.transformer.set_mean('data', meanfile)
-
         self.transformer.set_transpose('data', (2,0,1))
 
-    def process_image(self, image, tstamp, prev_det=None):
-            region_id_prev=""
-            x=p['x']
-                    y=p['y']
-                    if x<xmin:
-                          if prev_detections:
-                prev_det=prev_detections[i]
-                #log.debug("prev_det: " + str(prev_det))
-                #we get region_id_prev
-                region_id_prev=prev_det['region_id']
-                log.debug("region_id_prev: " + str(region_id_prev))
-                #we get the contour_prev
-                contour_prev=prev_det['contour']
-                height = frame.shape[0]
-                width = frame.shape[1]
-                #we get the crop
-                xmin=1.0
-                xmax=0.0
-                ymin=1.0
-                ymax=0.0
-                for p in contour_prev:
-                  xmin=x
-                    if x>xmax:
-                        xmax=x
-                    if y<ymin:
-                        ymin=y
-                    if y>ymax:
-                        ymax=y
-                log.debug('[xmin,ymin,xmax,ymax]: ' + str([xmin,ymin,xmax,ymax]))
-                xmin=int(xmin*(width-1))
-                ymin=int(ymin*(height-1))
-                xmax=int(xmax*(width-1))
-                ymax=int(ymax*(height-1))
-                log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
-                crop=frame[ymin:ymax, xmin:xmax]
-            try:    
-                im = self.transformer.preprocess('data', image)
-                self.net.blobs['data'].data[...] = im
-            
-                probs = self.net.forward()[LAYER_NAME]
-                log.debug('probs: ' + str(probs))
-                for p in probs:
-                    log.debug('p: ' + str(p))
-                    p_indexes = np.argsort(p)
-                    p_indexes = np.flip(p_indexes,0)
-                    while True:
-                        if len(p_indexes)==1:
-                            break
-                        index=p_indexes[0]
-                        label=self.labels[index]                            
-                        log.debug("label: " + str(label))
-                        if label in LOGOEXCLUDE:
-                            p_indexes=np.delete(p_indexes,0)
-                        else:
-                            break
-                    p_indexes = p_indexes[:N_TOP]
-                    
-                    log.debug("p_indexes: " + str(p_indexes))
-                    for i,property_id in enumerate(p_indexes):
-                        if i==N_TOP:
-                            break
-                        index=p_indexes[i]
-                        label=self.labels[index]                            
-                        confidence=p[index]
-                        
-                        if confidence<CONFIDENCE_MIN:
-                            label='Unknown'
-                        det = create_detection(
-                            server=self.name,
-                            ver=self.version,
-                            value=label,
-                            region_id=region_id_prev,
-                            contour=contour_prev,
-                            property_type=self.prop_type,
-                            confidence=confidence,
-                            t=tstamp
-                        )
-                        log.debug("det: " + str(det))                        
-                        self.detections.append(det)
-                        
-            except Exception as e:
-                log.error(e)
+    def preprocess_image(image):
+        return self.transformer.preprocess('data', image)
 
-                    
+    def process_image(self, image, tstamp, prev_det=None):
+        self.net.blobs['data'].data[...] = preprocess_image(image)
+        probs = self.net.forward()[LAYER_NAME]
+
+        log.debug('probs: ' + str(probs))
+        for p in probs:
+            log.debug('p: ' + str(p))
+            p_indexes = np.argsort(p)
+            p_indexes = np.flip(p_indexes, 0)
+            while True:
+                if len(p_indexes)==1:
+                    break
+                index=p_indexes[0]
+                label=self.labels[index]
+                log.debug("label: " + str(label))
+            p_indexes = p_indexes[:N_TOP]
+            
+            log.debug("p_indexes: " + str(p_indexes))
+            for i,property_id in enumerate(p_indexes):
+                if i==N_TOP:
+                    break
+                index=p_indexes[i]
+                label=self.labels[index]
+                confidence=p[index]
+                
+                if confidence<CONFIDENCE_MIN:
+                    label='Unknown'
+                det = create_detection(
+                    server=self.name,
+                    ver=self.version,
+                    value=label,
+                    region_id=region_id_prev,
+                    contour=contour_prev,
+                    property_type=self.prop_type,
+                    confidence=confidence,
+                    t=tstamp
+                )
+                log.debug("det: " + str(det))
+                self.module_data.detections.append(det)
+
+
 
 
