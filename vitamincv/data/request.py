@@ -18,10 +18,11 @@ class Request():
         if not isinstance(request_dict, dict):
             raise ValueError(f"request_dict is type: {type(request_dict)}, should be of type dict")
 
+        log.debug(f"request_dict: {request_dict}")
         self.request = request_dict
         self.request_id = request_id
-        self.request = self._load_params(self.request)
-        # self.url = _standardize_url(self.request.get("url"))
+        self._load_params(self.request)
+        self.url = _standardize_url(self.request.get("url"))
 
     def _load_params(self, req):
         """Load request parameters. 
@@ -61,12 +62,14 @@ class Request():
 
 def _standardize_url(url):
     log.info("Formatting urls in request")
-    url=url.replace("&amp;", "&")
-    url=url.replace(" ", "\\ ")
-    url=url.replace("https://", "http://")
-    url=url.replace("s://", "http://")
-    url=url.replace("s:", "http://")
-    url=url.replace("https://", "")
-    url=url.replace("http://s.yimg.com", "https://s.yimg.com")
-    url=url.replace(" ", "%20")
+    if not url:
+        raise ValueError("url is None")
+    # url=url.replace("&amp;", "&")
+    # url=url.replace(" ", "\\ ")
+    # url=url.replace("https://", "http://")
+    # url=url.replace("s://", "http://")
+    # url=url.replace("s:", "http://")
+    # url=url.replace("https://", "")
+    # url=url.replace("http://s.yimg.com", "https://s.yimg.com")
+    # url=url.replace(" ", "%20")
     return url

@@ -15,6 +15,8 @@ S3_IMAGES_FOLDER = "data/media/images/generic/"
 S3_PREV_DETECTIONS_FOLDER = "data/sample_detections/random_boxes/"
 S3_NET_DATA_FOLDER = "models/caffe/SportsNHLLogoClassifier-v1.2/"
 
+log.setLevel("DEBUG")
+
 def test_init():
     global cc
 
@@ -114,7 +116,7 @@ def test_init():
 def test_process():
     # Test on short video
     message = {
-        "url":"https://s3.amazonaws.com/vitamin-cv-test-data/data/media/videos/generic-short/kitti-clip.mp4"
+        "url":"https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
     }
     req = Request(message)
     cc.process(req)

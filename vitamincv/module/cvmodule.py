@@ -66,7 +66,7 @@ class ImageModule(CVModule):
         super().process(request, prev_module_data)
         self.med_ret = MediaRetriever(request.url)
         self.frames_iterator = self.med_ret.get_frames_iterator(request.sample_rate)
-        for i, (frame, tstamp) in enumerate(frames_iterator):
+        for i, (frame, tstamp) in enumerate(self.frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
                 continue
@@ -78,6 +78,7 @@ class ImageModule(CVModule):
             try:
                 prev_dets = prev_module_data.detections.tstamp_map.get(tstamp, None)
                 if prev_dets or not list_contains_only_none(prev_dets):
+                    log.debug(f"Processing with {len(prev_dets)} previous detections")
                     images = self.crop_image_from_(frame, prev_dets)
                     assert(len(images)==len(prev_dets))
                     for image, det in zip(images, prev_dets):
