@@ -136,10 +136,7 @@ def test_consistency2():
     j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["id"], expected_json["media_annotation"]["codes"][0]["id"])
-    print(j2)
-    assert(j1 == j2)
     assert(json.loads(j1) == json.loads(j2))
-    assert(cc.avro_api.doc == expected_json)
 
 def test_consistency3():
     # A video with previous response
@@ -163,4 +160,8 @@ def test_consistency3():
     cc = CaffeClassifier("NHLLogoClassifier", "0.0.2", LOCAL_NET_DATA_DIR,prop_type="logo",prop_id_map=sponsor_map,module_id_map=module_map)
     cc.process(message)
     cc.update_response()
-    assert(cc.avro_api.doc == expected_json)
+    j1 = json.dumps(expected_json, indent=2, sort_keys=True)
+    j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
+    j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][1]["date"], expected_json["media_annotation"]["codes"][1]["date"])
+    j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][1]["id"], expected_json["media_annotation"]["codes"][1]["id"])
+    assert(json.loads(j1) == json.loads(j2))
