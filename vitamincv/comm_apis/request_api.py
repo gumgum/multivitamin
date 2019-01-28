@@ -99,11 +99,11 @@ class RequestAPI():
                     if bin_decoding_flag:
                         avro_io = AvroIO(use_schema_registry=self.prod_flag, use_base64=True)
                         log.info('Decoding binary.')
-                        self.avro_api=AvroAPI(avro_io.decode(self.request['prev_response']))
+                        self.avro_api=AvroAPI(avro_io.decode(self.request['prev_response'],use_base64=True))
                     else:
                         avro_io = AvroIO(use_base64=False)
                         log.info('Decoding json.')
-                        self.avro_api=AvroAPI(avro_io.decode(self.request['prev_response'],False))
+                        self.avro_api=AvroAPI(avro_io.decode(self.request['prev_response'],use_base64=False,binary_flag=False))
                 else:
                     self.avro_api=AvroAPI()
         except Exception as e:
