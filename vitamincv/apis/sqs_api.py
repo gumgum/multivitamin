@@ -2,13 +2,13 @@ import glog as log
 import boto3
 import json
 from vitamincv.comm_apis.request_api import RequestAPI
-from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.comm_api import AsyncAPI
 
 from vitamincv.comm_apis import config
 
 boto3.client('iam') #required to expose iam roles to boto3?
 
-class SQSAPI(CommAPI):
+class SQSAPI(AsyncAPI):
     """Class to pull messages from and push messages to SQS """
     def __init__(self, queue_name):
         """ Construction requires a queue_name

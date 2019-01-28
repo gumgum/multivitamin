@@ -3,7 +3,7 @@ import time
 import glog as log
 import requests as sender
 
-class CommAPI(ABC):
+class AsyncAPI(ABC):
     def __init__(self):
         log.info('Construcing communication api.')
         #log.setLevel("DEBUG")

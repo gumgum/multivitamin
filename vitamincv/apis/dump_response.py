@@ -5,12 +5,12 @@ import tempfile
 import shutil
 import boto3
 
-from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.comm_api import AsyncAPI
 from vitamincv.avro_api.utils import get_current_date
 from vitamincv.avro_api.avro_io import AvroIO
 INDENTATION=2
 
-class DumpResponse(CommAPI):
+class DumpResponse(AsyncAPI):
     def __init__(self, pushing_folder=None, s3_bucket=None, s3_key=None):
         """DumpResponse is a CommAPI object that converts responses to csv and then either pushes 
         to s3_bucket/s3_key or pushing_folder

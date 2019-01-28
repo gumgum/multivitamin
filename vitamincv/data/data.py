@@ -1,14 +1,15 @@
 import glog as log
+from collections import defaultdict
 
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
     """Helper function to create bounding box contour from 4 extrema points"""
-    return [create_2dpoint(xmin, ymin),
-            create_2dpoint(xmax, ymin),
-            create_2dpoint(xmax, ymax),
-            create_2dpoint(xmin, ymax)
-            ]
+    return [create_point(xmin, ymin),
+            create_point(xmax, ymin),
+            create_point(xmax, ymax),
+            create_point(xmin, ymax)
+        ]
 
-def create_2dpoint(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
+def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
     """Create x, y point
 
     Args:
@@ -17,7 +18,7 @@ def create_2dpoint(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         bound (bool): if True, enforces [0, ub]
         ub_x (float): upperbound on x if check == True
         ub_y (float): upperbound on y if check == True
-    
+
     Returns:
         dict: x,y 
     """
@@ -36,8 +37,12 @@ def create_2dpoint(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         "x": x, 
         "y": y
     }
-    
-    class Detection():
+
+class PseudoDict():
+    def asdict(self):
+        return self.__dict__
+
+class Detection(PseudoDict):
     def __init__(self, server="",module_id=0, property_type="label", value="", 
                  value_verbose="", confidence=0.0, fraction=1.0, t=0.0, contour=None,
                  ver="", region_id="", property_id=None, footprint_id="", company="gumgum"):
@@ -63,47 +68,67 @@ def create_2dpoint(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
                 dict: with the above properties
             """
             if not contour:
-                contour = [create_point(0.0, 0.0),
+                self.contour = [create_point(0.0, 0.0),
                         create_point(1.0, 0.0),
                         create_point(1.0, 1.0),
                         create_point(0.0, 1.0)]
-            self.dict = {
-                "server" : server,
-                "module_id" : module_id,
-                "property_type" : property_type,
-                "value" : value,
-                "value_verbose" : value_verbose,
-                "property_id" : property_id,
-                "confidence" : confidence,
-                "fraction" : fraction,
-                "t" : t,
-                "company":company,
-                "ver" : ver,
-                "region_id" : region_id,
-                "contour" : contour,
-                "footprint_id" : footprint_id
-            }
+             self.server = server
+             self.module_id = module_id
+             self.property_type = property_type
+             self.value = value
+             self.value_verbose = value_verbose
+             self.property_id = property_id
+             self.confidence = confidence
+             self.fraction = fraction
+             self.t = t
+             self.company = company
+             self.ver = ver
+             self.region_id = region_id
+             self.contour = contour
+             self.footprint_id = footprint_id
 
-class Detections():
-    def __init__():
-        self.detections = []
-        self.tstamp_map = {}
-        
-class Segment():
-    pass
+class Segment(PseudoDict):
+    def __init__(self, server="", property_type="label", value="", value_verbose="",
+                 confidence=0.0, fraction=1.0, t1=0.0, t2=0.0, region_ids=None,
+                 version="", property_id=0, track_id=None, company="gumgum"):
+    
+        if not region_ids:
+            region_ids = []
+
+        self.server = server
+        self.property_type = property_type
+        self.value = value
+        self.value_verbose = value_verbose
+        self.property_id = property_id
+        self.confidence = confidence
+        self.fraction = fraction
+        self.t1 = t1
+        self.t2 = t2
+        self.ver = version
+        self.region_ids = region_ids
+        self.track_id = track_id
+        self.company = company
 
 class ModuleData():
     def __init__(self, detections=None, segments=None):
+        if not detections:
+            detections = []
         self.detections = detections
-        self.segments = segments
-        self.tstamp_map = create_detections_tstamp_map(detections)
 
-    def create_detections_tstamp_map(detections):
-        det_t_map={}
-        for d in detections:
-            t=d['t']
-            if t in det_t_map.keys():
-                det_t_map[t].append(d)
-            else:
-                det_t_map[t]=[d]
-        return det_t_map
+        if not segments:
+            segments = []
+        self.segments = segments
+        self.det_tstamp_map = None
+
+    def create_detections_tstamp_map(self):
+        if not self.detections:
+            log.warning("self.detections is empty; cannot create det_tstamp_map")
+            return
+        
+        self.det_tstamp_map = defaultdict(list)
+
+        for det in self.detections:
+            t = det.get("t")
+            if t is None:
+                continue
+            self.det_tstamp_map[t].append(det)

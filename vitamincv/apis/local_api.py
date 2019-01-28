@@ -6,7 +6,7 @@ from pathlib import Path
 from queue import Queue
 
 from vitamincv.comm_apis.request_api import RequestAPI
-from vitamincv.comm_apis.comm_api import CommAPI
+from vitamincv.comm_apis.comm_api import AsyncAPI
 from vitamincv.avro_api.utils import get_current_date
 
 
@@ -14,7 +14,7 @@ FILEEXT=".json"
 DEFAULT_FILE = "response" + FILEEXT
 INDENTATION=2
 
-class LocalAPI(CommAPI):
+class LocalAPI(AsyncAPI):
     def __init__(self, pulling_folder=None, pushing_folder=None, default_file=False):
         """LocalAPI is a CommAPI object that pulls queries from a local file
         and pushes responses to a file
