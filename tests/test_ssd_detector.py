@@ -50,6 +50,8 @@ import boto3
 import json
 import os
 from io import BytesIO
+
+from vitamincv.applications.detectors.ssd_detector import SSDDetector
 from vitamincv.module_api.utils import load_idmap
 
 
