@@ -11,12 +11,12 @@ from vitamincv.comm_apis.comm_api import CommAPI
 from vitamincv.comm_apis.sqs_api import SQSAPI
 from vitamincv.comm_apis.local_api import LocalAPI
 from vitamincv.comm_apis.vertex_api import VertexAPI
-from vitamincv.module_api.cvmodule import CVModule
+from vitamincv.module_api.module import Module
 
 from vitamincv.processor import Processor
-from vitamincv.data.request_message import Request
-from vitamincv.data.response_message import Response
-from vitamincv.data.struct import CVData
+from vitamincv.data.request import Request
+from vitamincv.data.response import Response
+from vitamincv.data.data import ModuleData
 
 PORT = os.environ.get('PORT', 5000)
 
@@ -33,17 +33,17 @@ class AsyncServer(Flask):
             output_comms (list[CommAPI]): List of concrete child implementations of CommAPI, 
                                           called for pushing responses to somewhere
         """
-        if isinstance(cvmodules, CVModule):
-            cvmodules = [cvmodules]
+        if isinstance(modules, Module):
+            modules = [modules]
             
-        if not isinstance(cvmodules, list):
+        if not isinstance(modules, list):
             raise TypeError("modules is not a list of CVModule")
 
-        if len(cvmodules)==0:
+        if len(modules)==0:
             raise TypeError("No modules was provided.")
 
-        for m in cvmodules:
-            if not isinstance(m, CVModule):
+        for m in modules:
+            if not isinstance(m, Module):
                 raise TypeError("Not all the modules are of type CVModule")
 
         if not input_comm:
@@ -59,19 +59,18 @@ class AsyncServer(Flask):
             if not isinstance(out, CommAPI):
                 raise TypeError("comm_apis_outputs must be CommAPIs")
             
-        self._controller = Controller(cvmodules)
+        self._controller = Controller(modules)
         self._input_comm = input_comm
         self._output_comms = output_comms
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
             log.info("Output comm type(s): {}".format(type(out)))
-        
-        self.modules_info = [{"name": x.name, "version": x.version} for x in cvmodules]
+
         super().__init__(__name__)
         
         @self.route("/health", methods=["GET"])
         def health_check():
-            return jsonify(self.modules_info)
+            return jsonify(self._controller.modules_info)
 
     def start(self):
         """Entry point for starting a server.

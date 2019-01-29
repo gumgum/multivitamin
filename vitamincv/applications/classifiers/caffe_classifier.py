@@ -23,6 +23,8 @@ except:
 from caffe.proto import caffe_pb2
 
 from vitamincv.module.cvmodule import ImageModule
+from vitamincv.module.utils import min_conf_filter_predictions
+from vitamincv.data.data import create_detection
 
 GPU=True
 DEVICE_ID=0
@@ -67,49 +69,33 @@ class CaffeClassifier(ImageModule):
             self.transformer.set_mean('data', meanfile)
         self.transformer.set_transpose('data', (2,0,1))
 
-    def preprocess_image(image):
+    def preprocess_image(self, image):
         return self.transformer.preprocess('data', image)
 
     def process_image(self, image, tstamp, prev_det=None):
-        self.net.blobs['data'].data[...] = preprocess_image(image)
-        probs = self.net.forward()[LAYER_NAME]
+        self.net.blobs['data'].data[...] = self.preprocess_image(image)
+        probs = self.net.forward()[LAYER_NAME][0]
+        asc_sorted_prob_idxs = np.argsort(probs)
 
-        log.debug('probs: ' + str(probs))
-        for p in probs:
-            log.debug('p: ' + str(p))
-            p_indexes = np.argsort(p)
-            p_indexes = np.flip(p_indexes, 0)
-            while True:
-                if len(p_indexes)==1:
-                    break
-                index=p_indexes[0]
-                label=self.labels[index]
-                log.debug("label: " + str(label))
-            p_indexes = p_indexes[:N_TOP]
-            
-            log.debug("p_indexes: " + str(p_indexes))
-            for i,property_id in enumerate(p_indexes):
-                if i==N_TOP:
-                    break
-                index=p_indexes[i]
-                label=self.labels[index]
-                confidence=p[index]
-                
-                if confidence<CONFIDENCE_MIN:
-                    label='Unknown'
-                det = create_detection(
-                    server=self.name,
-                    ver=self.version,
-                    value=label,
-                    region_id=region_id_prev,
-                    contour=contour_prev,
-                    property_type=self.prop_type,
-                    confidence=confidence,
-                    t=tstamp
-                )
-                log.debug("det: " + str(det))
-                self.module_data.detections.append(det)
+        label_idx = asc_sorted_prob_idxs[-1]
+        confidence = probs[label_idx]
+        label = self.labels[label_idx]
 
+        region_id = None
+        contour = None
+        if prev_det:
+            region_id = prev_det.get("region_id")
+            contour = prev_det.get("contour")
 
-
-
+        det = create_detection(
+            server=self.name,
+            ver=self.version,
+            value=label,
+            region_id=region_id,
+            contour=contour,
+            property_type=self.prop_type,
+            confidence=confidence,
+            t=tstamp
+        )
+        log.debug("det: " + str(det))
+        self.module_data.detections.append(det)

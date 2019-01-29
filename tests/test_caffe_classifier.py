@@ -119,4 +119,5 @@ def test_process():
         "url":"https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
     }
     req = Request(message)
-    cc.process(req)
+    out = cc.process(req)
+    log.info(len(out.detections))

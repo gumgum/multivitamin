@@ -60,6 +60,7 @@ class Request():
         self.flags = self.request.get("flags")
         log.info(f"Setting self.flags to {self.flags}")
 
+    
 def _standardize_url(url):
     log.info("Formatting urls in request")
     if not url:

@@ -1,6 +1,30 @@
 import glog as log
 from collections import defaultdict
 
+class ModuleData():
+    def __init__(self, detections=None, segments=None):
+        if not detections:
+            detections = []
+        self.detections = detections
+
+        if not segments:
+            segments = []
+        self.segments = segments
+        self.det_tstamp_map = None
+
+    def create_detections_tstamp_map(self):
+        if not self.detections:
+            log.warning("self.detections is empty; cannot create det_tstamp_map")
+            return
+        
+        if not self.det_tstamp_map:
+            self.det_tstamp_map = defaultdict(list)
+            for det in self.detections:
+                t = det.get("t")
+                if t is None:
+                    continue
+                self.det_tstamp_map[t].append(det)
+
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
     """Helper function to create bounding box contour from 4 extrema points"""
     return [create_point(xmin, ymin),
@@ -38,7 +62,7 @@ def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         "y": y
     }
 
-def create_detection(server="",module_id=0, property_type="label", value="", value_verbose="",
+def create_detection(server="", module_id=0, property_type="label", value="", value_verbose="",
                      confidence=0.0, fraction=1.0, t=0.0, contour=None,
                      ver="", region_id="", property_id=None, footprint_id="", company="gumgum"):
     """Factory method to create a detection object
@@ -66,6 +90,12 @@ def create_detection(server="",module_id=0, property_type="label", value="", val
                    create_point(1.0, 0.0),
                    create_point(1.0, 1.0),
                    create_point(0.0, 1.0)]
+    
+    if not region_id:
+        region_id = f"{t}_"
+        for pt in contour:
+            region_id += f"({pt['x']},{pt['y']})"
+
     return {
         "server" : server,
         "module_id" : module_id,
@@ -104,27 +134,3 @@ def create_segment(server="", property_type="label", value="", value_verbose="",
         "track_id": track_id,
         "company": company
     }
-
-class ModuleData():
-    def __init__(self, detections=None, segments=None):
-        if not detections:
-            detections = []
-        self.detections = detections
-
-        if not segments:
-            segments = []
-        self.segments = segments
-        self.det_tstamp_map = None
-
-    def create_detections_tstamp_map(self):
-        if not self.detections:
-            log.warning("self.detections is empty; cannot create det_tstamp_map")
-            return
-        
-        self.det_tstamp_map = defaultdict(list)
-
-        for det in self.detections:
-            t = det.get("t")
-            if t is None:
-                continue
-            self.det_tstamp_map[t].append(det)

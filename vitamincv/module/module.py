@@ -10,8 +10,7 @@ from vitamincv.data.request import Request
 from vitamincv.data.data import ModuleData
 from vitamincv.module.utils import p0p1_from_bbox_contour, list_contains_only_none
 
-
-class CVModule(ABC):
+class Module(ABC):
     def __init__(self, server_name, version, prop_type=None,
                  prop_id_map=None, module_id_map=None):
         """CVModule is an abstract class that defines the interface for 
@@ -21,7 +20,7 @@ class CVModule(ABC):
 
         Handles processing of request and previous module_data
         """
-        self.server_name = server_name
+        self.name = server_name
         self.version = version
         self.prop_type = prop_type
         self.prop_id_map = prop_id_map
@@ -39,13 +38,8 @@ class CVModule(ABC):
         assert isinstance(request, Request)
         self.request = request
         self.prev_module_data = prev_module_data
-    
-    def get_module_data(self):
-        """This will iterate over all self.segments and self.detections and 
-        construct the module_data object"""
-        
-class PropertiesModule(CVModule):
-    
+
+class PropertiesModule(Module):
     def process(self, request, prev_module_data=None):
         super().process(request, prev_module_data)
         self.process_properties()
@@ -59,10 +53,8 @@ class PropertiesModule(CVModule):
         """
         pass
 
-class ImageModule(CVModule):
-    
+class ImageModule(Module):
     def process(self, request, prev_module_data=None):
-    
         super().process(request, prev_module_data)
         self.med_ret = MediaRetriever(request.url)
         self.frames_iterator = self.med_ret.get_frames_iterator(request.sample_rate)
@@ -76,8 +68,12 @@ class ImageModule(CVModule):
             log.info(f"tstamp: {tstamp}")
 
             try:
-                prev_dets = prev_module_data.detections.tstamp_map.get(tstamp, None)
-                if prev_dets or not list_contains_only_none(prev_dets):
+                if prev_module_data:
+                    prev_dets = prev_module_data.detections.tstamp_map.get(tstamp, None)
+                    ## todo, look for POIs
+                    if not prev_dets or list_contains_only_none(prev_dets):
+                        log.info("prev_dets is empty")
+                        continue
                     log.debug(f"Processing with {len(prev_dets)} previous detections")
                     images = self.crop_image_from_(frame, prev_dets)
                     assert(len(images)==len(prev_dets))
@@ -87,7 +83,7 @@ class ImageModule(CVModule):
                     self.process_image(frame, tstamp)
             except:
                 log.error(traceback.print_exc())
-        return self.get_module_data()
+        return self.module_data
     
     def crop_image(self, image, prev_detections=None):
         log.info("Cropping images with previous detections")

@@ -22,30 +22,29 @@ import importlib.util
 if importlib.util.find_spec("cupy"):
     import cupy as cp
 
-class AvroAPI():
+class AvroResponse():
     """Wrapper with utilities around a single response document"""
     def __init__(self, doc=None):
+        self.set_doc(doc)
+    
+    def set_doc(self, doc):
         self._clear_maps()
-
         self.detections = None
-
         self.doc = create_response()
-
         self.max_gpu_mem = 0.75
         self.check_for_gpu()
-
         self.detection_querier = None
         self.segment_querier = None
 
         if doc:
             if type(doc) is str:
                 doc = json.load(open(doc))
-
             if 'media_annotation' not in doc:
                 log.debug("setting media_annotation")
                 self.doc["media_annotation"]=doc
             else:
                 self.doc = doc
+
     def reset_queriers(self):
         self.detection_querier = None
         self.segment_querier = None
@@ -413,16 +412,6 @@ class AvroAPI():
         unique_results = set(filtered_results)
         unique_results = [tuple([json.loads(d) for d in dict_set]) for dict_set in unique_results]
         return unique_results
-
-    def create_detections_tstamp_map(self,detections):
-        det_t_map={}
-        for d in detections:
-            t=d['t']
-            if t in det_t_map.keys():
-                det_t_map[t].append(d)
-            else:
-                det_t_map[t]=[d]
-        return det_t_map
     
     def get_detections_from_frame_anns_t_p(self,tstamp,p):
         """Transform all frames_annotations for a certain timestamp and property of interest to a list of a list of detections
