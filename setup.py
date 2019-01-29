@@ -22,7 +22,7 @@ if os.path.exists('/usr/local/cuda/version.txt'):
 
 # Install PIMS if PyAV is installed
 if importlib.util.find_spec("av"):
-    log.warning("PyAV not installed. Will not install PIMS")
+    print("PyAV not installed. Will not install PIMS")
     reqs.append("pims")
 
 class VerifyVersionCommand(install):
