@@ -9,6 +9,22 @@ from vitamincv.media_api import media
 VIDEO_URL = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2_NATIONAL_20180401_1520698069177.t.mp4"
 IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/0/0b/Cat_poster_1.jpg"
 
+VIDEO_CODEC_PROB_1 = "https://s3.amazonaws.com/video-ann/538_Pelicans+vs+Thunder+11%3A5-fhj713lbrhi.30-31.mp4"
+VIDEO_CODEC_PROB_2 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/Replay%20Video%20Capture_2018-11-16_11.52.51-2816an1tb0v.mp4"
+VIDEO_CODEC_PROB_3 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/1%3A3%20Houston%20Rockets%20at%20Golden%20State%20Warriors-6tgm4my1dr6.mp4"
+
+def pytest_addoption(parser):
+    parser.addoption("--all", action="store_true",
+        help="run all combinations")
+
+def pytest_generate_tests(metafunc):
+    if 'param1' in metafunc.fixturenames:
+        if metafunc.config.getoption('all'):
+            urls = [VIDEO_URL, VIDEO_CODEC_PROB_1, VIDEO_CODEC_PROB_2, VIDEO_CODEC_PROB_3]
+        else:
+            end = [VIDEO_URL]
+        metafunc.parametrize("video_url", urls)
+
 def test_bad_url():
     log.info("Testing erronous URL")
     with pytest.raises(FileNotFoundError):
@@ -24,10 +40,13 @@ def test_not_a_valid_filepath():
     with pytest.raises(FileNotFoundError):
         med_ret = media.MediaRetriever("file://fhekslf")
 
-def test_attributes():
-    global efficient_mr, fast_mr
+def create_media_retrievers(url):
     efficient_mr = media.MediaRetriever(VIDEO_URL)
     fast_mr = media.MediaRetriever(VIDEO_URL, limitation="cpu")
+    return efficient_mr, fast_mr
+
+def test_attributes(video_url):
+    efficient_mr, fast_mr = create_media_retrievers(video_url)
 
     assert(efficient_mr.get_fps() == fast_mr.get_fps())
     assert(efficient_mr.get_num_frames() == fast_mr.get_num_frames())
@@ -45,7 +64,8 @@ def test_download():
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
 
-def test_get_frame():
+def test_get_frame(video_url):
+    efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
     length = efficient_mr.get_length()
     random_tstamp = length*random.random()
@@ -53,7 +73,8 @@ def test_get_frame():
     im2 = fast_mr.get_frame(random_tstamp)
     assert(np.array_equal(im1, im2))
 
-def test_frames_iterator():
+def test_frames_iterator(video_url):
+    efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
     length = efficient_mr.get_length()
     random_tstamp1 = length*random.random()
@@ -90,7 +111,8 @@ def _run_frames_iterator(sample_rate, start, stop):
         assert(t1 == t2)
         assert(np.array_equal(im1, im2))
 
-def test_consistency_between_get_frame_and_frames_iterator():
+def test_consistency_between_get_frame_and_frames_iterator(video_url):
+    efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
     length = efficient_mr.get_length()
     random_tstamp = length*random.random()
