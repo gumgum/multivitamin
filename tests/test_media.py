@@ -35,6 +35,7 @@ def create_media_retrievers(url):
     fast_mr = media.MediaRetriever(VIDEO_URL, limitation="cpu")
     return efficient_mr, fast_mr
 
+@pytest.mark.parametrize("video_url", VIDEO_URLS)
 def test_attributes(video_url):
     efficient_mr, fast_mr = create_media_retrievers(video_url)
 
@@ -54,6 +55,7 @@ def test_download():
     assert(filelike_obj)
     assert(len(filelike_obj.read()) > 0)
 
+@pytest.mark.parametrize("video_url", VIDEO_URLS)
 def test_get_frame(video_url):
     efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
@@ -63,6 +65,7 @@ def test_get_frame(video_url):
     im2 = fast_mr.get_frame(random_tstamp)
     assert(np.array_equal(im1, im2))
 
+@pytest.mark.parametrize("video_url", VIDEO_URLS)
 def test_frames_iterator(video_url):
     efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
@@ -101,6 +104,7 @@ def _run_frames_iterator(sample_rate, start, stop):
         assert(t1 == t2)
         assert(np.array_equal(im1, im2))
 
+@pytest.mark.parametrize("video_url", VIDEO_URLS)
 def test_consistency_between_get_frame_and_frames_iterator(video_url):
     efficient_mr, fast_mr = create_media_retrievers(video_url)
     assert(efficient_mr.get_length() == fast_mr.get_length())
