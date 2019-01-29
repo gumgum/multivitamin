@@ -347,7 +347,7 @@ class FramesIterator():
         self.cap = video_cap
 
         fps = None
-        if isinstance(self.cap, cv2.VideoCapture) and start_tstamp != 0.0:
+        if isinstance(self.cap, cv2.VideoCapture):
             fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         if isinstance(self.cap, pims.Video):
