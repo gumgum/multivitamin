@@ -61,6 +61,31 @@ S3_NET_DATA_FOLDER = "models/caffe/ssd/SportsNHLPlacementDetector-v1.2/" # DO NO
 
 LOCAL_NET_DATA_DIR = "/tmp/test_caffe_detector/net_data"
 
+def test_init():
+    global cc
+
+    server_name = "TestDetector"
+    version = "0.0.0"
+    # net_data_dir = "/tmp/test_caffe_classifier/net_data"
+    # prop_type = "label"
+    # prop_id_map = {}
+    # module_id_map
+    if os.path.exists(LOCAL_NET_DATA_DIR):
+        try:
+           cc = CaffeClassifier(server_name, version, LOCAL_NET_DATA_DIR)
+           return
+        except:
+            pass
+    else:
+        os.makedirs(LOCAL_NET_DATA_DIR)
+
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+        filename = os.path.basename(key)
+        print("{}/{}".format(LOCAL_NET_DATA_DIR, filename))
+        with open("{}/{}".format(LOCAL_NET_DATA_DIR, filename), "wb") as file:
+            file.write(net_data_bytes.getvalue())
+
+    cc = CaffeClassifier(server_name, version, LOCAL_NET_DATA_DIR)
 
 def download_expected_response(path):
     s3 = boto3.client("s3")
