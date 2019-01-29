@@ -13,17 +13,7 @@ VIDEO_CODEC_PROB_1 = "https://s3.amazonaws.com/video-ann/538_Pelicans+vs+Thunder
 VIDEO_CODEC_PROB_2 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/Replay%20Video%20Capture_2018-11-16_11.52.51-2816an1tb0v.mp4"
 VIDEO_CODEC_PROB_3 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/1%3A3%20Houston%20Rockets%20at%20Golden%20State%20Warriors-6tgm4my1dr6.mp4"
 
-def pytest_addoption(parser):
-    parser.addoption("--all", action="store_true",
-        help="run all combinations")
-
-def pytest_generate_tests(metafunc):
-    if 'video_url' in metafunc.fixturenames:
-        if metafunc.config.getoption('all'):
-            urls = [VIDEO_URL, VIDEO_CODEC_PROB_1, VIDEO_CODEC_PROB_2, VIDEO_CODEC_PROB_3]
-        else:
-            end = [VIDEO_URL]
-        metafunc.parametrize("video_url", urls)
+VIDEO_URLS = [VIDEO_URL, VIDEO_CODEC_PROB_1, VIDEO_CODEC_PROB_2, VIDEO_CODEC_PROB_3]
 
 def test_bad_url():
     log.info("Testing erronous URL")
