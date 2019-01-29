@@ -136,6 +136,7 @@ def test_consistency2():
     j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["id"], expected_json["media_annotation"]["codes"][0]["id"])
+    assert(j1 == j2)    
     assert(json.loads(j1) == json.loads(j2))
 
 def test_consistency3():
@@ -145,7 +146,8 @@ def test_consistency3():
 
     message = {
         "url":expected_json["media_annotation"]["url"],
-        "prev_response":json.dumps(prev_resp)
+        "prev_response":json.dumps(prev_resp),
+        "bin_decoding":False
     }
     module_map ={}
     module_map['NHLPlacementDetector'] =60
@@ -156,12 +158,20 @@ def test_consistency3():
 
     sponsor_id_map_file= LOCAL_NET_DATA_DIR+"/idmap.txt"
     sponsor_map=load_idmap(sponsor_id_map_file)
+    
+    p={}
+    p['server']="NHLPlacementDetector"
+    p['property_type']='placement'
+    prev_pois=[p]
 
     cc = CaffeClassifier("NHLLogoClassifier", "0.0.2", LOCAL_NET_DATA_DIR,prop_type="logo",prop_id_map=sponsor_map,module_id_map=module_map)
+    cc.set_prev_pois(prev_pois=prev_pois)
     cc.process(message)
     cc.update_response()
     j1 = json.dumps(expected_json, indent=2, sort_keys=True)
     j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
+    #print(j2)
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][1]["date"], expected_json["media_annotation"]["codes"][1]["date"])
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][1]["id"], expected_json["media_annotation"]["codes"][1]["id"])
+    assert(j1 == j2)
     assert(json.loads(j1) == json.loads(j2))
