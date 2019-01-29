@@ -18,7 +18,7 @@ def pytest_addoption(parser):
         help="run all combinations")
 
 def pytest_generate_tests(metafunc):
-    if 'param1' in metafunc.fixturenames:
+    if 'video_url' in metafunc.fixturenames:
         if metafunc.config.getoption('all'):
             urls = [VIDEO_URL, VIDEO_CODEC_PROB_1, VIDEO_CODEC_PROB_2, VIDEO_CODEC_PROB_3]
         else:
