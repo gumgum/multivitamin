@@ -153,6 +153,39 @@ class SSDDetector(CVModule):
         filtered_preds = [preds[preds[:,2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
 
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
+        """Converts predictions to detections
+
+        Args:
+            predictions (list): A list of predictions tuples
+                    (<class index>, <confidence>) for an image
+
+            tstamp (float): A timestamp corresponding to the timestamp of an image
+
+            previous_detection (dict): Not implimented in SSD detector, currently
+
+        """
+        if tstamp is None:
+            tstamp = inspect.signature(create_detection).parameters["t"].default
+
+        for batch_index, pred, confidence, xmin, ymin, xmax, ymax in predictions:
+            if not isinstance(pred, str):
+                label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
+            else:
+                label = pred
+            contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
+            det = create_detection(
+                    server = self.name,
+                    ver = self.version,
+                    value = label,
+                    contour = contour,
+                    property_type = self.prop_type,
+                    confidence = confidence,
+                    t = tstamp
+                )
+            yield det
+
+
     def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
         """Appends results to detections
 
