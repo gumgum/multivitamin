@@ -91,9 +91,9 @@ def test_consistency2():
     placement_id_map_file= LOCAL_NET_DATA_DIR+"/idmap.txt"
     placement_map=load_idmap(placement_id_map_file)
 
-    SSDDetector("NHLPlacementDetector", "0.0.1", LOCAL_NET_DATA_DIR,prop_type="placement",prop_id_map=placement_map,module_id_map=module_map)
-    cc.process(message)
-    cc.update_response()
+    ssd = SSDDetector("NHLPlacementDetector", "0.0.1", LOCAL_NET_DATA_DIR,prop_type="placement",prop_id_map=placement_map,module_id_map=module_map)
+    ssd.process(message)
+    ssd.update_response()
     j1 = json.dumps(expected_json, indent=2, sort_keys=True)
     j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
