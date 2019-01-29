@@ -64,15 +64,16 @@ class AvroIO():
         log.info("Decoding file: {}".format(file_path))
         return self.decode(open(file_path, "rb").read())
 
-    def decode(self, bytes, binary_flag=True):
+    def decode(self, bytes, use_base64=False, binary_flag=True):
         """Decode an Avro Binary using the CV schema from bytes"""
+        self.use_base64 = use_base64
         if self.use_base64:
-            bytes_aux = base64.b64decode(bytes)
+            bytes = base64.b64decode(bytes)
         if binary_flag:
-            return self.impl.decode(bytes_aux)
+            return self.impl.decode(bytes)
         else:
             #log.info(str(bytes_aux))
-            return json.loads(str(bytes_aux))
+            return json.loads(str(bytes))
     
     def write(self, doc, file, serialize=True, indent=None):
         """Write Avro doc 
