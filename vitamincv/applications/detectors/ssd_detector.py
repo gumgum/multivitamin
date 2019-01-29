@@ -39,7 +39,7 @@ from caffe.proto import caffe_pb2 as cpb2
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
-from vitamincv.applications.utils import load_idmap
+from vitamincv.applications.utils import load_idmap, load_label_prototxt
 
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3
@@ -69,8 +69,8 @@ class SSDDetector(CVModule):
             caffe.set_mode_gpu()
             caffe.set_device(int(available_devices[0])) # py-caffe only supports 1 GPU
 
-        idmap_file = os.path.join(net_data_dir, 'idmap.txt')
-        self.labelmap = load_idmap(idmap_file)
+        idmap_file = os.path.join(net_data_dir, 'labelmap.prototxt')
+        self.labelmap = load_label_prototxt(idmap_file)
         log.info(str(len(self.labelmap.keys())) + " labels parsed.")
 
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
