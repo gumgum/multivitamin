@@ -114,7 +114,7 @@ def test_consistency1():
 
 def test_consistency2():
     #  Just a video
-    expected_json = download_expected_response("classfiication_doc_without_prev_resp.json")
+    expected_json = download_expected_response("classification_doc_without_prev_resp.json")
 
     message = {
         "url":expected_json["media_annotation"]["url"]
@@ -136,12 +136,12 @@ def test_consistency2():
     j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
     j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["id"], expected_json["media_annotation"]["codes"][0]["id"])
-    assert(j1 == j2)    
+    assert(j1 == j2)
     assert(json.loads(j1) == json.loads(j2))
 
 def test_consistency3():
     # A video with previous response
-    expected_json = download_expected_response("classfiication_doc_with_prev_resp.json")
+    expected_json = download_expected_response("classification_doc_with_prev_resp.json")
     prev_resp = download_expected_response("detection_doc.json")
 
     message = {
@@ -158,7 +158,7 @@ def test_consistency3():
 
     sponsor_id_map_file= LOCAL_NET_DATA_DIR+"/idmap.txt"
     sponsor_map=load_idmap(sponsor_id_map_file)
-    
+
     p={}
     p['server']="NHLPlacementDetector"
     p['property_type']='placement'
