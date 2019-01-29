@@ -4,6 +4,7 @@ import glog as log
 import datetime
 import os
 import traceback
+from collections.abc import Iterable
 
 from vitamincv.comm_apis.request_api import RequestAPI
 from vitamincv.avro_api.avro_api import AvroAPI, AvroIO
@@ -15,7 +16,7 @@ class CVModule(ABC):
     @abstractmethod
     def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None,process_properties_flag=False):
         """Abstract base class for CVModules
-        
+
         Args:
             server_name (str): name of server/module
             version (str): version of module
@@ -23,14 +24,14 @@ class CVModule(ABC):
         """
         log.info('Constructing cvmodule')
         self.name = server_name
-        self.version = version        
-        self.batch_size = 10 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
+        self.version = version
+        self.batch_size = 1 #This is to be defined depending on the architecture of the machine and model, and in the resolution of the images
         self.prop_type=prop_type
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
 
-        self.min_conf_filter = {}        
- 
+        self.min_conf_filter = {}
+
         #To be overwritten, if needed, by the child
         self.process_properties_flag = process_properties_flag
         self.prev_pois = [] #this are the properties of interest that define the regions of interest, the ones that we'll want to analyze.
@@ -38,11 +39,11 @@ class CVModule(ABC):
         self.code='SUCCESS'
         self.num_problematic_frames=0
         self.detections=[]
-        
+
     def set_prev_pois(self, prev_pois):
         log.info("Setting prev_pois: " + str(prev_pois))
-        self.prev_pois=prev_pois        
-    
+        self.prev_pois=prev_pois
+
     def set_message(self, message):
         if isinstance(message, RequestAPI):
             log.info("message is a Request_API")
@@ -64,20 +65,20 @@ class CVModule(ABC):
         else:
             raise TypeError("Unsupported type of message: {}".format(type(message)))
 
-        self.avro_api=self.request_api.get_avro_api()        
+        self.avro_api=self.request_api.get_avro_api()
         self.media_api=self.request_api.get_media_api()
         self.draw_detections=self.request_api.get("draw_detections")
         self.sample_rate = self.request_api.sample_rate
         if self.request_api.is_in("prev_pois"):#if not, the child will have defined them
             self.prev_pois=self.request_api.get("prev_pois")
         self.code='SUCCESS'
-    
+
     def get_request_api(self):
         return self.request_api
-            
+
     def get_avro_api(self):
         return self.avro_api
-    
+
     def findrois(self):
         log.info("Looking for rois.")
         if len(self.prev_pois)==0:
@@ -97,13 +98,13 @@ class CVModule(ABC):
 
     def batch_generator(self, iterator):
         """Take an iterator, convert it to a chunking generator
-        
+
 
         Args:
             iterator: Any iterable object where each element is a list or a tuple of length N
 
         Yields:
-            list: A list of N batches of size `self.batch_size`. The last 
+            list: A list of N batches of size `self.batch_size`. The last
                     batch may be smaller than the others
         """
         batch = []
@@ -121,14 +122,14 @@ class CVModule(ABC):
         Yields:
             frame: An image a time tstamp of a video or image
             tstamp: The timestamp associated with the frame
-            det: The matching detection object 
+            det: The matching detection object
         """
         log.info("Processing frames")
         frames_iterator=[]
         try:
             frames_iterator = self.media_api.get_frames_iterator(self.request_api.sample_rate)
         except ValueError as e:
-            log.error(e)                
+            log.error(e)
             self.code = "ERROR_NO_IMAGES_LOADED"
             return self.code
 
@@ -155,7 +156,7 @@ class CVModule(ABC):
                     continue
 
             for det in dets:
-                yield frame, tstamp, det 
+                yield frame, tstamp, det
 
     def process(self, message):
         """Process the message, calls process_images(batch, tstamps, contours=None)
@@ -215,7 +216,15 @@ class CVModule(ABC):
                 continue
 
             try:
-                self.append_detections(prediction_batch, tstamp_batch, det_batch)
+                for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
+                    iterable = self.convert_to_detection(predictions=predictions,
+                                             tstamp=tstamp,
+                                             previous_detection=prev_det)
+                    if not isinstance(iterable, Iterable) or isinstance(iterable, dict):
+                        iterable = [iterable]
+
+                    for new_det in iterable:
+                        self.detections.append(new_det)
             except Exception as e:
                 log.error("Appending Detections Failed")
                 log.error(e)
@@ -240,8 +249,7 @@ class CVModule(ABC):
     def postprocess_predictions(self, predictions):
         return predictions
 
-    @abstractmethod
-    def append_detections(self, predicitons, tstamps=None, previous_detections=None):
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         pass
 
     def update_response(self):
@@ -263,14 +271,14 @@ class CVModule(ABC):
         self.avro_api.set_url(self.request_api.get_url())
         self.avro_api.set_url_original(self.request_api.get_url())
         self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
-       
+
         if self.process_properties_flag==False:
             module_id=0
             if self.module_id_map:
                 module_id=self.module_id_map.get(self.name)
                 if module_id is None:
                     log.warning('module '+ self.name +' is not in module_id_map.')
-            log.info("len(self.detections): " + str(len(self.detections)))            
+            log.info("len(self.detections): " + str(len(self.detections)))
             for det in self.detections:
                 value = det.get("value")
                 if value is None:

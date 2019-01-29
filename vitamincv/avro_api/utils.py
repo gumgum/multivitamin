@@ -76,7 +76,7 @@ def points_equal(val0, val1):
     """
     return abs(round_float(val0) - round_float(val1)) < config.POINT_EPS
 
-def times_equal(val0, val1):
+def times_equal(val0, val1, eps=config.TIME_EPS):
     """Function for float quality comparison for time values
 
     Args:
@@ -86,7 +86,9 @@ def times_equal(val0, val1):
     Returns:
         bool: equality
     """
-    return abs(round_float(val0) - round_float(val1)) < config.TIME_EPS
+    if eps is None:
+        eps=config.TIME_EPS
+    return abs(round_float(val0) - round_float(val1)) < eps
 
 def get_current_time():
     """Get string YYYYMMDDHHMMSS for current time

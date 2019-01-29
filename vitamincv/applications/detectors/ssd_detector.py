@@ -39,21 +39,21 @@ from caffe.proto import caffe_pb2 as cpb2
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
-from vitamincv.applications.utils import load_idmap
+from vitamincv.applications.utils import load_idmap, load_label_prototxt
 
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3
 
 class SSDDetector(CVModule):
-    def __init__(self, 
-                server_name, 
-                version, 
+    def __init__(self,
+                server_name,
+                version,
                 net_data_dir,
                 prop_type = None,
                 prop_id_map = None,
                 module_id_map = None,
                 **gpukwargs):
-        super().__init__(server_name, 
+        super().__init__(server_name,
                             version,
                             prop_type = prop_type,
                             prop_id_map = prop_id_map,
@@ -61,7 +61,7 @@ class SSDDetector(CVModule):
 
         if not self.prop_type:
             self.prop_type="object"
-            
+
         gpu_util = GPUUtility(**gpukwargs)
         available_devices = gpu_util.get_gpus()
         log.info("Found GPU devices: {}".format(available_devices))
@@ -69,15 +69,15 @@ class SSDDetector(CVModule):
             caffe.set_mode_gpu()
             caffe.set_device(int(available_devices[0])) # py-caffe only supports 1 GPU
 
-        idmap_file = os.path.join(net_data_dir, 'idmap.txt')
-        self.labelmap = load_idmap(idmap_file)
+        idmap_file = os.path.join(net_data_dir, 'labelmap.prototxt')
+        self.labelmap = load_label_prototxt(idmap_file)
         log.info(str(len(self.labelmap.keys())) + " labels parsed.")
 
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
-        
+
         mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -100,14 +100,14 @@ class SSDDetector(CVModule):
         contours = None
         if previous_detections:
             contours = [det.get("contour") if det is not None else None for det in previous_detections]
-        
+
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
         images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-        
+
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
 
         return np.array(transformed_images)
@@ -119,16 +119,16 @@ class SSDDetector(CVModule):
         h = image.shape[0]
         w = image.shape[1]
         (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-        
+
         crop = image[y0:y1, x0:x1]
         return crop
 
     def process_images(self, images):
         """Network forward pass
-        
-        Args: 
+
+        Args:
             images (np.array): A numpy array of images
-    
+
         Returns:
             nd.array: List of tuples corresponding to each detection in the format of
                   (frame_index, label, confidence, xmin, ymin, xmax, ymax)
@@ -142,7 +142,7 @@ class SSDDetector(CVModule):
         """Filters out predictions out per class based on confidence
 
         Args:
-            predictions (list): List of tuples corresponding to confidences between 
+            predictions (list): List of tuples corresponding to confidences between
                     0 and 1, where each index represents a class
 
         Returns:
@@ -153,56 +153,34 @@ class SSDDetector(CVModule):
         filtered_preds = [preds[preds[:,2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
 
-    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
-        """Appends results to detections
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
+        """Converts predictions to detections
 
         Args:
-            prediction_batch (list): A list of lists of prediction tuples 
+            predictions (list): A list of predictions tuples
                     (<class index>, <confidence>) for an image
 
-            tstamps (list): A list of timestamps corresponding to the timestamp of an image
+            tstamp (float): A timestamp corresponding to the timestamp of an image
 
-            previous_detections (list): A list of previous detections corresponding
-                    to the previous detection of interest of an image
+            previous_detection (dict): Not implimented in SSD detector, currently
+
         """
-        print(previous_detections)
-        if tstamps is None:
-            tstamps = [None for _ in range(len(prediction_batch))]
-        
-        tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
+        if tstamp is None:
+            tstamp = inspect.signature(create_detection).parameters["t"].default
 
-
-        # if previous_detections:
-        #     raise NotImplementedError("previous detections not yet implemented for SSD")
-
-
-        # previous_detections = [None for _ in range(len(prediction_batch))]
-        # baseline_det = create_detection(
-        #                 server = self.name,
-        #                 ver = self.version,
-        #                 property_type = self.prop_type
-        #             )
-        # previous_detections = [baseline_det.copy() if prev_det is None else prev_det for prev_det in previous_detections]
-        # for tstamp, prev_det in zip(tstamps, previous_detections):
-        #     prev_det.update({"t":tstamp})
-
-
-        log.debug("len(prediction_batch): {}".format(len(prediction_batch)))
-        log.debug("len(tstamps): {}".format(len(tstamps)))
-
-        assert(len(prediction_batch)==len(tstamps))
-        for image_preds, tstamp in zip(prediction_batch, tstamps):
-            for batch_index, pred, confidence, xmin, ymin, xmax, ymax in image_preds:
-                if not isinstance(pred, str):
-                    label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
-                contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
-                det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        value = label,
-                        contour = contour,
-                        property_type = self.prop_type,
-                        confidence = confidence,
-                        t = tstamp
-                    )
-                self.detections.append(det)
+        for batch_index, pred, confidence, xmin, ymin, xmax, ymax in predictions:
+            if not isinstance(pred, str):
+                label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
+            else:
+                label = pred
+            contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
+            det = create_detection(
+                    server = self.name,
+                    ver = self.version,
+                    value = label,
+                    contour = contour,
+                    property_type = self.prop_type,
+                    confidence = confidence,
+                    t = tstamp
+                )
+            yield det

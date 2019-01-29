@@ -5,6 +5,7 @@ import numpy as np
 import traceback
 import importlib
 import inspect
+import numbers
 
 from vitamincv.exceptions import ParseError
 
@@ -33,17 +34,17 @@ else:
 
 from caffe.proto import caffe_pb2
 from vitamincv.module_api.cvmodule import CVModule
-from vitamincv.avro_api.cv_schema_factory import * 
+from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour
 
 from vitamincv.module_api.utils import min_conf_filter_predictions
 from vitamincv.module_api.GPUUtilities import GPUUtility
 
 
-LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
-LAYER_NAME = "prob"
-N_TOP = 1
-CONFIDENCE_MIN = 0.1
+# LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
+# LAYER_NAME = "prob"
+# N_TOP = 1
+# CONFIDENCE_MIN = 0.1
 
 class CaffeClassifier(CVModule):
     """ A generic classifer using the Caffe framework
@@ -55,26 +56,54 @@ class CaffeClassifier(CVModule):
                             files named deploy.prototxt, labels.txt, model.caffemodel, and (optionally)
                             mean.binaryproto
         prop_type (str | optional): The property type returned by the classifier (default: `label`)
-        prop_id_map (dict | optional): Converts predicted label to an int 
+        prop_id_map (dict | optional): Converts predicted label to an int
         module_id_map (dict | optional): Converts a server_name to an int
+        confidence_min (float | optional): A float describing the minimum confidence
+                                                   needed to for a prediction to qualify as
+                                                   an output.
+        confidence_min_dict (dict | optional): A dict mapping a label string to a
+                                               confidence value. All undefined
+                                               labels/property_ids will default to
+                                               confidence_min
+        layer_name (str | optinal): The string name of the desired network layer output
+        top_n (int | str): Only use the N most confident, qualifying, predictions
+        postprocess_predictions (func | optional): An optional function to allow for custom
+                                                   postprocessing. Will overwrite default functionality
+        postprocess_args (tuple | optional): Additional args to pass to postprocess_predictions
         gpukwargs: Any added keyword args get passed to the GPUUtility object. Refer to it to see what
                     the keyword args are
 
     """
-    def __init__(self, 
-                server_name, 
-                version, 
+    def __init__(self,
+                server_name,
+                version,
                 net_data_dir,
                 prop_type=None,
                 prop_id_map=None,
                 module_id_map=None,
+                confidence_min=0.1,
+                confidence_min_dict=None,
+                layer_name="prob",
+                top_n=1,
+                postprocess_predictions=None,
+                postprocess_args=None,
                 **gpukwargs):
 
-        super().__init__(server_name, 
-                            version, 
-                            prop_type = prop_type, 
+        super().__init__(server_name,
+                            version,
+                            prop_type = prop_type,
                             prop_id_map = prop_id_map,
                             module_id_map = module_id_map)
+
+        self.confidence_min = confidence_min
+        if confidence_min_dict is None:
+            confidence_min_dict = {}
+        self.layer_name = layer_name
+        self.top_n = top_n
+        self.postprocess_override = postprocess_predictions
+        self.postprocess_args = postprocess_args
+        if not isinstance(self.postprocess_args, tuple):
+            self.postprocess_args = ()
 
         if not self.prop_type:
             self.prop_type = "label"
@@ -95,17 +124,22 @@ class CaffeClassifier(CVModule):
             log.error(err)
             log.error(traceback.format_exc())
             raise ParseError(err)
-        
+
         self.labels = {idx:label for idx,label in enumerate(self.labels)}
         # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
-        self.min_conf_filter = {label:CONFIDENCE_MIN if not label in LOGOEXCLUDE else 1 for idx, label in self.labels.items()} 
+        self.min_conf_filter = {}
+        for idx, label in self.labels.items():
+            min_conf = self.confidence_min
+            if isinstance(confidence_min_dict.get(label), numbers.Number):
+                min_conf = confidence_min_dict[label]
+            self.min_conf_filter[label] = min_conf
 
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
-        
+
         mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
-                
+
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -129,14 +163,14 @@ class CaffeClassifier(CVModule):
         contours = None
         if previous_detections:
             contours = [det.get("contour") if det is not None else None for det in previous_detections]
-        
+
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
         images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-        
+
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
 
         return np.array(transformed_images)
@@ -148,94 +182,94 @@ class CaffeClassifier(CVModule):
         h = image.shape[0]
         w = image.shape[1]
         (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-        
+
         crop = image[y0:y1, x0:x1]
         return crop
 
     def process_images(self, images):
-        """ Network Forward Pass 
+        """ Network Forward Pass
 
         Args:
             images (np.array): A numpy array of images
 
         Returns:
-            list: List of floats corresponding to confidences between 0 and 1, 
+            list: List of floats corresponding to confidences between 0 and 1,
                     where each index represents a class
         """
         self.net.blobs['data'].reshape(*images.shape)
         self.net.blobs['data'].data[...] = images
-        preds = self.net.forward()[LAYER_NAME].copy()
+        preds = self.net.forward()[self.layer_name].copy()
         return preds
 
     def postprocess_predictions(self, predictions_batch):
-        """Filters out predictions out per class based on confidence, 
+        """Filters out predictions out per class based on confidence,
             and returns the top-N qualifying labels
 
         Args:
-            predictions (list): List of floats corresponding to confidences between 
+            predictions (list): List of floats corresponding to confidences between
                     0 and 1, where each index represents a class
 
         Returns:
-            list: A list of tuples (<class index>, <confidence>) for the 
+            list: A list of tuples (<class index>, <confidence>) for the
                     best, qualifying  N-predictions
         """
+        if callable(self.postprocess_override):
+            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
+            return processed_preds
+
         preds = np.array(predictions_batch)
         n_top_preds = []
         for pred in preds:
             pred_idxs_max2min = np.argsort(pred)[::-1]
+            pred = pred[pred_idxs_max2min]
             # Filter by ignore dict
             pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
-            n_top_pred = pred_idxs_max2min[:N_TOP]
-            n_top_conf = pred[n_top_pred]
-            n_top_preds.append(list(zip(n_top_pred, n_top_conf)))
+            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
+            n_top_preds.append(n_top_pred)
 
         return n_top_preds
 
-    def append_detections(self, prediction_batch, tstamps=None, previous_detections=None):
-        """Appends results to detections
+    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
+        """Converts predictions to detections
 
         Args:
-            prediction_batch (list): A list of lists of prediction tuples 
+            predictions (list): A list of predictions tuples
                     (<class index>, <confidence>) for an image
 
-            tstamps (list): A list of timestamps corresponding to the timestamp of an image
+            tstamp (float): A timestamp corresponding to the timestamp of an image
 
-            previous_detections (list): A list of previous detections corresponding
-                    to the previous detection of interest of an image
+            previous_detection (dict): A previous detections corresponding
+                    to the `previous detection of interest` of an image
 
         """
-        if tstamps is None:
-            tstamps = [None for _ in range(len(prediction_batch))]
-        tstamps = [inspect.signature(create_detection).parameters["t"].default if tstamp is None else tstamp for tstamp in tstamps]
+        if tstamp is None:
+            tstamp = inspect.signature(create_detection).parameters["t"].default
 
-        if previous_detections is None:
-            previous_detections = [None for _ in range(len(prediction_batch))]
 
-        baseline_det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        property_type = self.prop_type
-                    )
-        previous_detections = [baseline_det.copy() if prev_det is None else prev_det for prev_det in previous_detections]
-        for tstamp, prev_det in zip(tstamps, previous_detections):
-            prev_det.update({"t":tstamp})
+        if previous_detection is None:
+            previous_detection = create_detection(
+                                        server=self.name,
+                                        ver=self.version,
+                                        property_type=self.prop_type,
+                                        t=tstamp
+                                    )
 
-        assert(len(prediction_batch)==len(tstamps)==len(previous_detections))
-        for image_preds, tstamp, prev_det in zip(prediction_batch, tstamps, previous_detections):
-            for pred, confidence in image_preds:
-                if not type(pred) is str:
-                    label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
-                region_id = prev_det["region_id"]
-                contour = prev_det["contour"]
-                det = create_detection(
-                        server = self.name,
-                        ver = self.version,
-                        value = label,
-                        region_id = region_id,
-                        contour = contour,
-                        property_type = self.prop_type,
-                        confidence = confidence,
-                        t = tstamp
-                    )
-                self.detections.append(det)
+        for pred, confidence in predictions:
+            if not type(pred) is str:
+                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+            else:
+                label = pred
+            region_id = previous_detection["region_id"]
+            contour = previous_detection["contour"]
+            det = create_detection(
+                    server=self.name,
+                    ver=self.version,
+                    value=label,
+                    region_id=region_id,
+                    contour=contour,
+                    property_type=self.prop_type,
+                    confidence=confidence,
+                    t=tstamp
+                )
+            return det
