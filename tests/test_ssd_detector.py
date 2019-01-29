@@ -25,12 +25,12 @@ def test_object_detector():
     s3_client.download_file('cvapis-data', 'ssd-detector/nhlplacementdetector/net_data_v1.1.zip', tmp_filepath)
     log.info("Model downloaded.")
     with open(tmp_filepath, 'rb') as f:
-        log.info("Unzipping it.")    
+        log.info("Unzipping it.")
         z = zipfile.ZipFile(f)
         for name in z.namelist():
             print("    Extracting file", name)
             z.extract(name,"/tmp/")
-    log.info("Unzipped.")   
+    log.info("Unzipped.")
     ssd_detector=SSDDetector(server_name="SSDDetector",version="1.0",net_data_dir="/tmp/net_data/")
     log.info("1---------------------")
     ssd_detector.process(request1)
@@ -41,3 +41,60 @@ def test_object_detector():
     ssd_detector.update_response()
     log.info("---------------------")
     log.info("---------------------")
+
+#############################
+### START OF REAL TESTING ###
+#############################
+
+import boto3
+import json
+import os
+from io import BytesIO
+from vitamincv.module_api.utils import load_idmap
+
+
+S3_BUCKET_NAME = "vitamin-cv-test-data"
+S3_EXPECTED_PREV_RESPONSES = "data/previous_responses"
+S3_NET_DATA_FOLDER = "models/caffe/ssd/SportsNHLPlacementDetector-v1.2/" # DO NOT TOUCH
+
+LOCAL_NET_DATA_DIR = "/tmp/test_caffe_detector/net_data"
+
+
+def download_expected_response(path):
+    s3 = boto3.client("s3")
+    filelike = BytesIO()
+    s3.download_fileobj(S3_BUCKET_NAME, S3_EXPECTED_PREV_RESPONSES+"/"+path, filelike)
+    filelike.seek(0)
+    expected_json = json.loads(filelike.read().decode())
+    return expected_json
+
+def test_consistency1():
+    # Just an image
+    pass
+
+def test_consistency2():
+    #  Just a video
+    expected_json = download_expected_response("detection_doc.json")
+
+    message = {
+        "url":expected_json["media_annotation"]["url"]
+    }
+    module_map ={}
+    module_map['NHLPlacementDetector'] =60
+    module_map['NHLLogoClassifier']=61
+    module_map['NBAPlacementDetector'] =69
+    module_map['NBALogoClassifier']=70
+    module_map['NBALeagueDetector']=71
+
+    placement_id_map_file= SSD_NET_DATA_DIR+"/idmap.txt"
+    placement_map=load_idmap(placement_id_map_file)
+
+    SSDDetector("NHLPlacementDetector", "0.0.1", SSD_NET_DATA_DIR,prop_type="placement",prop_id_map=placement_map,module_id_map=module_map)
+    cc.process(message)
+    cc.update_response()
+    j1 = json.dumps(expected_json, indent=2, sort_keys=True)
+    j2 = json.dumps(cc.avro_api.doc, indent=2, sort_keys=True)
+    j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["date"], expected_json["media_annotation"]["codes"][0]["date"])
+    j2 = j2.replace(cc.avro_api.doc["media_annotation"]["codes"][0]["id"], expected_json["media_annotation"]["codes"][0]["id"])
+    assert(j1 == j2)
+    assert(json.loads(j1) == json.loads(j2))
