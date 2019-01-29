@@ -85,7 +85,7 @@ def test_init():
         with open("{}/{}".format(LOCAL_NET_DATA_DIR, filename), "wb") as file:
             file.write(net_data_bytes.getvalue())
 
-    cc = CaffeClassifier(server_name, version, LOCAL_NET_DATA_DIR)
+    ssd = SSDDetector(server_name, version, LOCAL_NET_DATA_DIR)
 
 def download_expected_response(path):
     s3 = boto3.client("s3")
