@@ -74,10 +74,10 @@ def test_frames_iterator(video_url):
     random_tstamp2 = length*random.random()
     sample_rate1 = 0.1*efficient_mr.get_fps()
     sample_rate2 = 10*efficient_mr.get_fps()
-    _run_frames_iterator(sample_rate1, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
-    _run_frames_iterator(sample_rate2, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
+    _run_frames_iterator(efficient_mr, fast_mr, sample_rate1, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
+    _run_frames_iterator(efficient_mr, fast_mr, sample_rate2, min(random_tstamp1, random_tstamp2), max(random_tstamp1, random_tstamp2))
 
-def _run_frames_iterator(sample_rate, start, stop):
+def _run_frames_iterator(efficient_mr, fast_mr, sample_rate, start, stop):
     efficient_iterator = efficient_mr.get_frames_iterator(sample_rate=sample_rate,
                                                 start_tstamp=start,
                                                 end_tstamp=stop)
