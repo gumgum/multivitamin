@@ -22,7 +22,7 @@ def load_idmap(idmap_file):
 def load_label_prototxt(prototxt_file):
     from google.protobuf import text_format
     from caffe.proto import caffe_pb2 as cpb2
-    with open(labelmap_file) as f:
+    with open(prototxt_file) as f:
         labelmap_aux = cpb2.LabelMap()
         text_format.Merge(str(f.read()), labelmap_aux)
         num_labels=len(labelmap_aux.item)
