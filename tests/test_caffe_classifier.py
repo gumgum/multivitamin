@@ -16,8 +16,6 @@ S3_IMAGES_FOLDER = "data/media/images/generic/"
 S3_PREV_DETECTIONS_FOLDER = "data/sample_detections/random_boxes/"
 S3_NET_DATA_FOLDER = "models/caffe/SportsNHLLogoClassifier-v1.2/"
 
-log.setLevel("DEBUG")
-
 def test_init():
     global cc
 
@@ -120,10 +118,10 @@ def test_process():
         "url":"https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
     }
     request = Request(message)
-    cur_moduledata = cc.process(request)
-    log.info(len(cur_moduledata.detections))
+    codes = cc.process(request)
+    log.info(len(cc.module_data.detections))
 
     response = AvroResponse()
-    response.moduledata_to_response(cur_moduledata)
+    response.moduledata_to_response(cc.module_data)
     doc = response.to_dict()
     log.info(f"doc: {json.dumps(doc, indent=2)}")

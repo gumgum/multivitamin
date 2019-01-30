@@ -60,7 +60,9 @@ class AvroResponse(Response):
         """
         dets = self._get_detections_from_response(properties_of_interest)
         segs = self._get_segments_from_response(properties_of_interest) #TODO
-        return ModuleData(detections=dets, segments=segs)
+        md = ModuleData(detections=dets, segments=segs)
+        md.create_detections_tstamp_map()
+        return md
     
     def to_dict(self):
         return self.doc
