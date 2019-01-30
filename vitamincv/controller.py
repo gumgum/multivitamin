@@ -32,10 +32,10 @@ class Controller():
         response = None
         if request.prev_response:
             log.info("Loading from prev_response")
-            response = AvroResponse(request.prev_response)
+            response = AvroResponse(doc=request.prev_response, request=request)
         else:
             log.info("No prev_response")
-            response = AvroResponse()
+            response = AvroResponse(request=request)
         
         if request.prev_response_url:
             raise NotImplementedError()

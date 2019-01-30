@@ -27,8 +27,9 @@ if importlib.util.find_spec("cupy"):
 
 class AvroResponse(Response):
     """Wrapper with utilities around a single response document"""
-    def __init__(self, doc=None):
+    def __init__(self, doc=None, request=None):
         self.set_doc(doc)
+        self.request = request
 
     def mediadata_to_response(self, mediadata):
         """Conver ModuleData to response"""

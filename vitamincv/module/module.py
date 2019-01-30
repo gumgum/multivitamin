@@ -42,4 +42,5 @@ class Module(ABC):
         self.request = request
         self.prev_media_data = prev_media_data
         self.media_data.meta["url"] = request.url
+        self.media_data.meta["sample_rate"] = request.sample_rate
 

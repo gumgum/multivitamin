@@ -7,7 +7,8 @@ import glog as log
 from vitamincv.data import MediaData
 
 class Response(ABC):
-    def __init__(self, document):
+    @abstractmethod
+    def __init__(self, doc=None, request=None):
         pass
     
     @abstractmethod

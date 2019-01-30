@@ -37,12 +37,13 @@ class MediaData():
     def __repr__(self):
         return f"{self.meta}\nnum_detections: {len(self.detections)}"
 
-def create_metadata(name="", ver="", url="", dims=None, footprint=None):
+def create_metadata(name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None):
     return {
         "name" : name,
         "ver" : ver,
         "url" : url,
         "dims" : dims,
+        "sample_rate" : sample_rate,
         "footprint" : footprint
     }
 
