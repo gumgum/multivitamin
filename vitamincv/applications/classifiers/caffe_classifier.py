@@ -243,6 +243,10 @@ class CaffeClassifier(CVModule):
                     to the `previous detection of interest` of an image
 
         """
+        if predictions == []:
+            log.warning("Predictions is an empty list. This should not happen. Returning None")
+            return None
+
         if tstamp is None:
             tstamp = inspect.signature(create_detection).parameters["t"].default
 

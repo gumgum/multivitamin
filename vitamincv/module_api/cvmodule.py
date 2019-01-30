@@ -217,12 +217,14 @@ class CVModule(ABC):
 
             try:
                 for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
+                    if predictions == []:
+                        continue
                     iterable = self.convert_to_detection(predictions=predictions,
                                              tstamp=tstamp,
                                              previous_detection=prev_det)
                     if not isinstance(iterable, Iterable) or isinstance(iterable, dict):
                         iterable = [iterable]
-
+                    
                     for new_det in iterable:
                         self.detections.append(new_det)
             except Exception as e:
