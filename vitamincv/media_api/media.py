@@ -406,6 +406,7 @@ if __name__ == "__main__":
     from tabulate import tabulate
     from datetime import datetime
     import random
+    from tqdm import tqdm
     print("SPEED TEST!!!")
 
     VIDEO_URL = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2_NATIONAL_20180401_1520698069177.t.mp4"
@@ -416,8 +417,8 @@ if __name__ == "__main__":
     VIDEO_URLS = [VIDEO_URL, VIDEO_CODEC_PROB_1, VIDEO_CODEC_PROB_2, VIDEO_CODEC_PROB_3]
 
     def create_media_retrievers(url):
-        efficient_mr = media.MediaRetriever(VIDEO_URL)
-        fast_mr = media.MediaRetriever(VIDEO_URL, limitation="cpu")
+        efficient_mr = MediaRetriever(VIDEO_URL)
+        fast_mr = MediaRetriever(VIDEO_URL, limitation="cpu")
         return efficient_mr, fast_mr
 
     def _benchmark_get_frame(mrs, num_samples=100, num_tests=100):
@@ -426,12 +427,13 @@ if __name__ == "__main__":
         for mr in mrs:
             random_tstamps = random_samples*mr.length
             results = []
-            for _ in range(num_tests):
+            for _ in tqdm(range(num_tests), desc="get frame"):
                 start = datetime.now()
                 for tstamp in random_samples:
                     mr.get_frame(tstamp)
                 end = datetime.now()
-                results.append(end-start)
+                x = end-start
+                results.append(x.total_seconds())
             averaged_results.append(np.average(results))
         return averaged_results
 
@@ -441,24 +443,30 @@ if __name__ == "__main__":
         for mr in mrs:
             random_start = random_sample*mr.length
             results = []
-            for _ in range(num_tests):
+            for _ in tqdm(range(num_tests), desc="iterator test"):
                 start = datetime.now()
                 for idx, _ in enumerate(mr.get_frames_iterator(start_tstamp=random_start)):
                     if idx >= num_samples:
                         break
                 end = datetime.now()
-                results.append(end-start)
+                x = end-start
+                results.append(x.total_seconds())
             averaged_results.append(np.average(results))
         return averaged_results
 
+    rs = []
     for url in VIDEO_URLS:
         mrs = create_media_retrievers(url)
         headers = ["Test Type", "Efficient", "Fast"]
 
         test_order = ["get_frame", "iterator"]
-        get_frame_results = _benchmark_get_frame(mrs)
-        iterator_results = _benchmark_frames_iterator(mrs)
+        get_frame_results = _benchmark_get_frame(mrs, num_tests=1)
+        iterator_results = _benchmark_frames_iterator(mrs, num_tests=1)
+        
+        results = list(zip(test_order, get_frame_results, iterator_results))
+        rs.append(results)
 
-        results = [test_order, get_frame_results, iterator_results]
-        print("RESULTS ON: "+url+"\n")
+    print("\n"*5)
+    for url, results in zip(VIDEO_URLS, rs):
+        print("RESULTS ON: "+url)
         print(tabulate(results ,headers=headers))
