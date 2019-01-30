@@ -5,7 +5,8 @@ import glog as log
 import credstash
 import requests as sender
 
-from vitamincv.comm_apis.sqs_api import SQSAPI
+from vitamincv.apis.sqs_api import SQSAPI
+
 
 class VertexAPI(SQSAPI):
     def __init__(self, queue_name):
@@ -23,17 +24,16 @@ class VertexAPI(SQSAPI):
     def pull(self, n=1):
         return super().pull(n)
 
-    def push(self, request_apis, delete_flag=True):
-        if type(request_apis)!=type([]):
-            request_apis=[request_apis]
+    def push(self, responses, dst_url=None, delete_flag=True):
+        if not isinstance(responses, list):
+            responses = [responses]
+
         log.debug("Pushing " + str(len(request_apis)) + " items")
-        for r in request_apis:
-            response=r.get_response()            
-            dst_url=r.get_destination_url()#This will include the request id as a parameter of the url
+        for res in responses:
             if dst_url:
-                log.info("Pushing to {}".format(dst_url))
-                ret = sender.post(dst_url, headers=self.auth_header, data=response)
-                log.info("requests.post(...) response: {}".format(ret))
+                log.info(f"Pushing to {dst_url}")
+                ret = sender.post(dst_url, headers=self.auth_header, data=res.to_dict())
+                log.info(f"requests.post(...) response: {ret}")
             else:
                 log.info("No dst_url in request. Not pushing response.")
             if delete_flag:

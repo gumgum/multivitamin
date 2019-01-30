@@ -5,10 +5,10 @@ import glog as log
 from vitamincv.module import Module
 
 class PropertiesModule(Module):
-    def process(self, request, prev_module_data=None):
-        super().process(request, prev_module_data)
+    def process(self, request, prev_media_data=None):
+        super().process(request, prev_media_data)
         self.process_properties()
-        return self.module_data
+        return "SUCCESS"
 
     @abstractmethod
     def process_properties(self):

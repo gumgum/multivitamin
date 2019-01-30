@@ -148,21 +148,6 @@ class AvroIO():
             return False
         return True
     
-    @staticmethod
-    def read_json(file_path):
-        """Convenience method for reading jsons"""
-        return json.load(open(file_path))
-    
-    @staticmethod
-    def write_json(json_str, file_path, indent=None):
-        """Convenience method for writing jsons"""
-        with open(file_path, "w") as wf:
-            if type(json_str) is dict:
-                json.dump(json_str, wf, indent=indent)
-            elif type(json_str) is str:
-                wf.write(json_str)
-            else:
-                raise ValueError("json_str input is not a str or dict. Of type: {}".format(type(json_str)))
 
 ##################################
 # Private implementation classes #

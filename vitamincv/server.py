@@ -7,27 +7,27 @@ import socket
 
 from flask import Flask, jsonify
 
-from vitamincv.comm_apis.comm_api import CommAPI
-from vitamincv.comm_apis.sqs_api import SQSAPI
-from vitamincv.comm_apis.local_api import LocalAPI
-from vitamincv.comm_apis.vertex_api import VertexAPI
-from vitamincv.module_api.module import Module
+from vitamincv.apis.comm_api import CommAPI
+from vitamincv.apis.sqs_api import SQSAPI
+from vitamincv.apis.local_api import LocalAPI
+from vitamincv.apis.vertex_api import VertexAPI
+from vitamincv.module import Module
 
-from vitamincv.processor import Processor
+from vitamincv.controller import Controller
 from vitamincv.data.request import Request
-from vitamincv.data.response import Response
-from vitamincv.data.data import ModuleData
+from vitamincv.data.response_interface import Response
+from vitamincv.data import MediaData
 
 PORT = os.environ.get('PORT', 5000)
 
-class AsyncServer(Flask):
-    def __init__(self, cvmodules, input_comm, output_comms=None):
-        """AsyncServer serves as the public interface for CV services through VitaminCV
+class Server(Flask):
+    def __init__(self, modules, input_comm, output_comms=None):
+        """Serves as the public interface for CV services through VitaminCV
 
         It's role is to start the healthcheck endpoint and initiate the services
 
         Args:
-            cvmodules (list[CVModule]): list of concrete child implementation of CVModule
+            modules (list[Module]): list of concrete child implementation of CVModule
             input_comm (CommAPI): Concrete child implementation of CommAPI, called for pulling 
                                   responses to process
             output_comms (list[CommAPI]): List of concrete child implementations of CommAPI, 
@@ -59,9 +59,9 @@ class AsyncServer(Flask):
             if not isinstance(out, CommAPI):
                 raise TypeError("comm_apis_outputs must be CommAPIs")
             
-        self._controller = Controller(modules)
-        self._input_comm = input_comm
-        self._output_comms = output_comms
+        self.controller = Controller(modules)
+        self.input_comm = input_comm
+        self.output_comms = output_comms
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
             log.info("Output comm type(s): {}".format(type(out)))
@@ -77,24 +77,25 @@ class AsyncServer(Flask):
 
             Note: this starts a healthcheck endpoint in a separate thread
         """
-        log.info("Starting HealthCheck endpoint at /health on port {}".format(PORT))
+        log.info(f"Starting HealthCheck endpoint at /health on port {PORT}")
         threading.Thread(target=self.run, kwargs={"host":"0.0.0.0","port": PORT}, daemon=True).start()
-        log.info("Starting CVmodule server")
+        log.info("Starting server...")
         self._start()
 
     def _start(self):
         while True:
             try:
                 log.info("Pulling request")
-                request = self.input_comm.pull()
-                response = self._controller.process_request(request)
-                log.info("Pushing reponse to output_comms")
-                for output_comm in self.output_comms:
-                    try:
-                        ret = output_comm.push(response)
-                    except Exception as e:
-                        log.info(e)
-                        log.info(traceback.format_exc())
+                requests = self.input_comm.pull()
+                for request in requests:
+                    response = self.controller.process_request(request)
+                    log.info("Pushing reponse to output_comms")
+                    for output_comm in self.output_comms:
+                        try:
+                            ret = output_comm.push(response)
+                        except Exception as e:
+                            log.info(e)
+                            log.info(traceback.format_exc())
             except Exception as e:
                 log.info(e)
                 log.info(traceback.format_exc())

@@ -5,16 +5,16 @@ import json
 from pathlib import Path
 from queue import Queue
 
-from vitamincv.comm_apis.request_api import RequestAPI
-from vitamincv.comm_apis.comm_api import AsyncAPI
-from vitamincv.avro_api.utils import get_current_date
-
+from vitamincv.data.request import Request
+from vitamincv.apis.comm_api import CommAPI
+from vitamincv.data.utils import get_current_date
 
 FILEEXT=".json"
 DEFAULT_FILE = "response" + FILEEXT
 INDENTATION=2
 
-class LocalAPI(AsyncAPI):
+
+class LocalAPI(CommAPI):
     def __init__(self, pulling_folder=None, pushing_folder=None, default_file=False):
         """LocalAPI is a CommAPI object that pulls queries from a local file
         and pushes responses to a file
@@ -31,12 +31,12 @@ class LocalAPI(AsyncAPI):
         if pulling_folder:
             p = Path(pulling_folder)
             if not p.exists():
-                raise ValueError("{} does not exist.".format(pulling_folder))
+                raise ValueError(f"{pulling_folder} does not exist.")
             paths = list(p.glob('**/*{}'.format(FILEEXT)))
             for path in paths:
                 with path.open() as rf:
                     for row in rf:
-                        self.json_queue.put(row)
+                        self.json_queue.put(json.loads(row))
         
         if not os.path.exists(pushing_folder):
             os.makedirs(pushing_folder)
@@ -48,7 +48,7 @@ class LocalAPI(AsyncAPI):
             n (int): batch size
         
         Returns:
-            list (RequestAPI): list of RequestAPI objects to process
+            list (Request): list of Request objects to process
         """
         log.info("Pulling local query jsons.")
         requests = []
@@ -57,37 +57,36 @@ class LocalAPI(AsyncAPI):
                 log.info("Queue of jsons is empty. Exiting.")
                 sys.exit("No more jsons to process. Exiting.")
             m = self.json_queue.get()
-            log.info("Appending request: {}".format(m))
-            requests.append(RequestAPI(request=m))
+            log.info(f"Appending request: {m}")
+            requests.append(Request(m))
         return requests
 
-    def push(self, request_apis):
-        """Push a list of RequestAPI objects to be written to pushing_folder
+    def push(self, responses):
+        """Push a list of Response objects to be written to pushing_folder
 
         Args:
-            request_apis (list[RequestAPI]): list of requests to be pushed/written to disk
+            request_apis (list[Response]): list of responses to be pushed/written to disk
         
         Returns:
             list[str]: list of response filenames written
         """
-        if not isinstance(request_apis, list):
-            request_apis = [request_apis]
+        if not isinstance(responses, list):
+            responses = [responses]
 
-        log.debug("Pushing {} items to folder: {}".format(len(request_apis), self.pushing_folder))
+        log.debug(f"Pushing {len(responses)} items to folder: {self.pushing_folder}")
         outfns = []
-        for r in request_apis:
-            response = r.get_response()
-            json_fn = self.get_json_fn(r.avro_api)
+        for res in responses:
+            json_fn = self.get_json_fn(res)
 
             if not os.path.exists(os.path.dirname(json_fn)):
                 os.makedirs(os.path.dirname(json_fn))
-            log.info("Writing {}".format(json_fn))
+            log.info(f"Writing {json_fn}")
             with open(json_fn, 'w') as wf:
-                wf.write(r.get_response(indent=INDENTATION))
+                wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
             outfns.append(json_fn)
         return outfns
 
-    def get_json_fn(self, aapi):
+    def get_json_fn(self, response):
         """Create a fn from url string from avro_api
 
         Args:
@@ -99,7 +98,7 @@ class LocalAPI(AsyncAPI):
         if self.default_file:
             return os.path.join(self.pushing_folder, DEFAULT_FILE)
 
-        media_url = aapi.get_url()
-        media_name = os.path.splitext(os.path.basename(media_url))[0]
-        return os.path.join(self.pushing_folder, "{}".format(get_current_date()), "{}.json".format(media_name))
+        media_url = response.get_url()
+        media_name = os.path.basename(media_url)
+        return os.path.join(self.pushing_folder, f"{get_current_date}", f"{media_name}.json")
 

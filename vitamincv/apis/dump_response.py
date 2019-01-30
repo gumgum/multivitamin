@@ -1,16 +1,18 @@
 import os
 import sys
+import json
 import glog as log
 import tempfile
 import shutil
 import boto3
 
-from vitamincv.comm_apis.comm_api import AsyncAPI
-from vitamincv.avro_api.utils import get_current_date
-from vitamincv.avro_api.avro_io import AvroIO
+from vitamincv.apis.comm_api import CommAPI
+from vitamincv.data.utils import get_current_date, write_json
+from vitamincv.data.response_interface import Response
+
 INDENTATION=2
 
-class DumpResponse(AsyncAPI):
+class DumpResponse(CommAPI):
     def __init__(self, pushing_folder=None, s3_bucket=None, s3_key=None):
         """DumpResponse is a CommAPI object that converts responses to csv and then either pushes 
         to s3_bucket/s3_key or pushing_folder
@@ -37,20 +39,18 @@ class DumpResponse(AsyncAPI):
     def pull(self, n=1):
         raise ValueError("Response2s3 cannot be used as a pulling CommAPI, only pushing")
 
-    def push(self, request_apis):
-        """Push a list of RequestAPI objects to be written to pushing_folder
+    def push(self, responses):
+        """Push a list of Response objects to be written to pushing_folder
 
         Args:
-            request_apis (list[RequestAPI]): list of requests to be pushed/written to disk
+            request_apis (list[Response]): list of requests to be pushed/written to disk
         """
-        if not isinstance(request_apis, list):
-            request_apis = [request_apis]
+        if not isinstance(responses, list):
+            responses = [responses]
 
-        for req in request_apis:
-            response = req.get_response(indent=INDENTATION)
-            
+        for res in responses:
             outfn = None
-            fname_local = self.get_fname(req.avro_api)
+            fname_local = self.get_fname(res)
             if self.pushing_folder:
                 outfn = os.path.join(self.pushing_folder, get_current_date(), fname_local)
             else:
@@ -61,7 +61,7 @@ class DumpResponse(AsyncAPI):
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
 
-            AvroIO.write_json(req.avro_api.get_json(indent=INDENTATION), outfn, indent=INDENTATION)
+            write_json(res.to_dict(), outfn, indent=INDENTATION)
 
             if self.s3_bucket and self.s3_key:
                 s3client = boto3.client('s3')
@@ -76,7 +76,7 @@ class DumpResponse(AsyncAPI):
                     shutil.rmtree(tmp_dir)
 
 
-    def get_fname(self, aapi):
+    def get_fname(self, response):
         """Create a fn from url string from avro_api
 
         Args:
@@ -85,5 +85,5 @@ class DumpResponse(AsyncAPI):
         Returns:
             str: unique identifier
         """
-        media_url = aapi.get_url()
-        return os.path.splitext(os.path.basename(media_url))[0] + ".json"
+        media_url = response.get_url()
+        return os.path.basename(media_url) + ".json"

@@ -34,8 +34,8 @@ else:
 
 from caffe.proto import caffe_pb2
 from vitamincv.module import ImagesModule
-from vitamincv.data.utils import p0p1_from_bbox_contour
-from vitamincv.module.utils import min_conf_filter_predictions, crop_image_from_contour
+from vitamincv.data.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from vitamincv.module.utils import min_conf_filter_predictions
 from vitamincv.module.GPUUtilities import GPUUtility
 from vitamincv.data.data import create_detection
 
@@ -141,7 +141,7 @@ class CaffeClassifier(ImagesModule):
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
-        images = [crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
+        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
 
         transformed_images = [self.transformer.preprocess('data', image) for image in images]
 

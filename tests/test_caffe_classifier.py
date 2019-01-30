@@ -122,6 +122,6 @@ def test_process():
     log.info(len(cc.module_data.detections))
 
     response = AvroResponse()
-    response.moduledata_to_response(cc.module_data)
+    response.mediadata_to_response(cc.module_data)
     doc = response.to_dict()
     log.info(f"doc: {json.dumps(doc, indent=2)}")

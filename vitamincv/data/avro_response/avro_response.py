@@ -12,9 +12,10 @@ import traceback
 
 from datetime import datetime
 
+from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
+from vitamincv.data import MediaData
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import *
-from vitamincv.data.avro_response.utils import points_equal, times_equal, create_region_id, get_current_time
 from vitamincv.data.avro_response.avro_io import AvroIO
 from vitamincv.data.avro_response.avro_query import *
 from vitamincv.data.response_interface import Response
@@ -29,38 +30,39 @@ class AvroResponse(Response):
     def __init__(self, doc=None):
         self.set_doc(doc)
 
-    def moduledata_to_response(self, moduledata):
+    def mediadata_to_response(self, mediadata):
         """Conver ModuleData to response"""
 
-        log.debug(f"moduledata: {moduledata}")
+        log.info("Converting mediadata to response")
         date = get_current_time()
         num_footprints = len(self.get_footprints())
         footprint_id = date + str(num_footprints+1)
-        footprint = create_footprint(code=moduledata.code, ver=moduledata.meta.get("ver"),
+        footprint = create_footprint(code=mediadata.code, ver=mediadata.meta.get("ver"),
                                      company="gumgum", labels=None, server_track="",
-                                     server=moduledata.meta.get("name"), date=date, annotator="",
+                                     server=mediadata.meta.get("name"), date=date, annotator="",
                                      tstamps=None, id=footprint_id)
         self.append_footprint(footprint)
-        self.set_url(moduledata.meta.get("url"))
-        self.set_url_original(moduledata.meta.get("url"))
+        self.set_url(mediadata.meta.get("url"))
+        self.set_url_original(mediadata.meta.get("url"))
         if self.get_dims() == (0, 0):
-            self.set_dims(*moduledata.meta.get("dims"))
+            self.set_dims(*mediadata.meta.get("dims"))
 
-        for det in moduledata.detections:
+        for det in mediadata.detections:
             self.append_detection(det)
         
-        #for seg in moduledata.segments:
+        #for seg in mediadata.segments:
         #    self.append_segments(seg)
     
-    def response_to_moduledata(properties_of_interest=None):
+    def response_to_mediadata(self, properties_of_interest=None):
         """Convert response data to ModuleData type
 
         Args:
             properties_of_interest (dict): dictionary with properties of interest
         """
+        log.info("Converting response to mediadata")
         dets = self._get_detections_from_response(properties_of_interest)
         segs = self._get_segments_from_response(properties_of_interest) #TODO
-        md = ModuleData(detections=dets, segments=segs)
+        md = MediaData(detections=dets, segments=segs)
         md.create_detections_tstamp_map()
         return md
     
@@ -85,17 +87,21 @@ class AvroResponse(Response):
         if props is None:
             props = [{"name":"*"}] #hacky way to query all frames?
 
-        if self.detection_querier is None:
-            self.build_detection_querier()
+        try:
+            if self.detection_querier is None:
+                self.build_detection_querier()
 
-        Q = AvroQueryBlock()
-        Q.set_operation("OR")
-        for prop in props:
-            q = AvroQuery()
-            q.set(prop)
-            Q.add(q)
+            Q = AvroQueryBlock()
+            Q.set_operation("OR")
+            for prop in props:
+                q = AvroQuery()
+                q.set(prop)
+                Q.add(q)
 
-        return self.detection_querier.query(Q)
+            return self.detection_querier.query(Q)
+        except:
+            log.info("Could not query detections")
+            return None
 
     def _get_segments_from_response(self, props):
         return None
@@ -1008,6 +1014,7 @@ class AvroResponse(Response):
         self.detection_querier = AvroQuerier()
         log.info("Getting detections")
         dets=self.get_detections_from_frame_anns()
+        log.debug(f"Found {len(dets)} detections")
         self.detection_querier.load(dets)
 
     def build_segment_querier(self):

@@ -66,13 +66,3 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
 def list_contains_only_none(l):
     return l==[None]*len(l)
 
-def crop_image_from_contour(image, contour):
-    if contour is None:
-        return image
-
-    h = image.shape[0]
-    w = image.shape[1]
-    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-
-    crop = image[y0:y1, x0:x1]
-    return crop

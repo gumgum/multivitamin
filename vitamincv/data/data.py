@@ -1,7 +1,9 @@
 import glog as log
 from collections import defaultdict
 
-class ModuleData():
+from vitamincv.data.utils import create_region_id
+
+class MediaData():
     def __init__(self, detections=None, segments=None, meta=None, code=None,
                  prop_id_map=None, module_id_map=None):
         if not detections:
@@ -14,7 +16,7 @@ class ModuleData():
 
         self.meta = meta
         self.code = code
-        self.det_tstamp_map = None
+        self.det_tstamp_map = {}
 
     def create_detections_tstamp_map(self):
         if not self.detections:
@@ -108,9 +110,7 @@ def create_detection(server="", module_id=0, property_type="label", value="", va
                    create_point(0.0, 1.0)]
     
     if not region_id:
-        region_id = f"{t}_"
-        for pt in contour:
-            region_id += f"({pt['x']},{pt['y']})"
+        region_id = create_region_id(t, contour)
 
     return {
         "server" : server,

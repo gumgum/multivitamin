@@ -5,9 +5,9 @@ import os
 import traceback
 from abc import ABC, abstractmethod
 
-from vitamincv.media.media import MediaRetriever
+from vitamincv.media import MediaRetriever
 from vitamincv.data.request import Request
-from vitamincv.data.data import ModuleData, create_metadata
+from vitamincv.data import MediaData, create_metadata
 from vitamincv.data.utils import p0p1_from_bbox_contour
 from vitamincv.module.utils import list_contains_only_none
 
@@ -18,7 +18,7 @@ class Module(ABC):
 
         ImageModule, PropertiesModule
 
-        Handles processing of request and previous module_data
+        Handles processing of request and previous media_data
         """
         self.name = server_name
         self.version = version
@@ -26,7 +26,7 @@ class Module(ABC):
         self.prop_id_map = prop_id_map
         self.module_id_map = module_id_map
         self.prev_pois = None
-        self.module_data = ModuleData(meta=create_metadata(self.name, self.version), 
+        self.media_data = MediaData(meta=create_metadata(self.name, self.version), 
                                       prop_id_map=prop_id_map, module_id_map=module_id_map)
         self.code='SUCCESS' #TODO
 
@@ -37,9 +37,9 @@ class Module(ABC):
         return self.prev_pois
 
     @abstractmethod
-    def process(self, request, prev_module_data=None):
+    def process(self, request, prev_media_data=None):
         assert isinstance(request, Request)
         self.request = request
-        self.prev_module_data = prev_module_data
-        self.module_data.meta["url"] = request.url
+        self.prev_media_data = prev_media_data
+        self.media_data.meta["url"] = request.url
 

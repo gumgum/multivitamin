@@ -1,43 +1,57 @@
-import sys
 import os
+import json
+
 import glog as log
-from vitamincv.applications.detectors.ssd_detector import SSDDetector
+import numpy as np
 import boto3
-import zipfile
+import cv2
 
-request1='{"url":"https://www.astrosafari.com/download/file.php?id=1608&sid=79f086b975b702945ca90b0ac3bd0202","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=5&moduleId=1&imageUrl\
-=https%3A%2F%2Fwww.astrosafari.com%2Fdownload%2Ffile.php%3Fid%3D1608%26sid%3D79f086b975b702945ca90b0ac3bd0202&order=2&async=true","prev_response":"AAAAAEAGMi4wJjIwMTgtMTAtMTZUMTc6MjM6MjAAAAAAAAAAAAAAAhxOU0\
-ZXQ2xhc3NpZmllcgAKNC4wLjEOU1VDQ0VTUwxndW1ndW0cMjAxODEwMTYxNzIzMjAObWFjaGluZQAAOk5TRldDbGFzc2lmaWVyXzIwMTgxMDE2MTcyMzIwALwBaHR0cHM6Ly93d3cuYXN0cm9zYWZhcmkuY29tL2Rvd25sb2FkL2ZpbGUucGhwP2lkPTE2MDgmYW1wO3NpZD0\
-3OWYwODZiOTc1YjcwMjk0NWNhOTBiMGFjM2JkMDIwMrwBaHR0cHM6Ly93d3cuYXN0cm9zYWZhcmkuY29tL2Rvd25sb2FkL2ZpbGUucGhwP2lkPTE2MDgmYW1wO3NpZD03OWYwODZiOTc1YjcwMjk0NWNhOTBiMGFjM2JkMDIwMgCACsAHAgAAAAAChgEwLjAwMDBfKDAuMDAw\
-MCwwLjAwMDApKDEuMDAwMCwwLjAwMDApKDEuMDAwMCwxLjAwMDApKDAuMDAwMCwxLjAwMDApAAgAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwACEgIcTlNGV0NsYXNzaWZpZXIACjQuMC4xDGd1bWd1bQxzYWZldHkIc2FmZQAc1nk/CtcjPAAAgD8AOk5TRldDb\
-GFzc2lmaWVyXzIwMTgxMDE2MTcyMzIwAAAAAAIAAAAAAAAAAAISAhxOU0ZXQ2xhc3NpZmllchJoaXN0b2dyYW0KNC4wLjEMZ3VtZ3VtDHNhZmV0eQhzYWZlABzWeT8K1yM8AACAPwA6TlNGV0NsYXNzaWZpZXJfMjAxODEwMTYxNzIzMjAAAAAAAAA=","bin_encoding":"\
-true","bin_decoding":"true"}'
-request2='{"url":"http://pbs.twimg.com/media/Dpq4c0OXcAII7J2.jpg:large","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=41&moduleId=1000&imageUrl=http%3A%2F%2Fpbs.twimg.com%2Fmedia%2FDpq4c0OXcAII7J2.jpg%3Alarge&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
-request3='{"url":"http://pbs.twimg.com/media/Dpq40egWkAAtocH.jpg:large","dst_url":"https://vertex-api-v3.gumgum.com/v1/module-responses?featureId=26&moduleId=1004&imageUrl=http%3A%2F%2Fpbs.twimg.com%2Fmedia%2FDpq40egWkAAtocH.jpg%3Alarge&order=1&async=true","prev_response":"","bin_encoding":"true","bin_decoding":"true"}'
+from vitamincv.applications.detectors.ssd_detector import SSDDetector
+from vitamincv.data.request import Request
+from vitamincv.data.avro_response import AvroResponse
+from utils import generate_fileobj_from_s3_folder
 
-message=""
-def test_object_detector():
-    log.info("Testing SSD detector.")
-    log.info("Downloading net_data")
-    s3_client = boto3.client('s3')
-    log.info("Downloading model.")
-    tmp_filepath='/tmp/net_data.zip'
-    s3_client.download_file('cvapis-data', 'ssd-detector/nhlplacementdetector/net_data_v1.1.zip', tmp_filepath)
-    log.info("Model downloaded.")
-    with open(tmp_filepath, 'rb') as f:
-        log.info("Unzipping it.")    
-        z = zipfile.ZipFile(f)
-        for name in z.namelist():
-            print("    Extracting file", name)
-            z.extract(name,"/tmp/")
-    log.info("Unzipped.")   
-    ssd_detector=SSDDetector(server_name="SSDDetector",version="1.0",net_data_dir="/tmp/net_data/")
-    log.info("1---------------------")
-    ssd_detector.process(request1)
-    log.info("2---------------------")
-    ssd_detector.process(request2)
-    log.info("3---------------------")
-    ssd_detector.process(request3)
-    ssd_detector.update_response()
-    log.info("---------------------")
-    log.info("---------------------")
+S3_BUCKET_NAME = "vitamin-cv-test-data"
+S3_IMAGES_FOLDER = "data/media/images/generic/"
+S3_PREV_DETECTIONS_FOLDER = "data/sample_detections/random_boxes/"
+S3_NET_DATA_FOLDER = "models/caffe/ssd/SportsNHLPlacementDetector-v1.2/"
+
+def test_init():
+    global cc
+
+    server_name = "TestClassifier"
+    version = "0.0.0"
+    net_data_dir = "/tmp/test_ssd_detector/net_data"
+    # prop_type = "label"
+    # prop_id_map = {}
+    # module_id_map
+    if os.path.exists(net_data_dir):
+        try:
+           cc = SSDDetector(server_name, version, net_data_dir)
+           return
+        except:
+            pass
+    else:
+        os.makedirs(net_data_dir)
+
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+        filename = os.path.basename(key)
+        log.info("{}/{}".format(net_data_dir, filename))
+        with open("{}/{}".format(net_data_dir, filename), "wb") as file:
+            file.write(net_data_bytes.getvalue())
+
+    cc = SSDDetector(server_name, version, net_data_dir)
+
+def test_process():
+    # Test on short video
+    message = {
+        "url":"https://s3.amazonaws.com/video-ann-testing/short_flamesatblues.mp4"
+    }
+    request = Request(message)
+    codes = cc.process(request)
+    log.info(len(cc.module_data.detections))
+
+    response = AvroResponse()
+    response.mediadata_to_response(cc.module_data)
+    doc = response.to_dict()
+    log.info(f"doc: {json.dumps(doc, indent=2)}")

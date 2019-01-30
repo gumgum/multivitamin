@@ -18,14 +18,14 @@ class ImagesModule(Module):
         self.batch_size = batch_size
         log.info(f"Creating ImagesModule with batch_size: {batch_size}")
 
-    def process(self, request, prev_module_data=None):
+    def process(self, request, prev_media_data=None):
         """Process the message, calls process_images(batch, tstamps, contours=None)
 
         Returns:
             str code
         """
         log.info("Processing message")
-        super().process(request, prev_module_data)
+        super().process(request, prev_media_data)
         self._load_media()
         self.num_problematic_frames = 0
         for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
@@ -46,7 +46,7 @@ class ImagesModule(Module):
                         iterable = [iterable]
 
                     for new_det in iterable:
-                        self.detections.append(new_det)
+                        self.media_data.detections.append(new_det)
             except Exception as e:
                 log.error(e)
                 log.error(traceback.print_exc())
@@ -106,9 +106,9 @@ class ImagesModule(Module):
 
             log.info('tstamp: ' + str(tstamp))
             dets = [None]
-            if self.prev_module_data: #We are expected to focus on previous detections
-                if tstamp in self.module_data.det_tstamp_map:
-                    dets = self.module_data.det_tstamp_map[tstamp]
+            if self.prev_media_data: #We are expected to focus on previous detections
+                if tstamp in self.media_data.det_tstamp_map:
+                    dets = self.media_data.det_tstamp_map[tstamp]
 
                 if len(dets) == 0:
                     log.debug("No detections for tstamp " + str(tstamp))
@@ -120,10 +120,10 @@ class ImagesModule(Module):
     def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         pass
 
-    # def process(self, request, prev_module_data=None):
-    #     super().process(request, prev_module_data)
+    # def process(self, request, prev_media_data=None):
+    #     super().process(request, prev_media_data)
     #     self.med_ret = MediaRetriever(request.url)
-    #     self.module_data.meta["dims"] = self.med_ret.get_w_h()
+    #     self.media_data.meta["dims"] = self.med_ret.get_w_h()
     #     self.frames_iterator = self.med_ret.get_frames_iterator(request.sample_rate)
     #     for i, (frame, tstamp) in enumerate(self.frames_iterator):
     #         if frame is None:
@@ -135,8 +135,8 @@ class ImagesModule(Module):
     #         log.info(f"tstamp: {tstamp}")
 
     #         try:
-    #             if prev_module_data:
-    #                 prev_dets = prev_module_data.detections.tstamp_map.get(tstamp, None)
+    #             if prev_media_data:
+    #                 prev_dets = prev_media_data.detections.tstamp_map.get(tstamp, None)
     #                 ## todo, look for POIs
     #                 if not prev_dets or list_contains_only_none(prev_dets):
     #                     log.info("prev_dets is empty")
@@ -150,7 +150,7 @@ class ImagesModule(Module):
     #                 self.process_image(frame, tstamp)
     #         except:
     #             log.error(traceback.print_exc())
-    #     return self.module_data
+    #     return self.media_data
     
     def crop_image(self, image, prev_detections=None):
         log.info("Cropping images with previous detections")
@@ -188,4 +188,4 @@ class ImagesModule(Module):
     
     def _load_media(self):
         self.media = MediaRetriever(self.request.url)
-        self.module_data.meta["dims"] = self.media.get_w_h()
+        self.media_data.meta["dims"] = self.media.get_w_h()

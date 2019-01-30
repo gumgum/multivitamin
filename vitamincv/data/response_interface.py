@@ -4,7 +4,7 @@ import json
 from abc import ABC, abstractmethod
 import glog as log
 
-from vitamincv.data.data import ModuleData
+from vitamincv.data import MediaData
 
 class Response(ABC):
     def __init__(self, document):
@@ -15,11 +15,11 @@ class Response(ABC):
         pass
 
     @abstractmethod
-    def response_to_moduledata(properties_of_interest=None):
+    def response_to_mediadata(properties_of_interest=None):
         pass
     
     @abstractmethod
-    def moduledata_to_response(self, module_data):
+    def mediadata_to_response(self, module_data):
         pass
     
     @abstractmethod
@@ -28,4 +28,8 @@ class Response(ABC):
     
     @abstractmethod
     def to_dict(self):
+        pass
+
+    @abstractmethod
+    def get_url(self):
         pass
