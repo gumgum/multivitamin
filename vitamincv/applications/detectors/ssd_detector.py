@@ -24,7 +24,6 @@ import vitamincv.module_api.server as Server
 from vitamincv.avro_api.cv_schema_factory import *
 
 import cv2
-from vitamincv.avro_api.utils import p0p1_from_bbox_contour
 import pickle
 
 GPU=True

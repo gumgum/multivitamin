@@ -2,8 +2,8 @@ import glog as log
 from collections import defaultdict
 
 class ModuleData():
-    def __init__(self, detections=None, segments=None, name="", version="", 
-                 url="", dims=None, code=None):
+    def __init__(self, detections=None, segments=None, meta=None, code=None,
+                 prop_id_map=None, module_id_map=None):
         if not detections:
             detections = []
         self.detections = detections
@@ -12,12 +12,9 @@ class ModuleData():
             segments = []
         self.segments = segments
 
-        self.name = name
-        self.version = version
+        self.meta = meta
         self.code = code
-        self.dims = dims
         self.det_tstamp_map = None
-
 
     def create_detections_tstamp_map(self):
         if not self.detections:
@@ -31,6 +28,18 @@ class ModuleData():
                 if t is None:
                     continue
                 self.det_tstamp_map[t].append(det)
+
+    def __repr__(self):
+        return f"{self.meta}\nnum_detections: {len(self.detections)}"
+
+def create_metadata(name="", ver="", url="", dims=None, footprint=None):
+    return {
+        "name" : name,
+        "ver" : ver,
+        "url" : url,
+        "dims" : dims,
+        "footprint" : footprint
+    }
 
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
     """Helper function to create bounding box contour from 4 extrema points"""

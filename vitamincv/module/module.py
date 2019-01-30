@@ -7,8 +7,9 @@ from abc import ABC, abstractmethod
 
 from vitamincv.media.media import MediaRetriever
 from vitamincv.data.request import Request
-from vitamincv.data.data import ModuleData
-from vitamincv.module.utils import p0p1_from_bbox_contour, list_contains_only_none
+from vitamincv.data.data import ModuleData, create_metadata
+from vitamincv.data.utils import p0p1_from_bbox_contour
+from vitamincv.module.utils import list_contains_only_none
 
 class Module(ABC):
     def __init__(self, server_name, version, prop_type=None,
@@ -25,7 +26,8 @@ class Module(ABC):
         self.prop_type = prop_type
         self.prop_id_map = prop_id_map
         self.module_id_map = module_id_map
-        self.module_data = ModuleData()
+        self.module_data = ModuleData(meta=create_metadata(self.name, self.version), 
+                                      prop_id_map=prop_id_map, module_id_map=module_id_map)
 
     def set_prev_props_of_interest(self, pois):
         self.prev_pois = pois
@@ -38,6 +40,7 @@ class Module(ABC):
         assert isinstance(request, Request)
         self.request = request
         self.prev_module_data = prev_module_data
+        self.module_data.meta["url"] = request.url
 
 class PropertiesModule(Module):
     def process(self, request, prev_module_data=None):
@@ -57,6 +60,7 @@ class ImageModule(Module):
     def process(self, request, prev_module_data=None):
         super().process(request, prev_module_data)
         self.med_ret = MediaRetriever(request.url)
+        self.module_data.meta["dims"] = self.med_ret.get_w_h()
         self.frames_iterator = self.med_ret.get_frames_iterator(request.sample_rate)
         for i, (frame, tstamp) in enumerate(self.frames_iterator):
             if frame is None:

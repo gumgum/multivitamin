@@ -14,7 +14,7 @@ from datetime import datetime
 
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import *
-from vitamincv.data.avro_response.utils import points_equal, times_equal, create_region_id
+from vitamincv.data.avro_response.utils import points_equal, times_equal, create_region_id, get_current_time
 from vitamincv.data.avro_response.avro_io import AvroIO
 from vitamincv.data.avro_response.avro_query import *
 from vitamincv.data.response_interface import Response
@@ -30,8 +30,27 @@ class AvroResponse(Response):
         self.set_doc(doc)
 
     def moduledata_to_response(self, moduledata):
+        """Conver ModuleData to response"""
+
+        log.debug(f"moduledata: {moduledata}")
+        date = get_current_time()
+        num_footprints = len(self.get_footprints())
+        footprint_id = date + str(num_footprints+1)
+        footprint = create_footprint(code=moduledata.code, ver=moduledata.meta.get("ver"),
+                                     company="gumgum", labels=None, server_track="",
+                                     server=moduledata.meta.get("name"), date=date, annotator="",
+                                     tstamps=None, id=footprint_id)
+        self.append_footprint(footprint)
+        self.set_url(moduledata.meta.get("url"))
+        self.set_url_original(moduledata.meta.get("url"))
+        if self.get_dims() == (0, 0):
+            self.set_dims(*moduledata.meta.get("dims"))
+
         for det in moduledata.detections:
             self.append_detection(det)
+        
+        #for seg in moduledata.segments:
+        #    self.append_segments(seg)
     
     def response_to_moduledata(properties_of_interest=None):
         """Convert response data to ModuleData type
