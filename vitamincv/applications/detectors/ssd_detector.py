@@ -173,6 +173,7 @@ class SSDDetector(CVModule):
                 label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
             else:
                 label = pred
+            #if there is a previous detection, the contour is not this.
             contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax)
             det = create_detection(
                     server = self.name,
