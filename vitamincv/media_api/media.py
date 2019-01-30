@@ -379,6 +379,7 @@ class FramesIterator():
 
     def __next__(self):
         ret = True
+        frame = None
         while(ret and self.cur_tstamp <= self.end_tstamp):
             if isinstance(self.cap, cv2.VideoCapture):
                 tstamp = self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
@@ -387,7 +388,6 @@ class FramesIterator():
                     ret, frame = self.cap.retrieve()
                     self.cur_tstamp = tstamp
                     self.first_frame = False
-                    return frame, self._round_tstamp(tstamp)
             if isinstance(self.cap, pims.Video):
                 try:
                     frame_idx = round(self.cur_tstamp*self.cap.frame_rate)
@@ -395,10 +395,10 @@ class FramesIterator():
                     frame = np.array(frame)[:, :, ::-1]
                     self.cur_tstamp += self.period
                     tstamp = frame_idx/self.cap.frame_rate
-                    return frame, self._round_tstamp(tstamp)
                 except ValueError:
                     ret = False
-
+        if frame is not None:
+            return frame, self._round_tstamp(tstamp)
         log.info("No more frames to read")
         raise StopIteration()
 
