@@ -388,6 +388,7 @@ class FramesIterator():
                     ret, frame = self.cap.retrieve()
                     self.cur_tstamp = tstamp
                     self.first_frame = False
+                    return frame, self._round_tstamp(tstamp)
             if isinstance(self.cap, pims.Video):
                 try:
                     frame_idx = round(self.cur_tstamp*self.cap.frame_rate)
@@ -395,10 +396,10 @@ class FramesIterator():
                     frame = np.array(frame)[:, :, ::-1]
                     self.cur_tstamp += self.period
                     tstamp = frame_idx/self.cap.frame_rate
+                    return frame, self._round_tstamp(tstamp)
                 except ValueError:
                     ret = False
-            if frame is not None:
-                return frame, self._round_tstamp(tstamp)
+
         log.info("No more frames to read")
         raise StopIteration()
 
@@ -460,12 +461,12 @@ if __name__ == "__main__":
         headers = ["Test Type", "Efficient", "Fast"]
 
         test_order = ["get_frame", "iterator (sample_rate=100)", "iterator (sample_rate=2)", "iterator (sample_rate=0.2)"]
-        get_frame_results = _benchmark_get_frame(mrs, num_tests=5)
+        get_frame_results = _benchmark_get_frame(mrs, num_tests=1)
         iterator_results1 = _benchmark_frames_iterator(mrs, 100, num_tests=5)
         iterator_results2 = _benchmark_frames_iterator(mrs, 2, num_tests=5)
         iterator_results3 = _benchmark_frames_iterator(mrs, 0.2, num_tests=5)
 
-        results = list(zip(test_order, *zip(*[get_frame_results,iterator_results1,iterator_results2,iterator_results3])))
+        results = list(zip(test_order, get_frame_results, iterator_results1, iterator_results2, iterator_results3))
         rs.append(results)
 
     print("\n"*4)
