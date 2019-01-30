@@ -354,7 +354,7 @@ class FramesIterator():
         if isinstance(self.cap, pims.Video):
             fps = self.cap.frame_rate
 
-        self.period = self.period = max(1.0/sample_rate, 1.0/fps)
+        self.period = max(1.0/sample_rate, 1.0/fps)
         log.info("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
@@ -437,7 +437,7 @@ if __name__ == "__main__":
             averaged_results.append(np.average(results))
         return averaged_results
 
-    def _benchmark_frames_iterator(mrs, num_samples=100, num_tests=100):
+    def _benchmark_frames_iterator(mrs, sample_rate, num_samples=100, num_tests=100):
         averaged_results = []
         random_sample = random.random()
         for mr in mrs:
@@ -445,7 +445,7 @@ if __name__ == "__main__":
             results = []
             for _ in tqdm(range(num_tests), desc="iterator test"):
                 start = datetime.now()
-                for idx, _ in enumerate(mr.get_frames_iterator(start_tstamp=random_start)):
+                for idx, _ in enumerate(mr.get_frames_iterator(sample_rate=sample_rate, start_tstamp=random_start)):
                     if idx >= num_samples:
                         break
                 end = datetime.now()
@@ -459,14 +459,16 @@ if __name__ == "__main__":
         mrs = create_media_retrievers(url)
         headers = ["Test Type", "Efficient", "Fast"]
 
-        test_order = ["get_frame", "iterator"]
+        test_order = ["get_frame", "iterator (sample_rate=100)", "iterator (sample_rate=2)", "iterator (sample_rate=0.2)"]
         get_frame_results = _benchmark_get_frame(mrs, num_tests=1)
-        iterator_results = _benchmark_frames_iterator(mrs, num_tests=1)
-        
-        results = list(zip(test_order, get_frame_results, iterator_results))
+        iterator_results1 = _benchmark_frames_iterator(mrs, 100, num_tests=5)
+        iterator_results2 = _benchmark_frames_iterator(mrs, 2, num_tests=5)
+        iterator_results3 = _benchmark_frames_iterator(mrs, 0.2, num_tests=5)
+
+        results = list(zip(test_order, get_frame_results, iterator_results1, iterator_results2, iterator_results3))
         rs.append(results)
 
-    print("\n"*5)
+    print("\n"*4)
     for url, results in zip(VIDEO_URLS, rs):
-        print("RESULTS ON: "+url)
+        print("\nRESULTS ON: "+url)
         print(tabulate(results ,headers=headers))
