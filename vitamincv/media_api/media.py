@@ -397,8 +397,8 @@ class FramesIterator():
                     tstamp = frame_idx/self.cap.frame_rate
                 except ValueError:
                     ret = False
-        if frame is not None:
-            return frame, self._round_tstamp(tstamp)
+            if frame is not None:
+                return frame, self._round_tstamp(tstamp)
         log.info("No more frames to read")
         raise StopIteration()
 
