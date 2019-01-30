@@ -92,7 +92,7 @@ def _run_frames_iterator(efficient_mr, fast_mr, sample_rate, start, stop):
             im1, t1 = next(efficient_iterator)
         except StopIteration:
             log.info("Efficient Video Ended Early")
-            stopped2 = True
+            stopped1 = True
 
         try:
             im2, t2 = next(fast_iterator)
@@ -101,8 +101,8 @@ def _run_frames_iterator(efficient_mr, fast_mr, sample_rate, start, stop):
             stopped2 = True
 
         assert(stopped1 == stopped2)
-        assert(t1 == t2)
         assert(np.array_equal(im1, im2))
+        assert(t1 == t2)
 
 @pytest.mark.parametrize("video_url", VIDEO_URLS)
 def test_consistency_between_get_frame_and_frames_iterator(video_url):
