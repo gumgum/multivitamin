@@ -91,10 +91,10 @@ def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         dict: x,y 
     """
     if not isinstance(x, float):
-        pass#log.warning("x should be a float")
+        pass
     x = float(x)
     if not isinstance(y, float):
-        pass#log.warning("y should be a float")
+        pass
     y = float(y)
     lowerbound = 0.0
     if bound:
