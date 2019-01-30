@@ -8,6 +8,7 @@ import cv2
 
 from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 from vitamincv.data.request import Request
+from vitamincv.data.avro_response import AvroResponse
 from utils import generate_fileobj_from_s3_folder
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"
@@ -118,6 +119,11 @@ def test_process():
     message = {
         "url":"https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
     }
-    req = Request(message)
-    out = cc.process(req)
-    log.info(len(out.detections))
+    request = Request(message)
+    cur_moduledata = cc.process(request)
+    log.info(len(cur_moduledata.detections))
+
+    response = AvroResponse()
+    response.moduledata_to_response(cur_moduledata)
+    doc = response.to_dict()
+    log.info(f"doc: {json.dumps(doc, indent=2)}")

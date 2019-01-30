@@ -5,9 +5,9 @@ import glog as log
 from abc import ABC, abstractmethod
 
 from vitamincv.module.module import Module
-
 from vitamincv.data.request import Request
-from vitamincv.module.utils import get_current_time
+from vitamincv.data.avro_response.avro_response import AvroResponse
+
 
 class Controller():
     def __init__(self, cvmodules):
@@ -21,16 +21,23 @@ class Controller():
         """Send request_message through all the cvmodules
 
         Args:
-            request_message (Request): incoming request
-            previous_response_message (Response): previous response message
+            request (Request): incoming request
+
         Returns:
             Response: outgoing response message
         """"
         if not isinstance(request, Request):
             raise ValueError(f"request_message is of type {type(request)}, not Request")
         
-        response = Response(bin_encoding=request.bin_encoding, bin_decoding=request.bin_decoding,
-                            prev_response=request.prev_response, prev_response_url=request.prev_response_url)
+        response = None
+        if request.prev_response:
+            log.info("Loading from prev_response")
+            response = AvroResponse(request.prev_response)
+        else:
+            response = AvroResponse()
+        
+        if request.prev_response_url:
+            raise NotImplementedError()
 
         for module in self._cvmodules:
             log.info(f"Processing request for cvmodule: {type(module)}")

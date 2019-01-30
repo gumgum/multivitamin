@@ -7,9 +7,9 @@ import datetime
 import tqdm
 import cv2
 
-from vitamincv.avro_api import config
-from vitamincv.avro_api.cv_schema_factory import *
-from vitamincv.media_api.media import MediaRetriever
+from vitamincv.data.avro_response import config
+from vitamincv.data.avro_response.cv_schema_factory import *
+from vitamincv.media.media import MediaRetriever
 
 def round_float(val):
     """Function to round a float to our set number of sigificant digits

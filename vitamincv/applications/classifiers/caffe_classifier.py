@@ -22,7 +22,7 @@ except:
                   enviroment variable SSD_CAFFE_PYTHON.")
 from caffe.proto import caffe_pb2
 
-from vitamincv.module.cvmodule import ImageModule
+from vitamincv.module.module import ImageModule
 from vitamincv.module.utils import min_conf_filter_predictions
 from vitamincv.data.data import create_detection
 

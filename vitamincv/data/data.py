@@ -2,7 +2,8 @@ import glog as log
 from collections import defaultdict
 
 class ModuleData():
-    def __init__(self, detections=None, segments=None):
+    def __init__(self, detections=None, segments=None, name="", version="", 
+                 url="", dims=None, code=None):
         if not detections:
             detections = []
         self.detections = detections
@@ -10,7 +11,13 @@ class ModuleData():
         if not segments:
             segments = []
         self.segments = segments
+
+        self.name = name
+        self.version = version
+        self.code = code
+        self.dims = dims
         self.det_tstamp_map = None
+
 
     def create_detections_tstamp_map(self):
         if not self.detections:

@@ -12,21 +12,73 @@ import traceback
 
 from datetime import datetime
 
-from vitamincv.avro_api import config
-from vitamincv.avro_api.cv_schema_factory import *
-from vitamincv.avro_api.utils import points_equal, times_equal, create_region_id
-from vitamincv.avro_api.avro_io import AvroIO
-from vitamincv.avro_api.avro_query import *
+from vitamincv.data.avro_response import config
+from vitamincv.data.avro_response.cv_schema_factory import *
+from vitamincv.data.avro_response.utils import points_equal, times_equal, create_region_id
+from vitamincv.data.avro_response.avro_io import AvroIO
+from vitamincv.data.avro_response.avro_query import *
+from vitamincv.data.response_interface import Response
 
 import importlib.util
 if importlib.util.find_spec("cupy"):
     import cupy as cp
 
-class AvroResponse():
+
+class AvroResponse(Response):
     """Wrapper with utilities around a single response document"""
     def __init__(self, doc=None):
         self.set_doc(doc)
+
+    def moduledata_to_response(self, moduledata):
+        for det in moduledata.detections:
+            self.append_detection(det)
     
+    def response_to_moduledata(properties_of_interest=None):
+        """Convert response data to ModuleData type
+
+        Args:
+            properties_of_interest (dict): dictionary with properties of interest
+        """
+        dets = self._get_detections_from_response(properties_of_interest)
+        segs = self._get_segments_from_response(properties_of_interest) #TODO
+        return ModuleData(detections=dets, segments=segs)
+    
+    def to_dict(self):
+        return self.doc
+    
+    def to_bytes(self):
+        return None
+
+    def _get_detections_from_response(self, props):
+        """Given a list of frames_ann properties get the corresponding detections where one property is fully met
+
+        Args:
+            props: A dict, or list of dicts, of detection key/value pairs
+
+        Returns:
+            list[dict]: list of detections matching one of the props
+        """
+        if type(props) is dict:
+            props = [props]
+
+        if props is None:
+            props = [{"name":"*"}] #hacky way to query all frames?
+
+        if self.detection_querier is None:
+            self.build_detection_querier()
+
+        Q = AvroQueryBlock()
+        Q.set_operation("OR")
+        for prop in props:
+            q = AvroQuery()
+            q.set(prop)
+            Q.add(q)
+
+        return self.detection_querier.query(Q)
+
+    def _get_segments_from_response(self, props):
+        return None
+
     def set_doc(self, doc):
         self._clear_maps()
         self.detections = None
@@ -330,29 +382,7 @@ class AvroResponse():
         return all_detections
 
 
-    def get_detections_from_props(self, props):
-        """Given a list of frames_ann properties get the corresponding detections where one property is fully met
 
-        Args:
-            props: A dict, or list of dicts, of detection key/value pairs
-
-        Returns:
-            list[dict]: list of detections matching one of the props           
-        """
-        if type(props) is dict:
-            props = [props]
-
-        if self.detection_querier is None:
-            self.build_detection_querier()
-
-        Q = AvroQueryBlock()
-        Q.set_operation("OR")
-        for prop in props:
-            q = AvroQuery()
-            q.set(prop)
-            Q.add(q)
-
-        return self.detection_querier.query(Q)
 
     def get_detections_grouped_by_region_id(self, *props):
         """Given a list of frames_ann properties get the corresponding detections where one property is fully met

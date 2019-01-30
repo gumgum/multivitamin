@@ -14,7 +14,7 @@ from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegis
 from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
 from confluent_kafka.avro.serializer import SerializerError
 
-from vitamincv.avro_api import config
+from vitamincv.data.avro_response import config
 
 class AvroIO():
     def __init__(self, use_schema_registry=False, use_base64=True):
