@@ -9,6 +9,7 @@ from PIL import Image
 import glog as log
 import urllib.parse
 from enum import Enum
+import math
 
 import importlib.util
 if importlib.util.find_spec("pims") and importlib.util.find_spec("av"):
