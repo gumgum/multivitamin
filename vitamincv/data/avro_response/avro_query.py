@@ -6,6 +6,7 @@ import glog as log
 import importlib.util
 
 from vitamincv.data.avro_response.cv_schema_factory import *
+from vitamincv.data import create_detection, create_segment
 
 class AvroQuerier():
     def __init__(self):
@@ -39,7 +40,6 @@ class AvroQuerier():
         log.debug("Processing list")
         self._process_list(self.data, self.query_map)
 
-        
         for args in self.numeric_fields:
             array = self.query_map
             update = {}
@@ -93,7 +93,7 @@ class AvroQuerier():
             return
 
         idxs = self.process_qblock(query) if type(query) is AvroQueryBlock else self.process_q(query)
-        return self.data[sorted(idxs)]
+        return self.data[sorted(idxs)].tolist()
 
     def group_query(self, queries, group_field):
         """Queries for detections/segments and groups by matching field names

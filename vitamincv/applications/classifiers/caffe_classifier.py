@@ -234,31 +234,3 @@ class CaffeClassifier(ImagesModule):
                     t=tstamp
                 )
             return det
-
-    # def process_image(self, image, tstamp, prev_det=None):
-    #     self.net.blobs['data'].data[...] = self.preprocess_image(image)
-    #     probs = self.net.forward()[LAYER_NAME][0]
-    #     asc_sorted_prob_idxs = np.argsort(probs)
-
-    #     label_idx = asc_sorted_prob_idxs[-1]
-    #     confidence = probs[label_idx]
-    #     label = self.labels[label_idx]
-
-    #     region_id = None
-    #     contour = None
-    #     if prev_det:
-    #         region_id = prev_det.get("region_id")
-    #         contour = prev_det.get("contour")
-
-    #     det = create_detection(
-    #         server=self.name,
-    #         ver=self.version,
-    #         value=label,
-    #         region_id=region_id,
-    #         contour=contour,
-    #         property_type=self.prop_type,
-    #         confidence=confidence,
-    #         t=tstamp
-    #     )
-    #     log.debug("det: " + str(det))
-    #     self.module_data.detections.append(det)

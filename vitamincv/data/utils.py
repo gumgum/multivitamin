@@ -1,4 +1,5 @@
 import datetime
+import glog as log
 import json
 
 from vitamincv.data import config 
@@ -36,15 +37,15 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     w_max_px_ind = max(w-1, 1)
     h_max_px_ind = max(h-1, 1)
 
-    x0 = contour[0]['x']
-    y0 = contour[0]['y']
-    x1 = contour[0]['x']
-    y1 = contour[0]['y']
+    x0 = float(contour[0]['x'])
+    y0 = float(contour[0]['y'])
+    x1 = float(contour[0]['x'])
+    y1 = float(contour[0]['y'])
     for pt in contour:
-        x0 = min(x0, pt['x'])
-        y0 = min(y0, pt['y'])
-        x1 = max(x1, pt['x'])
-        y1 = max(y1, pt['y'])
+        x0 = min(x0, float(pt['x']))
+        y0 = min(y0, float(pt['y']))
+        x1 = max(x1, float(pt['x']))
+        y1 = max(y1, float(pt['y']))
 
     x0 = dtype(x0 * w_max_px_ind)
     y0 = dtype(y0 * h_max_px_ind)
@@ -67,7 +68,7 @@ def crop_image_from_bbox_contour(image, contour):
     
     h = image.shape[0]
     w = image.shape[1]
-    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w, h)
+    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
     return image[y0:y1, x0:x1]
 
 def create_region_id(tstamp, contour):

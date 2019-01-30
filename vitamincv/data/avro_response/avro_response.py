@@ -13,7 +13,7 @@ import traceback
 from datetime import datetime
 
 from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
-from vitamincv.data import MediaData
+from vitamincv.data import MediaData, create_detection, create_bbox_contour_from_points, create_point
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import *
 from vitamincv.data.avro_response.avro_io import AvroIO
@@ -61,7 +61,11 @@ class AvroResponse(Response):
         """
         log.info("Converting response to mediadata")
         dets = self._get_detections_from_response(properties_of_interest)
+        if dets:
+            log.info(f"Found {len(dets)} dets")
         segs = self._get_segments_from_response(properties_of_interest) #TODO
+        if segs:
+            log.info(f"Found {len(segs)} segs")
         md = MediaData(detections=dets, segments=segs)
         md.create_detections_tstamp_map()
         return md
@@ -88,12 +92,13 @@ class AvroResponse(Response):
             props = [{"name":"*"}] #hacky way to query all frames?
 
         try:
-            if self.detection_querier is None:
-                self.build_detection_querier()
+            # if self.detection_querier is None:
+            self.build_detection_querier()
 
             Q = AvroQueryBlock()
             Q.set_operation("OR")
             for prop in props:
+                log.info(f"Querying for property: {prop}")
                 q = AvroQuery()
                 q.set(prop)
                 Q.add(q)
@@ -101,6 +106,7 @@ class AvroResponse(Response):
             return self.detection_querier.query(Q)
         except:
             log.info("Could not query detections")
+            log.warning(traceback.print_exc())
             return None
 
     def _get_segments_from_response(self, props):
@@ -1013,8 +1019,8 @@ class AvroResponse(Response):
         log.info("Building AvroQuerier")
         self.detection_querier = AvroQuerier()
         log.info("Getting detections")
-        dets=self.get_detections_from_frame_anns()
-        log.debug(f"Found {len(dets)} detections")
+        dets = self.get_detections_from_frame_anns()
+        log.info(f"Found {len(dets)} detections")
         self.detection_querier.load(dets)
 
     def build_segment_querier(self):

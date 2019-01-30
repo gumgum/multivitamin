@@ -46,6 +46,7 @@ class Controller():
             code = module.process(request, prev_module_data)
             log.info(f"{module.name} created {len(module.media_data.detections)} detections and {len(module.media_data.segments)} segments")
             response.mediadata_to_response(module.media_data)
+            log.debug(f"doc: {response.to_dict()}")
 
         return response
 

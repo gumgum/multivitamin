@@ -1,16 +1,17 @@
 import glog as log
 from collections import defaultdict
+import json
 
 from vitamincv.data.utils import create_region_id
 
 class MediaData():
     def __init__(self, detections=None, segments=None, meta=None, code=None,
                  prop_id_map=None, module_id_map=None):
-        if not detections:
+        if detections is None:
             detections = []
         self.detections = detections
 
-        if not segments:
+        if segments is None:
             segments = []
         self.segments = segments
 
@@ -19,7 +20,8 @@ class MediaData():
         self.det_tstamp_map = {}
 
     def create_detections_tstamp_map(self):
-        if not self.detections:
+        log.info("Creating detections tstamp map")
+        if self.detections is None or self.detections == []:
             log.warning("self.detections is empty; cannot create det_tstamp_map")
             return
         
@@ -30,6 +32,7 @@ class MediaData():
                 if t is None:
                     continue
                 self.det_tstamp_map[t].append(det)
+        log.debug(f"det_tstamp_map: {json.dumps(self.det_tstamp_map, indent=2)}")
 
     def __repr__(self):
         return f"{self.meta}\nnum_detections: {len(self.detections)}"
@@ -43,12 +46,12 @@ def create_metadata(name="", ver="", url="", dims=None, footprint=None):
         "footprint" : footprint
     }
 
-def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
+def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
     """Helper function to create bounding box contour from 4 extrema points"""
-    return [create_point(xmin, ymin),
-            create_point(xmax, ymin),
-            create_point(xmax, ymax),
-            create_point(xmin, ymax)
+    return [create_point(xmin, ymin, bound=bound),
+            create_point(xmax, ymin, bound=bound),
+            create_point(xmax, ymax, bound=bound),
+            create_point(xmin, ymax, bound=bound)
         ]
 
 def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):

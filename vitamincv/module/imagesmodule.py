@@ -8,11 +8,11 @@ from vitamincv.module import Module
 from vitamincv.media import MediaRetriever
 
 MAX_PROBLEMATIC_FRAMES = 10
-
+BATCH_SIZE = 2
 
 class ImagesModule(Module):
     def __init__(self, server_name, version, prop_type=None,
-                 prop_id_map=None, module_id_map=None, batch_size=10):
+                 prop_id_map=None, module_id_map=None, batch_size=BATCH_SIZE):
         super().__init__(server_name=server_name, version=version, prop_type=prop_type,
                          prop_id_map=prop_id_map, module_id_map=module_id_map)
         self.batch_size = batch_size
@@ -106,9 +106,14 @@ class ImagesModule(Module):
 
             log.info('tstamp: ' + str(tstamp))
             dets = [None]
-            if self.prev_media_data: #We are expected to focus on previous detections
-                if tstamp in self.media_data.det_tstamp_map:
-                    dets = self.media_data.det_tstamp_map[tstamp]
+            if self.prev_media_data: 
+                log.info("Processing with previous media_data")
+                log.debug(f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}")
+                if tstamp in self.prev_media_data.det_tstamp_map:
+                    dets = self.prev_media_data.det_tstamp_map[tstamp]
+                    log.info(f"Found {len(dets)} dets from previous media_data")
+                else:
+                    log.info(f"Did not find a detection for tstamp: {tstamp}")
 
                 if len(dets) == 0:
                     log.debug("No detections for tstamp " + str(tstamp))
@@ -119,61 +124,6 @@ class ImagesModule(Module):
 
     def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         pass
-
-    # def process(self, request, prev_media_data=None):
-    #     super().process(request, prev_media_data)
-    #     self.med_ret = MediaRetriever(request.url)
-    #     self.media_data.meta["dims"] = self.med_ret.get_w_h()
-    #     self.frames_iterator = self.med_ret.get_frames_iterator(request.sample_rate)
-    #     for i, (frame, tstamp) in enumerate(self.frames_iterator):
-    #         if frame is None:
-    #             log.warning("Invalid frame")
-    #             continue
-    #         if tstamp is None:
-    #             log.warning("Invalid tstamp")
-    #             continue
-    #         log.info(f"tstamp: {tstamp}")
-
-    #         try:
-    #             if prev_media_data:
-    #                 prev_dets = prev_media_data.detections.tstamp_map.get(tstamp, None)
-    #                 ## todo, look for POIs
-    #                 if not prev_dets or list_contains_only_none(prev_dets):
-    #                     log.info("prev_dets is empty")
-    #                     continue
-    #                 log.debug(f"Processing with {len(prev_dets)} previous detections")
-    #                 images = self.crop_image_from_(frame, prev_dets)
-    #                 assert(len(images)==len(prev_dets))
-    #                 for image, det in zip(images, prev_dets):
-    #                     self.process_image(image, tstamp, det)
-    #             else:
-    #                 self.process_image(frame, tstamp)
-    #         except:
-    #             log.error(traceback.print_exc())
-    #     return self.media_data
-    
-    def crop_image(self, image, prev_detections=None):
-        log.info("Cropping images with previous detections")
-        if prev_detections is None or list_contains_only_none(prev_detections):
-            return image
-        
-        images = []
-        for det in prev_detections:
-            if det.get("contour") is None:
-                log.warning("Contour is None")
-                continue
-            h, w = image.shape
-            (x0, y0), (x1, y1) = p0p1_from_bbox_contour(det["contour"], w, h)
-            images.append(image[y0:y1, x0:x1])
-        return images
-        
-    # @abstractmethod
-    # def process_images(self, image, tstamp, prev_det=None):
-    #     """Abstract method to be implemented by the child ImageModule, which appends to
-
-    #     self.detections
-    #     """
-    #     pass
 
     def preprocess_images(self, images, contours = None):
         return images
