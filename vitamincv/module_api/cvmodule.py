@@ -169,7 +169,6 @@ class CVModule(ABC):
         log.info("Processing message")
 
         #if the module is a "properties's processor, we call and return the correspondent child method.
-        preprocess_message_iterator = self.preprocess_message()
         if self.process_properties_flag:
             log.info("Processing properties")
             try:
@@ -184,7 +183,7 @@ class CVModule(ABC):
         self.findrois() #This will update self.detections_of_interest
 
         self.detections = []
-        for image_batch, tstamp_batch, det_batch in self.batch_generator(preprocess_message_iterator):
+        for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
             if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                 log.error("Too Many Problematic Iterations")
                 log.error("Returning with error code: "+str(self.code))
