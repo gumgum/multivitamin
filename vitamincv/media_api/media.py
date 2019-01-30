@@ -396,7 +396,7 @@ class FramesIterator():
                     self.cur_tstamp += self.period
                     tstamp = frame_idx/self.cap.frame_rate
                     return frame, self._round_tstamp(tstamp)
-                except:
+                except ValueError:
                     ret = False
 
         log.info("No more frames to read")
@@ -460,12 +460,12 @@ if __name__ == "__main__":
         headers = ["Test Type", "Efficient", "Fast"]
 
         test_order = ["get_frame", "iterator (sample_rate=100)", "iterator (sample_rate=2)", "iterator (sample_rate=0.2)"]
-        get_frame_results = _benchmark_get_frame(mrs, num_tests=1)
-        iterator_results1 = _benchmark_frames_iterator(mrs, 100, num_tests=1)
-        iterator_results2 = _benchmark_frames_iterator(mrs, 2, num_tests=1)
-        iterator_results3 = _benchmark_frames_iterator(mrs, 0.2, num_tests=1)
+        get_frame_results = _benchmark_get_frame(mrs, num_tests=5)
+        iterator_results1 = _benchmark_frames_iterator(mrs, 100, num_tests=5)
+        iterator_results2 = _benchmark_frames_iterator(mrs, 2, num_tests=5)
+        iterator_results3 = _benchmark_frames_iterator(mrs, 0.2, num_tests=5)
 
-        results = list(zip(test_order, list(zip(get_frame_results, iterator_results1, iterator_results2, iterator_results3))))
+        results = list(zip(test_order, *zip(*[get_frame_results,iterator_results1,iterator_results2,iterator_results3])))
         rs.append(results)
 
     print("\n"*4)
