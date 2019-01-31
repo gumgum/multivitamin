@@ -3,143 +3,61 @@ import sys
 import glog as log
 import numpy as np
 import traceback
-import importlib
-import inspect
-import numbers
-
-from vitamincv.exceptions import ParseError
-
-glog_level = os.environ.get("GLOG_minloglevel", None)
-
-if glog_level is None:
-    os.environ["GLOG_minloglevel"] = "1"
-    log.info("GLOG_minloglevel isn't set. Setting level to 1 (info)")
-    log.info("""GLOG_minloglevel levels are...
-                    \t0 -- Debug
-                    \t1 -- Info
-                    \t2 -- Warning
-                    \t3 -- Error""")
 
 
-CAFFE_PYTHON = os.environ.get('CAFFE_PYTHON')
-if CAFFE_PYTHON:
-    sys.path.append(os.path.abspath(CAFFE_PYTHON))
-
-if importlib.util.find_spec("caffe"):
+try:
+    log.info("GLOG_minloglevel:" + os.environ['GLOG_minloglevel.'] +" 0 - debug, 1 - info, 2 - warnings, 3 - errors")
+except:
+    log.info("GLOG_minloglevel is not explicitally defined. 0 - debug, 1 - info, 2 - warnings, 3 - errors")   
+try:
     import caffe
-elif CAFFE_PYTHON:
-    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
-else:
-    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
-
+except:
+    try:
+        SSD_CAFFE_PYTHON=os.environ['SSD_CAFFE_PYTHON']
+        sys.path.append(os.path.abspath(SSD_CAFFE_PYTHON))
+        import caffe
+    except:
+        sys.exit("Install caffe, set PYTHONPATH to point to caffe, or set \
+                  enviroment variable SSD_CAFFE_PYTHON.")
+from google.protobuf import text_format
 from caffe.proto import caffe_pb2
 from vitamincv.module_api.cvmodule import CVModule
+import vitamincv.module_api.server as Server
 from vitamincv.avro_api.cv_schema_factory import *
-from vitamincv.avro_api.utils import p0p1_from_bbox_contour
-
-from vitamincv.module_api.utils import min_conf_filter_predictions
-from vitamincv.module_api.GPUUtilities import GPUUtility
 
 
-# LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
-# LAYER_NAME = "prob"
-# N_TOP = 1
-# CONFIDENCE_MIN = 0.1
-
+LOGOEXCLUDE=["Garbage", "Messy", "MessyDark"]
+GPU=True
+DEVICE_ID=0
+LAYER_NAME = "prob"
+N_TOP = 1
+CONFIDENCE_MIN=0.1
 class CaffeClassifier(CVModule):
-    """ A generic classifer using the Caffe framework
-
-    Args:
-        server_name (str): The name of this classifier to be served
-        version (str): This classifier's version
-        net_data_dir (str): The path to the caffe net data directory. It should contain
-                            files named deploy.prototxt, labels.txt, model.caffemodel, and (optionally)
-                            mean.binaryproto
-        prop_type (str | optional): The property type returned by the classifier (default: `label`)
-        prop_id_map (dict | optional): Converts predicted label to an int
-        module_id_map (dict | optional): Converts a server_name to an int
-        confidence_min (float | optional): A float describing the minimum confidence
-                                                   needed to for a prediction to qualify as
-                                                   an output.
-        confidence_min_dict (dict | optional): A dict mapping a label string to a
-                                               confidence value. All undefined
-                                               labels/property_ids will default to
-                                               confidence_min
-        layer_name (str | optinal): The string name of the desired network layer output
-        top_n (int | str): Only use the N most confident, qualifying, predictions
-        postprocess_predictions (func | optional): An optional function to allow for custom
-                                                   postprocessing. Will overwrite default functionality
-        postprocess_args (tuple | optional): Additional args to pass to postprocess_predictions
-        gpukwargs: Any added keyword args get passed to the GPUUtility object. Refer to it to see what
-                    the keyword args are
-
-    """
-    def __init__(self,
-                server_name,
-                version,
-                net_data_dir,
-                prop_type=None,
-                prop_id_map=None,
-                module_id_map=None,
-                confidence_min=0.1,
-                confidence_min_dict=None,
-                layer_name="prob",
-                top_n=1,
-                postprocess_predictions=None,
-                postprocess_args=None,
-                **gpukwargs):
-
-        super().__init__(server_name,
-                            version,
-                            prop_type = prop_type,
-                            prop_id_map = prop_id_map,
-                            module_id_map = module_id_map)
-
-        self.confidence_min = confidence_min
-        if confidence_min_dict is None:
-            confidence_min_dict = {}
-        self.layer_name = layer_name
-        self.top_n = top_n
-        self.postprocess_override = postprocess_predictions
-        self.postprocess_args = postprocess_args
-        if not isinstance(self.postprocess_args, tuple):
-            self.postprocess_args = ()
-
+    def __init__(self, server_name, version, net_data_dir,prop_type=None,prop_id_map=None,module_id_map=None):
+        super().__init__(server_name, version, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
         if not self.prop_type:
-            self.prop_type = "label"
-
+            self.prop_type="label"      
         log.info("Constructing CaffeClassifier")
-        gpu_util = GPUUtility(**gpukwargs)
-        available_devices = gpu_util.get_gpus()
-        if available_devices:
+        #log.setLevel("DEBUG")
+        if GPU:
             caffe.set_mode_gpu()
-            caffe.set_device(int(available_devices[0])) # py-caffe only supports 1 GPU
+            caffe.set_device(DEVICE_ID)
 
-        labels_file = os.path.join(net_data_dir, "labels.txt") # Each row in labels.txt is  just a label
+        labels_file=os.path.join(net_data_dir, "labels.txt")
         try:
             with open(labels_file) as f:
                 self.labels = f.read().splitlines()
         except:
-            err = "Unable to parse file: " + labels_file
-            log.error(err)
+            log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
-            raise ParseError(err)
-
-        self.labels = {idx:label for idx,label in enumerate(self.labels)}
-        # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
-        self.min_conf_filter = {}
-        for idx, label in self.labels.items():
-            min_conf = self.confidence_min
-            if isinstance(confidence_min_dict.get(label), numbers.Number):
-                min_conf = confidence_min_dict[label]
-            self.min_conf_filter[label] = min_conf
-
+            exit(1)
+            
         self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
                              os.path.join(net_data_dir, 'model.caffemodel'),
                              caffe.TEST)
-
-        mean_file = os.path.join(net_data_dir, 'mean.binaryproto')
-
+        
+        mean_file=os.path.join(net_data_dir, 'mean.binaryproto')
+                
         self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -150,126 +68,101 @@ class CaffeClassifier(CVModule):
 
         self.transformer.set_transpose('data', (2,0,1))
 
-    def preprocess_images(self, images,  previous_detections = None):
-        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
+    def process_images(self, images, tstamps, prev_detections=None):
+        log.debug("Processing images")
+        log.debug("tstamps: "  + str(tstamps))
+        log.check_eq(len(images), len(tstamps))
+        if prev_detections:
+            log.check_eq(len(images), len(prev_detections))
+        for i,(frame, tstamp) in enumerate(zip(images, tstamps)):
+            log.debug("tstamp: " +str(tstamp))
+            crop=frame
+            contour_prev=[create_point(0.0, 0.0),
+                                 create_point(1.0, 0.0),
+                                 create_point(1.0, 1.0),
+                                 create_point(0.0, 1.0)]
+            region_id_prev=""
+            if prev_detections:
+                prev_det=prev_detections[i]
+                #log.debug("prev_det: " + str(prev_det))
+                #we get region_id_prev
+                region_id_prev=prev_det['region_id']
+                log.debug("region_id_prev: " + str(region_id_prev))
+                #we get the contour_prev
+                contour_prev=prev_det['contour']
+                height = frame.shape[0]
+                width = frame.shape[1]
+                #we get the crop
+                xmin=1.0
+                xmax=0.0
+                ymin=1.0
+                ymax=0.0
+                for p in contour_prev:
+                    x=p['x']
+                    y=p['y']
+                    if x<xmin:
+                        xmin=x
+                    if x>xmax:
+                        xmax=x
+                    if y<ymin:
+                        ymin=y
+                    if y>ymax:
+                        ymax=y
+                log.debug('[xmin,ymin,xmax,ymax]: ' + str([xmin,ymin,xmax,ymax]))
+                xmin=int(xmin*(width-1))
+                ymin=int(ymin*(height-1))
+                xmax=int(xmax*(width-1))
+                ymax=int(ymax*(height-1))
+                log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
+                crop=frame[ymin:ymax, xmin:xmax]
+            try:    
+                im = self.transformer.preprocess('data', crop)
+                self.net.blobs['data'].data[...] = im
+            
+                probs = self.net.forward()[LAYER_NAME]
+                log.debug('probs: ' + str(probs))
+                for p in probs:
+                    log.debug('p: ' + str(p))
+                    p_indexes = np.argsort(p)
+                    p_indexes = np.flip(p_indexes,0)
+                    while True:
+                        if len(p_indexes)==1:
+                            break
+                        index=p_indexes[0]
+                        label=self.labels[index]                            
+                        log.debug("label: " + str(label))
+                        if label in LOGOEXCLUDE:
+                            p_indexes=np.delete(p_indexes,0)
+                        else:
+                            break
+                    p_indexes = p_indexes[:N_TOP]
+                    
+                    log.debug("p_indexes: " + str(p_indexes))
+                    for i,property_id in enumerate(p_indexes):
+                        if i==N_TOP:
+                            break
+                        index=p_indexes[i]
+                        label=self.labels[index]                            
+                        confidence=p[index]
+                        
+                        if confidence<CONFIDENCE_MIN:
+                            label='Unknown'
+                        det = create_detection(
+                            server=self.name,
+                            ver=self.version,
+                            value=label,
+                            region_id=region_id_prev,
+                            contour=contour_prev,
+                            property_type=self.prop_type,
+                            confidence=confidence,
+                            t=tstamp
+                        )
+                        log.debug("det: " + str(det))                        
+                        self.detections.append(det)
+                        
+            except Exception as e:
+                log.error(e)
 
-        Args:
-            images (list): A list of images to be preprocessed
-            previous_detections (list): A list of previous detections of interest
-
-        Returns:
-            list: A list of transformed images
-        """
-        contours = None
-        if previous_detections:
-            contours = [det.get("contour") if det is not None else None for det in previous_detections]
-
-        transformed_images = []
-
-        if type(contours) is not list:
-            contours = [None for _ in range(len(images))]
-
-        images = [self._crop_image_from_contour(image, contour) for image, contour in zip(images, contours)]
-
-        transformed_images = [self.transformer.preprocess('data', image) for image in images]
-
-        return np.array(transformed_images)
-
-    def _crop_image_from_contour(self, image, contour):
-        if contour is None:
-            return image
-
-        h = image.shape[0]
-        w = image.shape[1]
-        (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
-
-        crop = image[y0:y1, x0:x1]
-        return crop
-
-    def process_images(self, images):
-        """ Network Forward Pass
-
-        Args:
-            images (np.array): A numpy array of images
-
-        Returns:
-            list: List of floats corresponding to confidences between 0 and 1,
-                    where each index represents a class
-        """
-        self.net.blobs['data'].reshape(*images.shape)
-        self.net.blobs['data'].data[...] = images
-        preds = self.net.forward()[self.layer_name].copy()
-        return preds
-
-    def postprocess_predictions(self, predictions_batch):
-        """Filters out predictions out per class based on confidence,
-            and returns the top-N qualifying labels
-
-        Args:
-            predictions (list): List of floats corresponding to confidences between
-                    0 and 1, where each index represents a class
-
-        Returns:
-            list: A list of tuples (<class index>, <confidence>) for the
-                    best, qualifying  N-predictions
-        """
-        if callable(self.postprocess_override):
-            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
-            return processed_preds
-
-        preds = np.array(predictions_batch)
-        n_top_preds = []
-        for pred in preds:
-            pred_idxs_max2min = np.argsort(pred)[::-1]
-            pred = pred[pred_idxs_max2min]
-            # Filter by ignore dict
-            pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
-            # Get Top N
-            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
-            n_top_preds.append(n_top_pred)
-
-        return n_top_preds
-
-    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
-        """Converts predictions to detections
-
-        Args:
-            predictions (list): A list of predictions tuples
-                    (<class index>, <confidence>) for an image
-
-            tstamp (float): A timestamp corresponding to the timestamp of an image
-
-            previous_detection (dict): A previous detections corresponding
-                    to the `previous detection of interest` of an image
-
-        """
-        if tstamp is None:
-            tstamp = inspect.signature(create_detection).parameters["t"].default
+                    
 
 
-        if previous_detection is None:
-            previous_detection = create_detection(
-                                        server=self.name,
-                                        ver=self.version,
-                                        property_type=self.prop_type,
-                                        t=tstamp
-                                    )
-
-        for pred, confidence in predictions:
-            if not type(pred) is str:
-                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
-            else:
-                label = pred
-            region_id = previous_detection["region_id"]
-            contour = previous_detection["contour"]
-            det = create_detection(
-                    server=self.name,
-                    ver=self.version,
-                    value=label,
-                    region_id=region_id,
-                    contour=contour,
-                    property_type=self.prop_type,
-                    confidence=confidence,
-                    t=tstamp
-                )
-            return det
