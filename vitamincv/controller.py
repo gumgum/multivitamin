@@ -42,8 +42,8 @@ class Controller():
 
         for module in self.modules:
             log.info(f"Processing request for module: {type(module)}")
-            prev_module_data = response.response_to_mediadata(module.get_prev_props_of_interest())
-            code = module.process(request, prev_module_data)
+            prev_media_data = response.get_media_data(module.get_prev_props_of_interest())
+            code = module.process(request, prev_media_data)
             log.info(f"{module.name} created {len(module.media_data.detections)} detections and {len(module.media_data.segments)} segments")
             response.mediadata_to_response(module.media_data)
             log.debug(f"doc: {response.to_dict()}")
