@@ -10,13 +10,20 @@ import base64
 import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter, BinaryDecoder, BinaryEncoder
-from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegistryClient
-from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
+from confluent_kafka.avro.cached_schema_registry_client import (
+    CachedSchemaRegistryClient,
+)
+from confluent_kafka.avro.serializer.message_serializer import (
+    MessageSerializer,
+    ContextStringIO,
+    MAGIC_BYTE,
+)
 from confluent_kafka.avro.serializer import SerializerError
 
 from vitamincv.data.avro_response import config
 
-class AvroIO():
+
+class AvroIO:
     def __init__(self, use_schema_registry=False, use_base64=True):
         """Public interface for Avro IO functionality
         
@@ -40,15 +47,15 @@ class AvroIO():
             avro.schema.RecordSchema: schema
         """
         return self.impl.schema
-    
+
     def get_schema_str(self):
         """Return schema as str
 
         Returns:
             str: schema as str
         """
-        return str(self.impl.schema).replace("\\","")
-    
+        return str(self.impl.schema).replace("\\", "")
+
     def decode_file(self, file_path):
         """Decode an Avro Binary using the CV schema
 
@@ -71,9 +78,9 @@ class AvroIO():
         if binary_flag:
             return self.impl.decode(bytes_aux)
         else:
-            #log.info(str(bytes_aux))
+            # log.info(str(bytes_aux))
             return json.loads(str(bytes_aux))
-    
+
     def write(self, doc, file, serialize=True, indent=None):
         """Write Avro doc 
 
@@ -92,7 +99,9 @@ class AvroIO():
                 with open(file, "wb") as wf:
                     wf.write(bytes)
             except avro.io.AvroTypeException:
-                log.error("avro.io.AvroTypeException: the datum is not an example of the schema")
+                log.error(
+                    "avro.io.AvroTypeException: the datum is not an example of the schema"
+                )
                 return False
             log.info("Encoded doc to file: {}".format(file))
         else:
@@ -119,7 +128,9 @@ class AvroIO():
             boolean: True if json is an example of schema
         """
         try:
-            writer = DataFileWriter(tempfile.TemporaryFile(), DatumWriter(), self.impl.schema)
+            writer = DataFileWriter(
+                tempfile.TemporaryFile(), DatumWriter(), self.impl.schema
+            )
             writer.append(doc)
             writer.close()
         except:
@@ -141,51 +152,59 @@ class AvroIO():
         else:
             avro_schema = schema
         try:
-            writer = DataFileWriter(tempfile.TemporaryFile(), DatumWriter(), avro_schema)
+            writer = DataFileWriter(
+                tempfile.TemporaryFile(), DatumWriter(), avro_schema
+            )
             writer.append(doc)
             writer.close()
         except:
             return False
         return True
-    
+
 
 ##################################
 # Private implementation classes #
 ##################################
 
-class _AvroIOLocal():
+
+class _AvroIOLocal:
     def __init__(self):
         """Private implementation class for Avro IO of local files"""
-        local_schema_file = pkg_resources.resource_filename('vitamincv.avro_api', 'image-science-response.avsc')
+        local_schema_file = pkg_resources.resource_filename(
+            "vitamincv.avro_api", "image-science-response.avsc"
+        )
         log.debug("Using local schema file {}".format(local_schema_file))
         if not os.path.exists(local_schema_file):
             raise FileNotFoundError("Schema file not found")
         self.schema = avro.schema.Parse(open(local_schema_file).read())
 
-    def decode(self, bytes):    
+    def decode(self, bytes):
         if len(bytes) <= 5:
             raise SerializerError("Message is too small to decode")
         with ContextStringIO(bytes) as payload:
-            magic, schema_id = struct.unpack('>bI', payload.read(5))
+            magic, schema_id = struct.unpack(">bI", payload.read(5))
             if magic != MAGIC_BYTE:
                 raise SerializerError("message does not start with magic byte")
             curr_pos = payload.tell()
             avro_reader = avro.io.DatumReader(self.schema)
+
             def decoder(p):
                 bin_decoder = avro.io.BinaryDecoder(p)
                 return avro_reader.read(bin_decoder)
+
             return decoder(payload)
-    
+
     def encode(self, record):
         with ContextStringIO() as outf:
-            outf.write(struct.pack('b', MAGIC_BYTE))
-            outf.write(struct.pack('>I', config.SCHEMA_ID))
+            outf.write(struct.pack("b", MAGIC_BYTE))
+            outf.write(struct.pack(">I", config.SCHEMA_ID))
             encoder = avro.io.BinaryEncoder(outf)
             writer = avro.io.DatumWriter(self.schema)
             writer.write(record, encoder)
             return outf.getvalue()
 
-class _AvroIORegistry():
+
+class _AvroIORegistry:
     def __init__(self):
         """Private implementation class for Avro IO using the registry"""
         log.info("Using registry with schema_id {}".format(config.SCHEMA_ID))
@@ -201,7 +220,3 @@ class _AvroIORegistry():
 
     def encode(self, record):
         return self.serializer.encode_record_with_schema_id(config.SCHEMA_ID, record)
-
-
-
- 

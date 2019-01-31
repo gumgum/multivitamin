@@ -7,7 +7,8 @@ import boto3
 
 from vitamincv.data.config import DEFAULT_SAMPLE_RATE
 
-class Request():
+
+class Request:
     def __init__(self, request_dict, request_id=None):
         """Object to encapsulate and cleanse request
 
@@ -16,7 +17,9 @@ class Request():
             request_id (str): ID tied to request (esp from AWS SQS)
         """
         if not isinstance(request_dict, dict):
-            raise ValueError(f"request_dict is type: {type(request_dict)}, should be of type dict")
+            raise ValueError(
+                f"request_dict is type: {type(request_dict)}, should be of type dict"
+            )
 
         log.debug(f"request_dict: {request_dict}")
         self.request = request_dict
@@ -60,7 +63,7 @@ class Request():
         self.flags = self.request.get("flags")
         log.info(f"Setting self.flags to {self.flags}")
 
-    
+
 def _standardize_url(url):
     log.info("Formatting urls in request")
     if not url:

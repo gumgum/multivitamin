@@ -10,7 +10,8 @@ from vitamincv.apis.comm_api import CommAPI
 from vitamincv.data.utils import get_current_date, write_json
 from vitamincv.data.response_interface import Response
 
-INDENTATION=2
+INDENTATION = 2
+
 
 class DumpResponse(CommAPI):
     def __init__(self, pushing_folder=None, s3_bucket=None, s3_key=None):
@@ -28,16 +29,20 @@ class DumpResponse(CommAPI):
 
         if pushing_folder:
             if not os.path.exists(pushing_folder):
-                os.makedirs(pushing_folder)        
+                os.makedirs(pushing_folder)
         if s3_bucket and not s3_key:
             raise ValueError("s3 bucket defined but s3 key not defined")
         if s3_key and not s3_bucket:
             raise ValueError("s3 key defined but s3 bucket not defined")
         if not pushing_folder and not s3_key:
-            raise ValueError("pushing_folder and s3 key not defined, we cannot set where to dump.")
+            raise ValueError(
+                "pushing_folder and s3 key not defined, we cannot set where to dump."
+            )
 
     def pull(self, n=1):
-        raise ValueError("Response2s3 cannot be used as a pulling CommAPI, only pushing")
+        raise ValueError(
+            "Response2s3 cannot be used as a pulling CommAPI, only pushing"
+        )
 
     def push(self, responses):
         """Push a list of Response objects to be written to pushing_folder
@@ -52,7 +57,9 @@ class DumpResponse(CommAPI):
             outfn = None
             fname_local = self.get_fname(res)
             if self.pushing_folder:
-                outfn = os.path.join(self.pushing_folder, get_current_date(), fname_local)
+                outfn = os.path.join(
+                    self.pushing_folder, get_current_date(), fname_local
+                )
             else:
                 tmp_dir = tempfile.mkdtemp()
                 outfn = os.path.join(tmp_dir, fname_local)
@@ -64,17 +71,20 @@ class DumpResponse(CommAPI):
             write_json(res.to_dict(), outfn, indent=INDENTATION)
 
             if self.s3_bucket and self.s3_key:
-                s3client = boto3.client('s3')
-                key_fullpath =os.path.join(self.s3_key,fname_local)
-                log.info("Pushing {} to {}/{}".format(outfn, self.s3_bucket, key_fullpath))
-                with open(outfn, 'rb') as data:
-                    s3client.put_object(Bucket=self.s3_bucket, Key=key_fullpath, Body=data)
+                s3client = boto3.client("s3")
+                key_fullpath = os.path.join(self.s3_key, fname_local)
+                log.info(
+                    "Pushing {} to {}/{}".format(outfn, self.s3_bucket, key_fullpath)
+                )
+                with open(outfn, "rb") as data:
+                    s3client.put_object(
+                        Bucket=self.s3_bucket, Key=key_fullpath, Body=data
+                    )
 
             if not self.pushing_folder:
                 if os.path.exists(tmp_dir):
                     log.info("Removing temp dir {}".format(tmp_dir))
                     shutil.rmtree(tmp_dir)
-
 
     def get_fname(self, response):
         """Create a fn from url string from avro_api

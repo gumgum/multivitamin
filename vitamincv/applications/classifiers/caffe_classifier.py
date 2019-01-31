@@ -14,23 +14,31 @@ glog_level = os.environ.get("GLOG_minloglevel", None)
 if glog_level is None:
     os.environ["GLOG_minloglevel"] = "1"
     log.info("GLOG_minloglevel isn't set. Setting level to 1 (info)")
-    log.info("""GLOG_minloglevel levels are...
+    log.info(
+        """GLOG_minloglevel levels are...
                     \t0 -- Debug
                     \t1 -- Info
                     \t2 -- Warning
-                    \t3 -- Error""")
+                    \t3 -- Error"""
+    )
 
 
-CAFFE_PYTHON = os.environ.get('CAFFE_PYTHON')
+CAFFE_PYTHON = os.environ.get("CAFFE_PYTHON")
 if CAFFE_PYTHON:
     sys.path.append(os.path.abspath(CAFFE_PYTHON))
 
 if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
-    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
+    raise ImportError(
+        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(
+            CAFFE_PYTHON
+        )
+    )
 else:
-    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
+    raise ImportError(
+        "Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON."
+    )
 
 from caffe.proto import caffe_pb2
 from vitamincv.module import ImagesModule
@@ -45,27 +53,32 @@ from vitamincv.data.data import create_detection
 # N_TOP = 1
 # CONFIDENCE_MIN=0.1
 
-class CaffeClassifier(ImagesModule):
-    def __init__(self,
-                server_name,
-                version,
-                net_data_dir,
-                prop_type=None,
-                prop_id_map=None,
-                module_id_map=None,
-                confidence_min=0.1,
-                confidence_min_dict=None,
-                layer_name="prob",
-                top_n=1,
-                postprocess_predictions=None,
-                postprocess_args=None,
-                **gpukwargs):
 
-        super().__init__(server_name,
-                            version,
-                            prop_type = prop_type,
-                            prop_id_map = prop_id_map,
-                            module_id_map = module_id_map)
+class CaffeClassifier(ImagesModule):
+    def __init__(
+        self,
+        server_name,
+        version,
+        net_data_dir,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None,
+        confidence_min=0.1,
+        confidence_min_dict=None,
+        layer_name="prob",
+        top_n=1,
+        postprocess_predictions=None,
+        postprocess_args=None,
+        **gpukwargs
+    ):
+
+        super().__init__(
+            server_name,
+            version,
+            prop_type=prop_type,
+            prop_id_map=prop_id_map,
+            module_id_map=module_id_map,
+        )
 
         self.confidence_min = confidence_min
         if confidence_min_dict is None:
@@ -85,9 +98,9 @@ class CaffeClassifier(ImagesModule):
         available_devices = gpu_util.get_gpus()
         if available_devices:
             caffe.set_mode_gpu()
-            caffe.set_device(int(available_devices[0])) # py-caffe only supports 1 GPU
+            caffe.set_device(int(available_devices[0]))  # py-caffe only supports 1 GPU
 
-        labels_file=os.path.join(net_data_dir, "labels.txt")
+        labels_file = os.path.join(net_data_dir, "labels.txt")
         try:
             with open(labels_file) as f:
                 self.labels = f.read().splitlines()
@@ -96,7 +109,7 @@ class CaffeClassifier(ImagesModule):
             log.error(traceback.format_exc())
             raise ParseError(err)
 
-        self.labels = {idx:label for idx,label in enumerate(self.labels)}
+        self.labels = {idx: label for idx, label in enumerate(self.labels)}
         # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
         self.min_conf_filter = {}
         for idx, label in self.labels.items():
@@ -105,24 +118,28 @@ class CaffeClassifier(ImagesModule):
                 min_conf = confidence_min_dict[label]
             self.min_conf_filter[label] = min_conf
 
-        self.net = caffe.Net(os.path.join(net_data_dir, 'deploy.prototxt'),
-                             os.path.join(net_data_dir, 'model.caffemodel'),
-                             caffe.TEST)
-        
-        mean_file=os.path.join(net_data_dir, 'mean.binaryproto')
-                
-        self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
+        self.net = caffe.Net(
+            os.path.join(net_data_dir, "deploy.prototxt"),
+            os.path.join(net_data_dir, "model.caffemodel"),
+            caffe.TEST,
+        )
+
+        mean_file = os.path.join(net_data_dir, "mean.binaryproto")
+
+        self.transformer = caffe.io.Transformer(
+            {"data": self.net.blobs["data"].data.shape}
+        )
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
-            data_meanfile = open(mean_file , 'rb' ).read()
+            data_meanfile = open(mean_file, "rb").read()
             blob_meanfile.ParseFromString(data_meanfile)
             meanfile = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
-            self.transformer.set_mean('data', meanfile)
-        self.transformer.set_transpose('data', (2,0,1))
+            self.transformer.set_mean("data", meanfile)
+        self.transformer.set_transpose("data", (2, 0, 1))
 
     # def preprocess_image(self, image):
     #     return self.transformer.preprocess('data', image)
-    def preprocess_images(self, images,  previous_detections = None):
+    def preprocess_images(self, images, previous_detections=None):
         """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
 
         Args:
@@ -134,16 +151,24 @@ class CaffeClassifier(ImagesModule):
         """
         contours = None
         if previous_detections:
-            contours = [det.get("contour") if det is not None else None for det in previous_detections]
+            contours = [
+                det.get("contour") if det is not None else None
+                for det in previous_detections
+            ]
 
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
-        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
+        images = [
+            crop_image_from_bbox_contour(image, contour)
+            for image, contour in zip(images, contours)
+        ]
 
-        transformed_images = [self.transformer.preprocess('data', image) for image in images]
+        transformed_images = [
+            self.transformer.preprocess("data", image) for image in images
+        ]
 
         return np.array(transformed_images)
 
@@ -157,8 +182,8 @@ class CaffeClassifier(ImagesModule):
             list: List of floats corresponding to confidences between 0 and 1,
                     where each index represents a class
         """
-        self.net.blobs['data'].reshape(*images.shape)
-        self.net.blobs['data'].data[...] = images
+        self.net.blobs["data"].reshape(*images.shape)
+        self.net.blobs["data"].data[...] = images
         preds = self.net.forward()[self.layer_name].copy()
         return preds
 
@@ -175,7 +200,9 @@ class CaffeClassifier(ImagesModule):
                     best, qualifying  N-predictions
         """
         if callable(self.postprocess_override):
-            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
+            processed_preds = self.postprocess_override(
+                predictions_batch, *self.postprocess_args
+            )
             return processed_preds
 
         preds = np.array(predictions_batch)
@@ -184,9 +211,11 @@ class CaffeClassifier(ImagesModule):
             pred_idxs_max2min = np.argsort(pred)[::-1]
             pred = pred[pred_idxs_max2min]
             # Filter by ignore dict
-            pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
+            pred_idxs_max2min = min_conf_filter_predictions(
+                self.min_conf_filter, pred_idxs_max2min, pred, self.labels
+            )
             # Get Top N
-            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
+            n_top_pred = list(zip(pred_idxs_max2min, pred))[: self.top_n]
             n_top_preds.append(n_top_pred)
 
         return n_top_preds
@@ -207,30 +236,32 @@ class CaffeClassifier(ImagesModule):
         if tstamp is None:
             tstamp = inspect.signature(create_detection).parameters["t"].default
 
-
         if previous_detection is None:
             previous_detection = create_detection(
-                                        server=self.name,
-                                        ver=self.version,
-                                        property_type=self.prop_type,
-                                        t=tstamp
-                                    )
+                server=self.name,
+                ver=self.version,
+                property_type=self.prop_type,
+                t=tstamp,
+            )
 
         for pred, confidence in predictions:
             if not type(pred) is str:
-                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+                label = self.labels.get(
+                    pred,
+                    inspect.signature(create_detection).parameters["value"].default,
+                )
             else:
                 label = pred
             region_id = previous_detection["region_id"]
             contour = previous_detection["contour"]
             det = create_detection(
-                    server=self.name,
-                    ver=self.version,
-                    value=label,
-                    region_id=region_id,
-                    contour=contour,
-                    property_type=self.prop_type,
-                    confidence=confidence,
-                    t=tstamp
-                )
+                server=self.name,
+                ver=self.version,
+                value=label,
+                region_id=region_id,
+                contour=contour,
+                property_type=self.prop_type,
+                confidence=confidence,
+                t=tstamp,
+            )
             return det

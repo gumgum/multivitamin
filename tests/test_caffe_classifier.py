@@ -16,6 +16,7 @@ S3_IMAGES_FOLDER = "data/media/images/generic/"
 S3_PREV_DETECTIONS_FOLDER = "data/sample_detections/random_boxes/"
 S3_NET_DATA_FOLDER = "models/caffe/SportsNHLLogoClassifier-v1.2/"
 
+
 def test_init():
     global cc
 
@@ -27,20 +28,23 @@ def test_init():
     # module_id_map
     if os.path.exists(net_data_dir):
         try:
-           cc = CaffeClassifier(server_name, version, net_data_dir)
-           return
+            cc = CaffeClassifier(server_name, version, net_data_dir)
+            return
         except:
             pass
     else:
         os.makedirs(net_data_dir)
 
-    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(
+        S3_BUCKET_NAME, S3_NET_DATA_FOLDER
+    ):
         filename = os.path.basename(key)
         log.info("{}/{}".format(net_data_dir, filename))
         with open("{}/{}".format(net_data_dir, filename), "wb") as file:
             file.write(net_data_bytes.getvalue())
 
     cc = CaffeClassifier(server_name, version, net_data_dir)
+
 
 # def test_preprocess_images():
 #     global images_, images_cropped, sample_prev_detections
@@ -73,7 +77,7 @@ def test_init():
 #     global preds, preds_from_crops
 #     preds = cc.process_images(images_)
 #     preds_from_crops = cc.process_images(images_cropped)
-    
+
 #     assert(preds.shape == preds_from_crops.shape)
 #     assert(preds.shape[0] == images_.shape[0])
 #     assert(not np.array_equal(preds, preds_from_crops))
@@ -87,7 +91,7 @@ def test_init():
 #     global postprocessed_preds, postprocessed_preds_from_crops
 #     current_detections = cc.detections.copy()
 #     tstamps = [det["t"] for det in sample_prev_detections]
-    
+
 #     # Vanilla Append
 #     cc.append_detections(postprocessed_preds.copy())
 #     assert(len(current_detections) < len(cc.detections))
@@ -112,11 +116,10 @@ def test_init():
 #     assert(len(current_detections) < len(cc.detections))
 #     cc.detections = current_detections.copy()
 
+
 def test_process():
     # Test on short video
-    message = {
-        "url":"https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
-    }
+    message = {"url": "https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"}
     request = Request(message)
     codes = cc.process(request)
     log.info(len(cc.module_data.detections))

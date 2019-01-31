@@ -4,6 +4,7 @@ import glog as log
 
 from vitamincv.module import Module
 
+
 class PropertiesModule(Module):
     def process(self, request, prev_media_data=None):
         super().process(request, prev_media_data)

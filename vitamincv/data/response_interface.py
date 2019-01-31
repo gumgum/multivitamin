@@ -2,30 +2,44 @@ from abc import ABC, abstractmethod
 
 
 class Response(ABC):
+    def __init__(self, response=None, request=None):
+        self.set_response(response)
+        self.request = request
+
     @abstractmethod
-    def __init__(self, doc=None, request=None):
-        pass
-    
-    @abstractmethod
-    def set_doc(self, doc):
+    def set_response(self, response):
         pass
 
     @abstractmethod
-    def response_to_mediadata(properties_of_interest=None):
+    def to_mediadata(properties_of_interest=None):
+        """ Abstract method that converts and then returns 
+            this response to a MediaData object
+
+        Args:
+            properties_of_interest (dict): dict containing property values that
+                                           will be passed
+        
+        Returns:
+            MediaData:
+        """
         pass
-    
+
     @abstractmethod
-    def mediadata_to_response(self, module_data):
+    def load_mediadata(self, media_data):
+        """Abstract method that loads mediadata into this Response object
+
+        Args:
+            media_data (MediaData)
+        """
         pass
-    
+
     @abstractmethod
     def to_bytes(self):
         pass
-    
+
     @abstractmethod
     def to_dict(self):
         pass
 
-    @abstractmethod
-    def get_url(self):
-        pass
+    def get_request(self):
+        return self.request

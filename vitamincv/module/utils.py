@@ -1,6 +1,7 @@
 import os
 import glog as log
 
+
 def load_idmap(idmap_filepath):
     """Load idmap
     
@@ -13,25 +14,26 @@ def load_idmap(idmap_filepath):
     FileNotFoundError: if idmap does not exist
     ValueError: Problems parsing 
     """
-    idmap={}
+    idmap = {}
     if not os.path.exists(idmap_filepath):
         raise FileNotFoundError("{} not found.".format(idmap_filepath))
     try:
-        with open(idmap_filepath, 'r') as rf:
+        with open(idmap_filepath, "r") as rf:
             for row_in in rf:
                 try:
-                    row = row_in.split('\t')
-                    assert(len(row)>=2)
+                    row = row_in.split("\t")
+                    assert len(row) >= 2
                 except:
-                    row = row_in.split(' ')
-                    assert(len(row)>=2)
-                id=int(row[0])
-                label = row[1].strip()                    
+                    row = row_in.split(" ")
+                    assert len(row) >= 2
+                id = int(row[0])
+                label = row[1].strip()
                 idmap[label] = id
     except:
         log.error("Problems parsing " + idmap_filepath)
         raise ValueError("Problems parsing " + idmap_filepath)
     return idmap
+
 
 def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
     """ Filter our predictions based on per label confidence thresholds
@@ -50,7 +52,7 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
     """
     if label_dict is None:
         label_dict = {}
-        
+
     qualifying_preds = []
     for pred, conf in zip(preds, confs):
         min_conf = filter_dict.get(pred)
@@ -63,6 +65,6 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
             qualifying_preds.append(pred)
     return qualifying_preds
 
-def list_contains_only_none(l):
-    return l==[None]*len(l)
 
+def list_contains_only_none(l):
+    return l == [None] * len(l)

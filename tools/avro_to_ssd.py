@@ -4,7 +4,7 @@ from vitamincv.avro_api.avro_api import AvroAPI
 from vitamincv.avro_api.avro_io import AvroIO
 from vitamincv.avro_api.utils import to_SSD_ann_format
 
-if __name__=="__main__":
+if __name__ == "__main__":
     a = argparse.ArgumentParser()
     a.add_argument("--avro")
     a.add_argument("--out_dir")
@@ -13,4 +13,3 @@ if __name__=="__main__":
 
     aapi = AvroAPI(AvroIO.read_json(args.avro))
     to_SSD_ann_format(aapi, args.property_type, args.out_dir)
-
