@@ -1,10 +1,5 @@
-import os
-import sys
-import json
 from abc import ABC, abstractmethod
-import glog as log
 
-from vitamincv.data import MediaData
 
 class Response(ABC):
     @abstractmethod

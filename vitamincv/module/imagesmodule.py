@@ -10,11 +10,24 @@ from vitamincv.media import MediaRetriever
 MAX_PROBLEMATIC_FRAMES = 10
 BATCH_SIZE = 2
 
+
 class ImagesModule(Module):
-    def __init__(self, server_name, version, prop_type=None,
-                 prop_id_map=None, module_id_map=None, batch_size=BATCH_SIZE):
-        super().__init__(server_name=server_name, version=version, prop_type=prop_type,
-                         prop_id_map=prop_id_map, module_id_map=module_id_map)
+    def __init__(
+        self,
+        server_name,
+        version,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None,
+        batch_size=BATCH_SIZE,
+    ):
+        super().__init__(
+            server_name=server_name,
+            version=version,
+            prop_type=prop_type,
+            prop_id_map=prop_id_map,
+            module_id_map=module_id_map,
+        )
         self.batch_size = batch_size
         log.info(f"Creating ImagesModule with batch_size: {batch_size}")
 
@@ -28,20 +41,26 @@ class ImagesModule(Module):
         super().process(request, prev_media_data)
         self._load_media()
         self.num_problematic_frames = 0
-        for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
+        for image_batch, tstamp_batch, det_batch in self.batch_generator(
+            self.preprocess_message()
+        ):
             if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                 log.error("Too Many Problematic Iterations")
-                log.error("Returning with error code: "+str(self.code))
+                log.error("Returning with error code: " + str(self.code))
                 return self.code
 
             try:
                 image_batch = self.preprocess_images(image_batch, det_batch)
                 prediction_batch_raw = self.process_images(image_batch)
                 prediction_batch = self.postprocess_predictions(prediction_batch_raw)
-                for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
-                    iterable = self.convert_to_detection(predictions=predictions,
-                                             tstamp=tstamp,
-                                             previous_detection=prev_det)
+                for predictions, tstamp, prev_det in zip(
+                    prediction_batch, tstamp_batch, det_batch
+                ):
+                    iterable = self.convert_to_detection(
+                        predictions=predictions,
+                        tstamp=tstamp,
+                        previous_detection=prev_det,
+                    )
                     if not isinstance(iterable, Iterable) or isinstance(iterable, dict):
                         iterable = [iterable]
 
@@ -84,7 +103,7 @@ class ImagesModule(Module):
             tstamp: The timestamp associated with the frame
             det: The matching detection object
         """
-        frames_iterator=[]
+        frames_iterator = []
         try:
             frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
         except ValueError as e:
@@ -104,11 +123,13 @@ class ImagesModule(Module):
                 log.warning("Invalid tstamp")
                 continue
 
-            log.info('tstamp: ' + str(tstamp))
+            log.info("tstamp: " + str(tstamp))
             dets = [None]
-            if self.prev_media_data: 
+            if self.prev_media_data:
                 log.info("Processing with previous media_data")
-                log.debug(f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}")
+                log.debug(
+                    f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}"
+                )
                 if tstamp in self.prev_media_data.det_tstamp_map:
                     dets = self.prev_media_data.det_tstamp_map[tstamp]
                     log.info(f"Found {len(dets)} dets from previous media_data")
@@ -125,7 +146,7 @@ class ImagesModule(Module):
     def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
         pass
 
-    def preprocess_images(self, images, contours = None):
+    def preprocess_images(self, images, contours=None):
         return images
 
     @abstractmethod
@@ -135,7 +156,7 @@ class ImagesModule(Module):
 
     def postprocess_predictions(self, predictions):
         return predictions
-    
+
     def _load_media(self):
         self.media = MediaRetriever(self.request.url)
         self.media_data.meta["dims"] = self.media.get_w_h()
