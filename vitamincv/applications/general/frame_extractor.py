@@ -55,10 +55,10 @@ class FrameExtractor(CVModule):
             filelike.write(line.encode())
         filelike.seek(0)
 
-        contents_file_key = self._s3_key_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
+        self.contents_file_key = self._s3_key_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
         result = self._s3_client.upload_fileobj(filelike,
                                                 self._s3_bucket,
-                                                contents_file_key)
+                                                self.contents_file_key)
         return result
 
     def process(self, message):
@@ -112,6 +112,6 @@ class FrameExtractor(CVModule):
         self.avro_api.set_url(self.request_api.get_url())
         self.avro_api.set_url_original(self.request_api.get_url())
         self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
-        p = create_prop(server=self.name, value=self.s3_contents_file, property_type="extraction")
+        p = create_prop(server=self.name, value=self.contents_file_key, property_type="extraction")
         track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=[p])
         self.avro_api.append_track_to_tracks_summary(track)
