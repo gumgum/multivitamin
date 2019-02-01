@@ -77,9 +77,10 @@ class FrameExtractor(CVModule):
                                     Key=self._s3_key_format.format(video_hash=video_hash,
                                                                    filename=self._list_file,
                                                                    ext="tsv"))
-        except:
             log.info("Video already exists")
             return
+        except:
+            pass
 
         contents = []
         for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=1.0):
