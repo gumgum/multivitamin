@@ -88,7 +88,8 @@ class FrameExtractor(CVModule):
             contents.append((video_hash, tstamp))
             self._manager.queue.put(data)
         self._manager.kill_workers_on_completion()
-        self._add_contents_to_s3(contents)
+        result = self._add_contents_to_s3(contents)
+        print(result)
 
     def update_response(self):
         date = get_current_time()
