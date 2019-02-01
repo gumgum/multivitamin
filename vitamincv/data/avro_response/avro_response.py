@@ -21,6 +21,7 @@ from vitamincv.data.utils import (
 from vitamincv.data import (
     MediaData,
     create_detection,
+    create_segment,
     create_bbox_contour_from_points,
     create_point,
 )
@@ -29,7 +30,9 @@ from vitamincv.data.avro_response.cv_schema_factory import (
     create_footprint,
     create_response,
     create_prop,
-    create_region
+    create_region,
+    create_image_ann,
+    create_video_ann
 )
 from vitamincv.data.avro_response.avro_io import AvroIO
 from vitamincv.data.avro_response.avro_query import (
@@ -48,28 +51,23 @@ if importlib.util.find_spec("cupy"):
 class AvroResponse(Response):
     """Wrapper with utilities around a single response document"""
 
-    def set_response(self, doc):
+    def set_response(self, response):
         self._clear_maps()
         self.detections = None
-        self.doc = create_response()
+        self.response = create_response()
         self.max_gpu_mem = 0.75
         self.check_for_gpu()
         self.detection_querier = None
         self.segment_querier = None
 
-        if doc:
-            if type(doc) is str:
-                doc = json.load(open(doc))
-            if "media_annotation" not in doc:
-                log.debug("setting media_annotation")
-                self.doc["media_annotation"] = doc
-            else:
-                self.doc = doc
+        if not isinstance(response, Response):
+            raise ValueError(Response)
+        self.response = response
 
     def load_mediadata(self, media_data):
         """Conver ModuleData to response"""
 
-        log.info("Converting mediadata to response")
+        log.info("Loading mediadata into response")
         date = get_current_time()
         num_footprints = len(self.get_footprints())
         footprint_id = date + str(num_footprints + 1)
@@ -115,13 +113,13 @@ class AvroResponse(Response):
         return md
 
     def to_dict(self):
-        return self.doc
+        return self.response
 
     def to_bytes(self):
         return None
 
     def _get_detections_from_response(self, props):
-        """Given a list of frames_ann properties get the corresponding detections where one property is fully met
+        """Given a list of properties get the corresponding detections where one property is fully met
 
         Args:
             props: A dict, or list of dicts, of detection key/value pairs
@@ -136,7 +134,7 @@ class AvroResponse(Response):
             props = [{"name": "*"}]  # hacky way to query all frames?
 
         try:
-            # if self.detection_querier is None:
+            # if self.detection_querier is None: #ASK MATTHEW
             self.build_detection_querier()
 
             Q = AvroQueryBlock()
@@ -154,7 +152,37 @@ class AvroResponse(Response):
             return None
 
     def _get_segments_from_response(self, props):
-        return None
+        """Given a list of properties get the corresponding segments where one property is fully met
+
+        Args:
+            props: A dict, or list of dicts, of segment key/value pairs
+
+        Returns:
+            list[dict]: list of segments matching one of the props
+        """
+        if type(props) is dict:
+            props = [props]
+
+        if props is None:
+            props = [{"name": "*"}]  # hacky way to query all frames?
+
+        try:
+            # if self.detection_querier is None: #ASK MATTHEW
+            self.build_segment_querier()
+
+            Q = AvroQueryBlock()
+            Q.set_operation("OR")
+            for prop in props:
+                log.info(f"Querying for property: {prop}")
+                q = AvroQuery()
+                q.set(prop)
+                Q.add(q)
+
+            return self.segment_querier.query(Q)
+        except:
+            log.info("Could not query segments")
+            log.warning(traceback.print_exc())
+            return None
 
     def reset_queriers(self):
         self.detection_querier = None
@@ -176,7 +204,7 @@ class AvroResponse(Response):
     """Modifiers"""
 
     def append_footprint(self, code):
-        self.doc["media_annotation"]["codes"].append(code)
+        self.response["media_annotation"]["codes"].append(code)
 
     def append_detection(self, detection, prop_id_map=None, t_eps=None):
         """Append a detection struct (the middleman between avro schema and API user)
@@ -278,13 +306,13 @@ class AvroResponse(Response):
         i = 0
         # https://stackoverflow.com/questions/21388026/find-closest-float-in-array-for-all-floats-in-another-array
         for i, image_ann in enumerate(
-            list(self.doc["media_annotation"]["frames_annotation"])
+            list(self.response["media_annotation"]["frames_annotation"])
         ):
             t1 = image_ann["t"]
             if times_equal(float(t1), float(t2), eps=t_eps):
                 log.debug("Appending new region to existing frame annotation.")
                 image_ann["regions"].append(region)
-                self.doc["media_annotation"]["frames_annotation"][i] = image_ann
+                self.response["media_annotation"]["frames_annotation"][i] = image_ann
                 tstamp_exists = True
                 break
             if t1 > t2 and not times_equal(
@@ -296,27 +324,27 @@ class AvroResponse(Response):
                 "Creating new frame annotation with tstamp: {}".format(detection["t"])
             )
             image_ann = create_image_ann(t=detection["t"], regions=[region])
-            self.doc["media_annotation"]["frames_annotation"].insert(i, image_ann)
+            self.response["media_annotation"]["frames_annotation"].insert(i, image_ann)
 
     def append_image_anns(self, image_anns):
         for image_ann in image_anns:
             self.append_image_ann(image_ann)
 
     def append_image_ann(self, image_ann):
-        self.doc["media_annotation"]["frames_annotation"].append(image_ann)
+        self.response["media_annotation"]["frames_annotation"].append(image_ann)
 
     def append_region_to_image_ann(self, region, tstamp):
         # Potentially change frames_annotations into a map for O(1) lookup in the future
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             if image_ann["t"] == tstamp:
                 image_ann["regions"].append(region)
 
     def append_track_to_tracks_summary(self, track):
         # log.info(pprint.pformat(track))
-        if "array" in self.doc["media_annotation"]["tracks_summary"]:
-            self.doc["media_annotation"]["tracks_summary"]["array"].append(track)
+        if "array" in self.response["media_annotation"]["tracks_summary"]:
+            self.response["media_annotation"]["tracks_summary"]["array"].append(track)
         else:
-            self.doc["media_annotation"]["tracks_summary"].append(track)
+            self.response["media_annotation"]["tracks_summary"].append(track)
             # log.info("len(self.doc['media_annotation']['tracks_summary']['array']): " + str(len(self.doc["media_annotation"]["tracks_summary"]["array"])))
 
     def append_annotation_tasks(self, annotation_tasks):
@@ -324,20 +352,20 @@ class AvroResponse(Response):
             self.append_annotation_task(at)
 
     def append_annotation_task(self, annotation_task):
-        self.doc["media_annotation"]["annotation_tasks"].append(annotation_task)
+        self.response["media_annotation"]["annotation_tasks"].append(annotation_task)
 
     def sort_image_anns_by_timestamp(self):
-        tmp = self.doc["media_annotation"]["frames_annotation"]
-        self.doc["media_annotation"]["frames_annotation"] = sorted(
+        tmp = self.response["media_annotation"]["frames_annotation"]
+        self.response["media_annotation"]["frames_annotation"] = sorted(
             tmp, key=lambda k: k["t"]
         )
 
     def sort_tracks_summary_by_timestamp(self):
-        tmp = self.doc["media_annotation"]["tracks_summary"]
-        self.doc["media_annotation"]["tracks_summary"] = sorted(
+        tmp = self.response["media_annotation"]["tracks_summary"]
+        self.response["media_annotation"]["tracks_summary"] = sorted(
             tmp, key=lambda k: k["t2"]
         )
-        self.doc["media_annotation"]["tracks_summary"] = sorted(
+        self.response["media_annotation"]["tracks_summary"] = sorted(
             tmp, key=lambda k: k["t1"]
         )
 
@@ -349,25 +377,25 @@ class AvroResponse(Response):
     def set_media_ann(self, media_ann):
         assert isinstance(media_ann, dict)
         self._clear_maps()
-        self.doc["media_annotation"] = media_ann
+        self.response["media_annotation"] = media_ann
 
     def set_url(self, url):
         assert isinstance(url, str)
-        self.doc["media_annotation"]["url"] = url
+        self.response["media_annotation"]["url"] = url
 
     def set_url_original(self, url):
         assert isinstance(url, str)
-        self.doc["media_annotation"]["url_original"] = url
+        self.response["media_annotation"]["url_original"] = url
 
     def set_dims(self, w, h):
         assert isinstance(w, int)
         assert isinstance(h, int)
-        self.doc["media_annotation"]["w"] = w
-        self.doc["media_annotation"]["h"] = h
+        self.response["media_annotation"]["w"] = w
+        self.response["media_annotation"]["h"] = h
 
     def set_footprints(self, codes):
         assert isinstance(codes, list)
-        self.doc["media_annotation"]["codes"] = codes
+        self.response["media_annotation"]["codes"] = codes
 
     """Getters"""
 
@@ -378,7 +406,7 @@ class AvroResponse(Response):
             list (str): list of servers
         """
         servers = []
-        for code in self.doc["media_annotation"]["codes"]:
+        for code in self.response["media_annotation"]["codes"]:
             servers.append(code["server"])
         return servers
 
@@ -388,7 +416,7 @@ class AvroResponse(Response):
         Returns:
             list (dict): list of footprints
         """
-        return self.doc["media_annotation"]["codes"]
+        return self.response["media_annotation"]["codes"]
 
     def get_segments_from_tracks_summary(self):
         """Transform all tracks_summary to a list of segements
@@ -397,6 +425,7 @@ class AvroResponse(Response):
             list[dict]: list of segments
         """
         all_segments = []
+        log.info(f"len(self.get_tracks()) = {len(self.get_tracks())}")
         for track in self.get_tracks():
             t1 = track["t1"]
             t2 = track["t2"]
@@ -465,7 +494,7 @@ class AvroResponse(Response):
             props (list): Any number of lists of detection key/value pairs
 
         Returns:
-            list[tuple]: A list of grouped detections          
+            list[tuple]: A list of grouped detections
         """
         props = list(props)
         for idx, prop in enumerate(props):
@@ -568,7 +597,7 @@ class AvroResponse(Response):
         Returns:
             list of image_ann objects
         """
-        return self.doc["media_annotation"]["frames_annotation"]
+        return self.response["media_annotation"]["frames_annotation"]
 
     def get_media_summaries(self):
         """Get full media summary
@@ -576,7 +605,7 @@ class AvroResponse(Response):
         Returns:
             list of media_summary objects
         """
-        return self.doc["media_annotation"]["media_summary"]
+        return self.response["media_annotation"]["media_summary"]
 
     def get_footprints(self):
         """Get all footprints
@@ -584,7 +613,7 @@ class AvroResponse(Response):
         Returns:
             list of footprints
         """
-        return self.doc["media_annotation"]["codes"]
+        return self.response["media_annotation"]["codes"]
 
     def get_footprint(self, query_footprint):
         """Get all footprints from doc that match query_footprint with AND logic
@@ -597,7 +626,7 @@ class AvroResponse(Response):
             footprints (list): list of footprints.
         """
         codes = []
-        for c in self.doc["media_annotation"]["codes"]:
+        for c in self.response["media_annotation"]["codes"]:
             if partial_value_AND_match(c, query_footprint) and date_range_match(
                 c, query_footprint
             ):
@@ -615,7 +644,7 @@ class AvroResponse(Response):
             regions (list): list of dictionaries of regions
         """
         image_anns = []
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             regions = []
             for region in image_ann["regions"]:
                 for prop in region["props"]:
@@ -637,7 +666,7 @@ class AvroResponse(Response):
         """
         regions = []
         ts = []
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             t = image_ann["t"]
             for region in image_ann["regions"]:
                 for prop in region["props"]:
@@ -660,25 +689,25 @@ class AvroResponse(Response):
         i = self._t2index.get(t)
         if i is None:
             return None
-        return self.doc["media_annotation"]["frames_annotation"][i]
+        return self.response["media_annotation"]["frames_annotation"][i]
 
     def get_url(self):
-        return self.doc["media_annotation"]["url"]
+        return self.response["media_annotation"]["url"]
 
     def get_dims(self):
         return (self.get_width(), self.get_height())
 
     def get_width(self):
-        return self.doc["media_annotation"]["w"]
+        return self.response["media_annotation"]["w"]
 
     def get_height(self):
-        return self.doc["media_annotation"]["h"]
+        return self.response["media_annotation"]["h"]
 
     def get_response(self):
-        return self.doc
+        return self.response
 
     def get_json(self, indent=None):
-        return json.dumps(self.doc, indent=indent)
+        return json.dumps(self.response, indent=indent)
 
     def get_detector_id(self):
         pass
@@ -697,12 +726,12 @@ class AvroResponse(Response):
 
     def get_timestamps(self):
         return sorted(
-            [x["t"] for x in self.doc["media_annotation"]["frames_annotation"]]
+            [x["t"] for x in self.response["media_annotation"]["frames_annotation"]]
         )
 
     def get_timestamps_from_footprints(self, server=None):
         tstamps = []
-        for c in self.doc["media_annotation"]["codes"]:
+        for c in self.response["media_annotation"]["codes"]:
             log.info(str(c))
             if not c["tstamps"]:
                 continue
@@ -720,12 +749,12 @@ class AvroResponse(Response):
         pass
 
     def get_tracks(self):
-        return self.doc["media_annotation"]["tracks_summary"]
+        return self.response["media_annotation"]["tracks_summary"]
 
     def get_tracks_from_label(self, label):
         input("NEEDS TO BE REVIEWED")
         tracks = []
-        for track in self.doc["media_annotation"]["tracks_summary"]:
+        for track in self.response["media_annotation"]["tracks_summary"]:
             if track["regions"][0]["props"][0]["value"] == label:
                 tracks.append(track)
         return tracks
@@ -740,7 +769,7 @@ class AvroResponse(Response):
         confidences = []
         # we go through the tracks, and we check whether they show the poi or not.
         # log.info(str(self.doc))
-        tracks_summary = self.doc["media_annotation"]["tracks_summary"]
+        tracks_summary = self.response["media_annotation"]["tracks_summary"]
         # log.info("We got a track summary, type: " + str(type(tracks_summary)))
         # log.info(str(tracks_summary.keys()))
         # tracks_summary=tracks_summary["array"]
@@ -775,7 +804,7 @@ class AvroResponse(Response):
 
     def get_tracks_from_timestamp(self, tstamp):
         tracks = []
-        for track in self.doc["media_annotation"]["tracks_summary"]:
+        for track in self.response["media_annotation"]["tracks_summary"]:
             if track["t1"] < tstamp < track["t2"]:
                 tracks.append(track)
         return track
@@ -783,7 +812,7 @@ class AvroResponse(Response):
     def get_sorted_tracks_from_timestamp(self, tstamp):
         tracks = []
         found = False
-        for track in self.doc["media_annotation"]["tracks_summary"]:
+        for track in self.response["media_annotation"]["tracks_summary"]:
             if track["t1"] < tstamp:
                 found = True
                 if tstamp < track["t2"]:
@@ -795,7 +824,7 @@ class AvroResponse(Response):
     def get_temporal_signal_from_prop(
         self, poi, use_track_summary_flag=True, tstamps_msecs=[]
     ):
-        if use_track_summary_flag == False:
+        if use_track_summary_flag is False:
             log.info("Retrieving temporal signal from frame annotations")
             tstamps_secs = self.get_timestamps()
             tstamps_msecs = [int(1000 * x) for x in tstamps_secs]
@@ -996,7 +1025,7 @@ class AvroResponse(Response):
         skip_t1 = False
         skip_t2 = False
         for key, value in query.items():
-            if key is "t" and query_map.get("t1") is not None:
+            if key == "t" and query_map.get("t1") is not None:
                 idxs = timestamp_in_range_query(query_map, value)
                 if desired_idxs is None:
                     desired_idxs = idxs
@@ -1004,10 +1033,10 @@ class AvroResponse(Response):
                     desired_idxs = desired_idxs.intersection(idxs)
                 continue
 
-            if (key is "t1" and skip_t1) or (key is "t2" and skip_t2):
+            if (key == "t1" and skip_t1) or (key == "t2" and skip_t2):
                 continue
 
-            if key is "t1" and query_map.get("t") is not None:
+            if key == "t1" and query_map.get("t") is not None:
                 skip_t2 = True
                 idxs = range_around_timestamp_query(query_map, value, query.get("t2"))
                 if desired_idxs is None:
@@ -1016,7 +1045,7 @@ class AvroResponse(Response):
                     desired_idxs = desired_idxs.intersection(idxs)
                 continue
 
-            if key is "t2" and query_map.get("t") is not None:
+            if key == "t2" and query_map.get("t") is not None:
                 skip_t1 = True
                 idxs = range_around_timestamp_query(query_map, query.get("t1"), value)
                 if desired_idxs is None:
@@ -1050,7 +1079,7 @@ class AvroResponse(Response):
         #
         # OBSOLETE
         #
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             for region in image_ann["regions"]:
                 if region["id"] == region_id:
                     return image_ann
@@ -1060,7 +1089,7 @@ class AvroResponse(Response):
         #
         # OBSOLETE
         #
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             for region in image_ann["regions"]:
                 if region["id"] == region_id:
                     return region
@@ -1088,8 +1117,12 @@ class AvroResponse(Response):
         self.detection_querier.load(dets)
 
     def build_segment_querier(self):
+        log.info("Building AvroQuerier")
         self.segment_querier = AvroQuerier()
-        self.segment_querier.load(self.get_segments_from_tracks_summary())
+        log.info("Getting segments")
+        segments = self.get_segments_from_tracks_summary()
+        log.info(f"Found {len(segments)} segments")
+        self.segment_querier.load(segments)
 
     def _clear_maps(self):
         self._region_id2detections = {}
@@ -1132,7 +1165,7 @@ class AvroResponse(Response):
         # OBSOLETE
         #
         self._t2index = {}
-        for i, img_ann in enumerate(self.doc["media_annotation"]["frames_annotation"]):
+        for i, img_ann in enumerate(self.response["media_annotation"]["frames_annotation"]):
             self._t2index[img_ann["t"]] = i
 
     def build_frames_ann_query_map(self):
@@ -1159,7 +1192,7 @@ class AvroResponse(Response):
                 if key in unsupported:
                     continue
 
-                if key is "t":
+                if key == "t":
                     query_map["t_list"] = np.append(query_map["t_list"], idx)
 
                 if key not in query_map.keys():
@@ -1194,7 +1227,7 @@ class AvroResponse(Response):
                 if key not in query_map.keys():
                     query_map[key] = {}
 
-                if key is "t1" or key is "t2":
+                if key == "t1" or key == "t2":
                     if type(query_map[key]) is dict:
                         query_map[key] = np.array([])
                     query_map[key] = np.append(query_map[key], val)
@@ -1231,7 +1264,7 @@ def partial_value_AND_match(item, query_item):
     """Boolean test to see if each key/value in `query_item` matches in itemself.
     Skips comparision if default values
     """
-    if type(query_item) == type([]):
+    if isinstance(query_item, list):
         for qitem in query_item:
             if partial_value_AND_match(item, qitem):
                 return True

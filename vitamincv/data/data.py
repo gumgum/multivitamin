@@ -162,35 +162,15 @@ def create_detection(
 
 
 def create_segment(
-    server="",
-    property_type="label",
-    value="",
-    value_verbose="",
-    confidence=0.0,
-    fraction=1.0,
     t1=0.0,
     t2=0.0,
-    region_ids=None,
-    version="",
-    property_id=0,
-    track_id=None,
-    company="gumgum",
+    detections=None
 ):
-    if not region_ids:
-        region_ids = []
+    if not detections:
+        detections = []
 
     return {
-        "server": server,
-        "property_type": property_type,
-        "value": value,
-        "value_verbose": value_verbose,
-        "property_id": property_id,
-        "confidence": confidence,
-        "fraction": fraction,
         "t1": t1,
         "t2": t2,
-        "ver": version,
-        "region_ids": region_ids,
-        "track_id": track_id,
-        "company": company,
+        "detections": detections
     }
