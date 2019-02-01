@@ -24,6 +24,7 @@ class FrameExtractor(CVModule):
                                       parallelization="thread")
 
     def _upload_frame_helper(self, data):
+        print(data)
         self._upload_frame(**data)
 
     def _upload_frame(self, frame, tstamp, video_hash):
@@ -32,7 +33,6 @@ class FrameExtractor(CVModule):
         im.save(im_filelike, format=self._encoding)
         im_filelike.seek(0)
         s3_key = "{}/{}.{}".format(video_hash, tstamp, self._encoding)
-        print(tstamp)
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
