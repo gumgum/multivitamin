@@ -55,7 +55,6 @@ class FrameExtractor(CVModule):
             filelike.write(line.encode())
         filelike.seek(0)
 
-        self.contents_file_key = self._s3_key_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
         result = self._s3_client.upload_fileobj(filelike,
                                                 self._s3_bucket,
                                                 self.contents_file_key)
@@ -72,6 +71,7 @@ class FrameExtractor(CVModule):
             self.code = "ERROR_NO_IMAGES_LOADED"
 
         video_hash = hashfileobject(filelike, hexdigest=True)
+        self.contents_file_key = self._s3_key_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
         try:
             self._s3_client.head_object(Bucket=self._s3_bucket,
                                     Key=self._s3_key_format.format(video_hash=video_hash,
