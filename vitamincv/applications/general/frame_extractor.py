@@ -72,6 +72,14 @@ class FrameExtractor(CVModule):
             self.code = "ERROR_NO_IMAGES_LOADED"
 
         video_hash = hashfileobject(filelike, hexdigest=True)
+        try:
+            self._s3_client.head_object(Bucket=self._s3_bucket,
+                                    Key=self._s3_key_format.format(video_hash=video_hash,
+                                                                   filename=self._list_file,
+                                                                   ext="tsv"))
+        except:
+            log.info("Video already exists")
+            return
 
         contents = []
         for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=1.0):
@@ -88,7 +96,6 @@ class FrameExtractor(CVModule):
             self._manager.queue.put(data)
         self._manager.kill_workers_on_completion()
         result = self._add_contents_to_s3(contents)
-        print(result)
 
     def update_response(self):
         date = get_current_time()
