@@ -19,7 +19,7 @@ class FrameExtractor(CVModule):
         self._encoding = "JPEG"
 
         self._manager = WorkerManager(func=self._upload_frame_helper,
-                                      n=10,
+                                      n=100,
                                       max_queue_size=100,
                                       parallelization="thread")
 
@@ -30,7 +30,9 @@ class FrameExtractor(CVModule):
         im = Image.fromarray(frame)
         im_filelike = BytesIO()
         im.save(im_filelike, format=self._encoding)
+        im_filelike.seek(0)
         s3_key = "{}/{}.{}".format(video_hash, tstamp, self._encoding)
+        print(tstamp)
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
@@ -44,10 +46,13 @@ class FrameExtractor(CVModule):
         filelike = self.media_api.download(return_filelike=True)
         video_hash = hashfileobject(filelike, hexdigest=True)
         for frame, tstamp in self.media_api.get_frames_iterator():
-            self._upload_frame(frame, tstamp, video_hash)
-            # data = {
-            #     "frame": frame,
-            #     "tstamp": tstamp,
-            #     "video_hash": video_hash
-            # }
-            # self._manager.queue.put(data)
+            #self._upload_frame(frame, tstamp, video_hash)
+            if frame is None:
+                continue
+            data = {
+                "frame": frame,
+                "tstamp": tstamp,
+                "video_hash": video_hash
+            }
+            self._manager.queue.put(data)
+        self._manager.kill_workers_on_completion()
