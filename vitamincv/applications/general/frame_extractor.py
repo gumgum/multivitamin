@@ -1,5 +1,6 @@
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.comm_apis.work_handler import WorkerManager
+from vitamincv.media_api.media import MediaRetriever
 
 from PIL import Image
 from io import BytesIO
