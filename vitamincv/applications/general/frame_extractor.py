@@ -41,7 +41,6 @@ class FrameExtractor(CVModule):
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
-
         self._append_to_sql(video_hash, tstamp, s3_key, result)
 
     def _append_to_sql(self, video_hash, tstamp, s3_key, result):
@@ -59,7 +58,7 @@ class FrameExtractor(CVModule):
         contents_file_key = self._s3_key_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
         result = self._s3_client.upload_fileobj(filelike,
                                                 self._s3_bucket,
-                                                s3_key)
+                                                contents_file_key)
         return result
 
     def process(self, message):
