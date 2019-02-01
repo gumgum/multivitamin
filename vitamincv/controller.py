@@ -9,10 +9,10 @@ from vitamincv.data.request import Request
 from vitamincv.data.avro_response.avro_response import AvroResponse
 
 
-class Controller():
+class Controller:
     def __init__(self, modules):
-        """Controller receives a Request and controls the communication to the CVmodules for processing,
-            then returns a response
+        """Controller receives a Request and controls the communication to the CVmodules
+           for processing, then returns a response
         """
         self.modules = modules
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
@@ -28,7 +28,7 @@ class Controller():
         """
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
-        
+
         response = None
         if request.prev_response:
             log.info("Loading from prev_response")
@@ -36,17 +36,26 @@ class Controller():
         else:
             log.info("No prev_response")
             response = AvroResponse(request=request)
-        
+
         if request.prev_response_url:
             raise NotImplementedError()
 
         for module in self.modules:
             log.info(f"Processing request for module: {type(module)}")
-            prev_media_data = response.get_media_data(module.get_prev_props_of_interest())
+<<<<<<< HEAD
+            prev_media_data = response.to_mediadata(module.get_prev_props_of_interest())
             code = module.process(request, prev_media_data)
+            
+            log.info(f"{module.name} created {len(module.media_data.detections)} detections")
+            log.info(f"{module.name} created {len(module.media_data.segments)} segments")
+            
+            response.load_mediadata(module.media_data)
+=======
+            prev_module_data = response.response_to_mediadata(module.get_prev_props_of_interest())
+            code = module.process(request, prev_module_data)
             log.info(f"{module.name} created {len(module.media_data.detections)} detections and {len(module.media_data.segments)} segments")
             response.mediadata_to_response(module.media_data)
+>>>>>>> parent of b8bd975... save state
             log.debug(f"doc: {response.to_dict()}")
 
         return response
-

@@ -5,13 +5,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from time import sleep
 
-#from subprocess import Popen
-#import shlex
+# from subprocess import Popen
+# import shlex
 
-#from rq import Queue, Worker, Connection
-#from redis import Redis
+# from rq import Queue, Worker, Connection
+# from redis import Redis
 
 from vitamincv.comm_apis.comm_api import CommAPI
+
 
 class WebAPI(CommAPI):
     def __init__(self, port=5000):
@@ -25,14 +26,14 @@ class WebAPI(CommAPI):
         @app.route("/", methods=["GET", "POST"])
         def process():
             message = request.get_json(force=True)
-            log.info('Message received: {}'.format(message))
+            log.info("Message received: {}".format(message))
             response = self.cvmodule.process(message)
             if isinstance(response, dict):
                 return json.dumps(response, indent=2)
             return response
             # job = self.q.enqueue(self.cvmodule.process, message)
             # while not job.result:
-                # sleep(0.1)
+            # sleep(0.1)
             # return jsonify(job.result)
 
         @app.route("/health", methods=["GET", "POST"])

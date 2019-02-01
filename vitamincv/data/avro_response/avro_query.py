@@ -8,7 +8,8 @@ import importlib.util
 from vitamincv.data.avro_response.cv_schema_factory import *
 from vitamincv.data import create_detection, create_segment
 
-class AvroQuerier():
+
+class AvroQuerier:
     def __init__(self):
         self.query_map = {}
         self.numeric_fields = set()
@@ -21,10 +22,10 @@ class AvroQuerier():
 
             Uses GPU if one is available
         """
-        log.debug("Loading json_list: "+ str(json_list))
+        log.debug("Loading json_list: " + str(json_list))
         self.query_map = {}
         self.numeric_fields = set()
-        if len(json_list)==0:
+        if len(json_list) == 0:
             return
         if json_list[0].get("t") is not None:
             json_list = sorted(json_list, key=lambda d: d["t"])
@@ -44,7 +45,7 @@ class AvroQuerier():
             array = self.query_map
             update = {}
             for arg in args:
-                log.debug('arg: ' + str(arg))
+                log.debug("arg: " + str(arg))
                 array = array[arg]
                 if type(array) is dict:
                     update[arg] = {}
@@ -79,7 +80,6 @@ class AvroQuerier():
                 old[key] = val
         return old
 
-
     def query(self, query):
         """ Queries for matching detections/segments
 
@@ -92,7 +92,11 @@ class AvroQuerier():
         if type(query) is not AvroQuery and type(query) is not AvroQueryBlock:
             return
 
-        idxs = self.process_qblock(query) if type(query) is AvroQueryBlock else self.process_q(query)
+        idxs = (
+            self.process_qblock(query)
+            if type(query) is AvroQueryBlock
+            else self.process_q(query)
+        )
         return self.data[sorted(idxs)].tolist()
 
     def group_query(self, queries, group_field):
@@ -118,7 +122,6 @@ class AvroQuerier():
             matching_ids = self.intersect(matching_ids, set(_qresults.keys()))
             qresults.append(_qresults)
 
-
         results = []
         for key in matching_ids:
             result = []
@@ -131,7 +134,7 @@ class AvroQuerier():
     def process_qblock(self, query):
         operation = query.get_operation(query.operation_code)
         idxs = None
-        
+
         for q in query.query:
             if type(q) is AvroQueryBlock:
                 _idxs = self.process_qblock(q)
@@ -152,27 +155,27 @@ class AvroQuerier():
         return idxs
 
     def process_q(self, query):
-        log.debug('Processing query')
+        log.debug("Processing query")
         idxs = None
         skip = set(["include"])
         for key, val in query.__dict__.items():
-            #log.debug('key, val: ' + str(key) +', ' + str(val))
+            # log.debug('key, val: ' + str(key) +', ' + str(val))
             if key in skip:
                 continue
             if callable(val):
                 continue
             if val is None:
                 continue
-            
+
             if type(val) is str:
-                #log.debug('type(val) is str')
+                # log.debug('type(val) is str')
                 _idxs = self.string_query(key, val)
-                #log.debug('_idxs: ' + str(_idxs))
+                # log.debug('_idxs: ' + str(_idxs))
 
             elif isinstance(val, numbers.Number) and "min_" in key:
                 maximum = getattr(query, key.replace("min_", "max_"))
                 skip.add(key.replace("min_", "max_"))
-                
+
                 if maximum is None:
                     maximum = self.xp.inf
 
@@ -182,9 +185,9 @@ class AvroQuerier():
             elif isinstance(val, numbers.Number) and "max_" in key:
                 minimum = getattr(query, key.replace("max_", "min_"))
                 skip.add(key.replace("max_", "min_"))
-                
+
                 if minimum is None:
-                    minimum = -1*self.xp.inf
+                    minimum = -1 * self.xp.inf
 
                 field = key.replace("max_", "")
                 _idxs = self.numeric_range_query(minimum, val, field)
@@ -207,22 +210,26 @@ class AvroQuerier():
 
     def string_query(self, *args):
         _result = self.query_map
-        #log.debug('_result: ' + str(_result))
+        # log.debug('_result: ' + str(_result))
         for arg in args:
-            log.debug('arg: ' + str(arg))
+            log.debug("arg: " + str(arg))
             _result = _result[arg]
         return _result
 
     def numeric_range_query(self, minimum=None, maximum=None, *args):
         if minimum is None:
-            minimum = -1*self.xp.inf
+            minimum = -1 * self.xp.inf
         if maximum is None:
             maximum = self.xp.inf
 
         qmap = self.query_map
         for arg in args:
             qmap = qmap[arg]
-        result = set(self.xp.nonzero(self.xp.logical_and(minimum <= qmap, qmap <= maximum))[0].tolist())
+        result = set(
+            self.xp.nonzero(self.xp.logical_and(minimum <= qmap, qmap <= maximum))[
+                0
+            ].tolist()
+        )
         return result
 
     def numeric_match_query(self, value, *args):
@@ -236,18 +243,21 @@ class AvroQuerier():
         self.gpu = None
         deviceIDs = []
         try:
-            deviceIDs = GPUtil.getAvailable(order="memory", maxMemory = self.max_gpu_mem, maxLoad = 0.70)
+            deviceIDs = GPUtil.getAvailable(
+                order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70
+            )
         except:
             log.warning("No GPUs Found -- This must be a CPU only machine")
 
         if len(deviceIDs) > 0:
             if importlib.util.find_spec("cupy"):
                 import cupy as cp
+
                 self.xp = cp
                 self.gpu = deviceIDs[0]
 
-
     """ Detections/Segments Loading """
+
     def create_sub_dict(self, full_dict, *args):
         sub_dict = full_dict
         for arg in args:
@@ -260,22 +270,28 @@ class AvroQuerier():
         sub_dict = self.create_sub_dict(sub_dict, *args)
         for key, val in elem.items():
             if type(val) is list:
-                self._process_list(val, sub_dict, key, idx=list_idx, prev_args=prev_args+args)
+                self._process_list(
+                    val, sub_dict, key, idx=list_idx, prev_args=prev_args + args
+                )
             elif type(val) is dict:
-                self._process_dict(list_idx, val, sub_dict, key, prev_args=prev_args+args)
+                self._process_dict(
+                    list_idx, val, sub_dict, key, prev_args=prev_args + args
+                )
             elif type(val) is str:
                 self._process_val_str(list_idx, sub_dict, key, val)
             elif isinstance(val, numbers.Number):
-                self._process_val_num(list_idx, val, sub_dict, key, prev_args=prev_args+args)
+                self._process_val_num(
+                    list_idx, val, sub_dict, key, prev_args=prev_args + args
+                )
 
     def _process_list(self, val, sub_dict, *args, idx=None, prev_args=()):
         sub_dict = self.create_sub_dict(sub_dict, *args)
         for _idx, elem in enumerate(val):
             if type(elem) is dict:
                 if idx is None:
-                    self._process_dict(_idx, elem, sub_dict, prev_args=prev_args+args)
+                    self._process_dict(_idx, elem, sub_dict, prev_args=prev_args + args)
                 else:
-                    self._process_dict(idx, elem, sub_dict, prev_args=prev_args+args)
+                    self._process_dict(idx, elem, sub_dict, prev_args=prev_args + args)
 
     def _process_val_str(self, idx, sub_dict, *args):
         sub_dict = self.create_sub_dict(sub_dict, *args[:-1])
@@ -291,17 +307,18 @@ class AvroQuerier():
         if type(sub_dict.get(key)) is not list:
             sub_dict[key] = []
 
-        for _ in  range(idx-len(sub_dict[key]) if idx-len(sub_dict[key]) > 0 else 0):
+        for _ in range(idx - len(sub_dict[key]) if idx - len(sub_dict[key]) > 0 else 0):
             sub_dict[key].append(np.nan)
 
         sub_dict[key].append(val)
-        self.numeric_fields.add(prev_args+args)
+        self.numeric_fields.add(prev_args + args)
 
 
-class AvroQueryBlock():
+class AvroQueryBlock:
     """ Enables more advanced queries using multiple AvroQuery objects
 
     """
+
     def __init__(self):
         self.query = []
         self.operation_code = 1
@@ -330,8 +347,7 @@ class AvroQueryBlock():
             if operation == 1:
                 return "OR"
 
-
-    def set_operation(self, operation = "OR"):
+    def set_operation(self, operation="OR"):
         """ Sets operation
 
             Args:
@@ -359,12 +375,14 @@ class AvroQueryBlock():
     def set_exclude(self, exclude=True):
         self.include = not exclude
 
-class AvroQuery():
+
+class AvroQuery:
     """ Basic Query Object
 
         Parses default detection and segment from cv_schema_factory to find queriable fields
 
     """
+
     def __init__(self):
         self.include = True
 
@@ -427,10 +445,11 @@ class AvroQuery():
             Args:
                 attr (str): The detection/segment field to query against
         """
+
         def _match_template(value):
             setattr(self, attr, value)
 
-        setattr(self, "match_"+attr, _match_template)
+        setattr(self, "match_" + attr, _match_template)
 
     def _range_constructor(self, attr):
         """ Dynamically creates "range" methods
@@ -438,16 +457,17 @@ class AvroQuery():
             Args:
                 attr (str): The detection/segment field to query against
         """
+
         def _min_range_template(value):
-            setattr(self, "min_"+attr, value)
+            setattr(self, "min_" + attr, value)
 
         def _max_range_template(value):
-            setattr(self, "max_"+attr, value)
+            setattr(self, "max_" + attr, value)
 
-        setattr(self, "min_"+attr, None) 
-        setattr(self, "max_"+attr, None)
-        setattr(self, "set_min_"+attr, _min_range_template)
-        setattr(self, "set_max_"+attr, _max_range_template)
+        setattr(self, "min_" + attr, None)
+        setattr(self, "max_" + attr, None)
+        setattr(self, "set_min_" + attr, _min_range_template)
+        setattr(self, "set_max_" + attr, _max_range_template)
 
     def set_include(self, include=True):
         self.include = include

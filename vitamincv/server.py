@@ -18,7 +18,8 @@ from vitamincv.data.request import Request
 from vitamincv.data.response_interface import Response
 from vitamincv.data import MediaData
 
-PORT = os.environ.get('PORT', 5000)
+PORT = os.environ.get("PORT", 5000)
+
 
 class Server(Flask):
     def __init__(self, modules, input_comm, output_comms=None):
@@ -35,11 +36,11 @@ class Server(Flask):
         """
         if isinstance(modules, Module):
             modules = [modules]
-            
+
         if not isinstance(modules, list):
             raise TypeError("modules is not a list of CVModule")
 
-        if len(modules)==0:
+        if len(modules) == 0:
             raise TypeError("No modules was provided.")
 
         for m in modules:
@@ -58,7 +59,7 @@ class Server(Flask):
         for out in output_comms:
             if not isinstance(out, CommAPI):
                 raise TypeError("comm_apis_outputs must be CommAPIs")
-            
+
         self.controller = Controller(modules)
         self.input_comm = input_comm
         self.output_comms = output_comms
@@ -67,7 +68,7 @@ class Server(Flask):
             log.info("Output comm type(s): {}".format(type(out)))
 
         super().__init__(__name__)
-        
+
         @self.route("/health", methods=["GET"])
         def health_check():
             return jsonify(self._controller.modules_info)
@@ -78,7 +79,9 @@ class Server(Flask):
             Note: this starts a healthcheck endpoint in a separate thread
         """
         log.info(f"Starting HealthCheck endpoint at /health on port {PORT}")
-        threading.Thread(target=self.run, kwargs={"host":"0.0.0.0","port": PORT}, daemon=True).start()
+        threading.Thread(
+            target=self.run, kwargs={"host": "0.0.0.0", "port": PORT}, daemon=True
+        ).start()
         log.info("Starting server...")
         self._start()
 
@@ -99,4 +102,3 @@ class Server(Flask):
             except Exception as e:
                 log.info(e)
                 log.info(traceback.format_exc())
-

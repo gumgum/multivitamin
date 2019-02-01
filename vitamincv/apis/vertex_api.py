@@ -1,4 +1,4 @@
-from abc import ABC,abstractmethod
+from abc import ABC, abstractmethod
 import time
 
 import glog as log
@@ -15,9 +15,11 @@ class VertexAPI(SQSAPI):
         Args:
             queue_name (str): AWS SQS queue name
         """
-        #log.setLevel("DEBUG")
+        # log.setLevel("DEBUG")
         super().__init__(queue_name)
-        auth_header = credstash.getSecret('vertex-api-auth-header', table='VA-CredStash-ImageScience-Vertex')
+        auth_header = credstash.getSecret(
+            "vertex-api-auth-header", table="VA-CredStash-ImageScience-Vertex"
+        )
         auth_header = auth_header.split(":")
         self.auth_header = {auth_header[0]: auth_header[1].strip()}
 
@@ -37,7 +39,10 @@ class VertexAPI(SQSAPI):
             else:
                 log.info("No dst_url in request. Not pushing response.")
             if delete_flag:
-                log.info("Deleting "+r.get_request_id()+ " from queue " + str(self.queue_url))
+                log.info(
+                    "Deleting "
+                    + r.get_request_id()
+                    + " from queue "
+                    + str(self.queue_url)
+                )
                 super().delete_message(r.get_request_id())
-
-

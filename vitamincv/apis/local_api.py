@@ -1,7 +1,7 @@
-import os 
+import os
 import sys
 import glog as log
-import json 
+import json
 from pathlib import Path
 from queue import Queue
 
@@ -9,9 +9,9 @@ from vitamincv.data.request import Request
 from vitamincv.apis.comm_api import CommAPI
 from vitamincv.data.utils import get_current_date
 
-FILEEXT=".json"
+FILEEXT = ".json"
 DEFAULT_FILE = "response" + FILEEXT
-INDENTATION=2
+INDENTATION = 2
 
 
 class LocalAPI(CommAPI):
@@ -32,12 +32,12 @@ class LocalAPI(CommAPI):
             p = Path(pulling_folder)
             if not p.exists():
                 raise ValueError(f"{pulling_folder} does not exist.")
-            paths = list(p.glob('**/*{}'.format(FILEEXT)))
+            paths = list(p.glob("**/*{}".format(FILEEXT)))
             for path in paths:
                 with path.open() as rf:
                     for row in rf:
                         self.json_queue.put(json.loads(row))
-        
+
         if not os.path.exists(pushing_folder):
             os.makedirs(pushing_folder)
 
@@ -81,7 +81,7 @@ class LocalAPI(CommAPI):
             if not os.path.exists(os.path.dirname(json_fn)):
                 os.makedirs(os.path.dirname(json_fn))
             log.info(f"Writing {json_fn}")
-            with open(json_fn, 'w') as wf:
+            with open(json_fn, "w") as wf:
                 wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
             outfns.append(json_fn)
         return outfns
@@ -100,5 +100,6 @@ class LocalAPI(CommAPI):
 
         media_url = response.get_url()
         media_name = os.path.basename(media_url)
-        return os.path.join(self.pushing_folder, f"{get_current_date}", f"{media_name}.json")
-
+        return os.path.join(
+            self.pushing_folder, f"{get_current_date}", f"{media_name}.json"
+        )

@@ -1,6 +1,6 @@
 import os
 import sys
-import json 
+import json
 
 from vitamincv.avro_api.avro_io import AvroIO
 
@@ -12,26 +12,31 @@ if not os.path.exists(local_json):
 
 temp_file = "tmp.avro"
 
+
 def test_local_encode():
     avroio = AvroIO()
-    assert(avroio.write(AvroIO.read_json(local_json), temp_file))
+    assert avroio.write(AvroIO.read_json(local_json), temp_file)
+
 
 def test_local_decode():
     avroio = AvroIO()
     res = avroio.decode_file(temp_file)
-    assert(True)
+    assert True
+
 
 def test_remote_encode():
     avroio = AvroIO(use_schema_registry=True)
-    assert(avroio.write(AvroIO.read_json(local_json), temp_file))
+    assert avroio.write(AvroIO.read_json(local_json), temp_file)
+
 
 def test_remote_decode():
     avroio = AvroIO(use_schema_registry=True)
     doc = avroio.decode_file(temp_file)
     print(json.dumps(doc, indent=2))
-    assert(True)
+    assert True
+
 
 def test_is_valid_avro_doc():
     avroio = AvroIO()
     doc = avroio.decode_file(temp_file)
-    assert(avroio.is_valid_avro_doc(doc))
+    assert avroio.is_valid_avro_doc(doc)

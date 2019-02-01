@@ -2,15 +2,18 @@ import GPUtil
 from tabulate import tabulate
 import glog as log
 
-class GPUUtility():
-    def __init__(self, 
-                limit = 1, 
-                priority = "memory",
-                minFreeLoad = 0.0,
-                minFreeMemory = 0.0,
-                minFreeMemoryMb = 0.0,
-                ignoreIDs = [],
-                ignoreUUIDs = []):
+
+class GPUUtility:
+    def __init__(
+        self,
+        limit=1,
+        priority="memory",
+        minFreeLoad=0.0,
+        minFreeMemory=0.0,
+        minFreeMemoryMb=0.0,
+        ignoreIDs=[],
+        ignoreUUIDs=[],
+    ):
         """Base class for any GPU-friendly objects. Simply wraps GPUtil module
 
         Args:
@@ -36,10 +39,10 @@ class GPUUtility():
         self.limit = limit
         self.priority = priority
         self.minFreeLoad = minFreeLoad
-        
+
         self.minFreeMemory = minFreeMemory
         self.minFreeMemoryMb = minFreeMemoryMb
-     
+
         self.ignoreIDs = ignoreIDs
         self.ignoreUUIDs = ignoreUUIDs
 
@@ -70,7 +73,6 @@ class GPUUtility():
     @minFreeLoad.setter
     def minFreeLoad(self, load):
         self._minFreeLoad = self._round_to_between_0_and_1(load)
-        
 
     @staticmethod
     def _round_to_between_0_and_1(value):
@@ -91,8 +93,8 @@ class GPUUtility():
     def get_gpus(self, **kwargs):
         """Gets a list of qualifying GPU IDs
         """
-        max_load = self._round_to_between_0_and_1(1.0-self.minFreeLoad)
-        max_mem = self._round_to_between_0_and_1(1.0-self.minFreeMemory) 
+        max_load = self._round_to_between_0_and_1(1.0 - self.minFreeLoad)
+        max_mem = self._round_to_between_0_and_1(1.0 - self.minFreeMemory)
 
         log.debug("GPU Requirements")
 
@@ -101,20 +103,22 @@ class GPUUtility():
             ("maxLoad", max_load),
             ("maxMemory", max_mem),
             ("excludeID", self.ignoreIDs),
-            ("excludeUUID", self.ignoreUUIDs)]
+            ("excludeUUID", self.ignoreUUIDs),
+        ]
 
         table = tabulate(table, headers=["Parameter", "Value"], tablefmt="simple")
         log.debug(table)
 
         availableGPUids = GPUtil.getAvailable(
-                                        order = self.priority,
-                                        maxLoad = max_load,
-                                        maxMemory = max_mem,
-                                        excludeID = self.ignoreIDs,
-                                        excludeUUID = self.ignoreUUIDs)
-        log.debug("GPU Util Found GPU IDs: "+str(availableGPUids))
+            order=self.priority,
+            maxLoad=max_load,
+            maxMemory=max_mem,
+            excludeID=self.ignoreIDs,
+            excludeUUID=self.ignoreUUIDs,
+        )
+        log.debug("GPU Util Found GPU IDs: " + str(availableGPUids))
         availableGPUids = self._filter_gpus(availableGPUids)
-        log.debug("Filtered GPU IDs are: "+str(availableGPUids))
+        log.debug("Filtered GPU IDs are: " + str(availableGPUids))
 
         return availableGPUids
 
@@ -139,9 +143,11 @@ class GPUUtility():
 
         return usableGPUids
 
+
 class CupyUtility(GPUUtility):
     import numpy
     import importlib.util
+
     if importlib.util.find_spec("cupy"):
         import cupy
     else:
