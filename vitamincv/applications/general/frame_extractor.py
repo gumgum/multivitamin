@@ -113,6 +113,7 @@ class FrameExtractor(CVModule):
         self.avro_api.set_url(self.request_api.get_url())
         self.avro_api.set_url_original(self.request_api.get_url())
         self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
-        p = create_prop(server=self.name, value=self.contents_file_key, property_type="extraction")
+        url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=self.contents_file_key)
+        p = create_prop(server=self.name, value=url, property_type="extraction")
         track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=[p])
         self.avro_api.append_track_to_tracks_summary(track)
