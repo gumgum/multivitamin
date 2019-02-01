@@ -41,8 +41,6 @@ class FrameExtractor(CVModule):
 
     def process(self, message):
         self.set_message(message)
-        video_url = self.avro_api.get_url()
-        self.media_api = MediaRetriever(video_url)
         filelike = self.media_api.download(return_filelike=True)
         video_hash = hashfileobject(filelike, hexdigest=True)
         for frame, tstamp in self.media_api.get_frames_iterator():
