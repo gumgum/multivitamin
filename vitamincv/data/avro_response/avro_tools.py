@@ -66,13 +66,9 @@ def transform(json_dict, schema_str):
         log.warning("No url")
         if json_dict["media_annotation"]["url_original"] == "":
             log.warning("No url_original")
-            return (
-                ""
-            )  #################It makes no sense to take this into consideration
+            return ""  #################It makes no sense to take this into consideration
         else:
-            json_dict["media_annotation"]["url"] = json_dict["media_annotation"][
-                "url_original"
-            ]
+            json_dict["media_annotation"]["url"] = json_dict["media_annotation"]["url_original"]
     codes_in = json_dict["media_annotation"]["codes"]
     if "array" in codes_in:
         codes_in = codes_in["array"]

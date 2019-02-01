@@ -54,21 +54,10 @@ CONFIDENCE_MIN = 0.3
 
 class SSDDetector(ImagesModule):
     def __init__(
-        self,
-        server_name,
-        version,
-        net_data_dir,
-        prop_type=None,
-        prop_id_map=None,
-        module_id_map=None,
-        **gpukwargs,
+        self, server_name, version, net_data_dir, prop_type=None, prop_id_map=None, module_id_map=None, **gpukwargs
     ):
         super().__init__(
-            server_name,
-            version,
-            prop_type=prop_type,
-            prop_id_map=prop_id_map,
-            module_id_map=module_id_map,
+            server_name, version, prop_type=prop_type, prop_id_map=prop_id_map, module_id_map=module_id_map
         )
 
         if not self.prop_type:
@@ -86,13 +75,9 @@ class SSDDetector(ImagesModule):
         log.info(str(len(self.labelmap.keys())) + " labels parsed.")
 
         self.net = caffe.Net(
-            os.path.join(net_data_dir, "deploy.prototxt"),
-            os.path.join(net_data_dir, "model.caffemodel"),
-            caffe.TEST,
+            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
         )
-        self.transformer = caffe.io.Transformer(
-            {"data": self.net.blobs["data"].data.shape}
-        )
+        self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
 
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
         if os.path.exists(mean_file):
@@ -115,24 +100,16 @@ class SSDDetector(ImagesModule):
         """
         contours = None
         if previous_detections:
-            contours = [
-                det.get("contour") if det is not None else None
-                for det in previous_detections
-            ]
+            contours = [det.get("contour") if det is not None else None for det in previous_detections]
 
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
-        images = [
-            crop_image_from_bbox_contour(image, contour)
-            for image, contour in zip(images, contours)
-        ]
+        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
 
-        transformed_images = [
-            self.transformer.preprocess("data", image) for image in images
-        ]
+        transformed_images = [self.transformer.preprocess("data", image) for image in images]
 
         return np.array(transformed_images)
 
@@ -161,9 +138,7 @@ class SSDDetector(ImagesModule):
         Returns:
             list: A list of nd.arrays given by number of detections against (label, confidence, xmin, ymin, xmax, ymax)
         """
-        frame_indexes, indicies_of_first_occurance = np.unique(
-            predictions[:, 0], return_index=True
-        )
+        frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
         predictions = np.split(predictions, indicies_of_first_occurance[1:])
         filtered_preds = [preds[preds[:, 2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
@@ -185,15 +160,10 @@ class SSDDetector(ImagesModule):
 
         for batch_index, pred, confidence, xmin, ymin, xmax, ymax in predictions:
             if not isinstance(pred, str):
-                label = self.labelmap.get(
-                    pred,
-                    inspect.signature(create_detection).parameters["value"].default,
-                )
+                label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
             else:
                 label = pred
-            contour = create_bbox_contour_from_points(
-                float(xmin), float(ymin), float(xmax), float(ymax), bound=True
-            )
+            contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
             det = create_detection(
                 server=self.name,
                 ver=self.version,

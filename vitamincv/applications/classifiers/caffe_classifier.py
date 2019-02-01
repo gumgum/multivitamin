@@ -31,14 +31,10 @@ if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
     raise ImportError(
-        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(
-            CAFFE_PYTHON
-        )
+        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON)
     )
 else:
-    raise ImportError(
-        "Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON."
-    )
+    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
 
 from caffe.proto import caffe_pb2
 from vitamincv.module import ImagesModule
@@ -73,11 +69,7 @@ class CaffeClassifier(ImagesModule):
     ):
 
         super().__init__(
-            server_name,
-            version,
-            prop_type=prop_type,
-            prop_id_map=prop_id_map,
-            module_id_map=module_id_map,
+            server_name, version, prop_type=prop_type, prop_id_map=prop_id_map, module_id_map=module_id_map
         )
 
         self.confidence_min = confidence_min
@@ -119,16 +111,12 @@ class CaffeClassifier(ImagesModule):
             self.min_conf_filter[label] = min_conf
 
         self.net = caffe.Net(
-            os.path.join(net_data_dir, "deploy.prototxt"),
-            os.path.join(net_data_dir, "model.caffemodel"),
-            caffe.TEST,
+            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
         )
 
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
 
-        self.transformer = caffe.io.Transformer(
-            {"data": self.net.blobs["data"].data.shape}
-        )
+        self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
             data_meanfile = open(mean_file, "rb").read()
@@ -151,24 +139,16 @@ class CaffeClassifier(ImagesModule):
         """
         contours = None
         if previous_detections:
-            contours = [
-                det.get("contour") if det is not None else None
-                for det in previous_detections
-            ]
+            contours = [det.get("contour") if det is not None else None for det in previous_detections]
 
         transformed_images = []
 
         if type(contours) is not list:
             contours = [None for _ in range(len(images))]
 
-        images = [
-            crop_image_from_bbox_contour(image, contour)
-            for image, contour in zip(images, contours)
-        ]
+        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
 
-        transformed_images = [
-            self.transformer.preprocess("data", image) for image in images
-        ]
+        transformed_images = [self.transformer.preprocess("data", image) for image in images]
 
         return np.array(transformed_images)
 
@@ -200,9 +180,7 @@ class CaffeClassifier(ImagesModule):
                     best, qualifying  N-predictions
         """
         if callable(self.postprocess_override):
-            processed_preds = self.postprocess_override(
-                predictions_batch, *self.postprocess_args
-            )
+            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
             return processed_preds
 
         preds = np.array(predictions_batch)
@@ -211,9 +189,7 @@ class CaffeClassifier(ImagesModule):
             pred_idxs_max2min = np.argsort(pred)[::-1]
             pred = pred[pred_idxs_max2min]
             # Filter by ignore dict
-            pred_idxs_max2min = min_conf_filter_predictions(
-                self.min_conf_filter, pred_idxs_max2min, pred, self.labels
-            )
+            pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
             n_top_pred = list(zip(pred_idxs_max2min, pred))[: self.top_n]
             n_top_preds.append(n_top_pred)
@@ -238,18 +214,12 @@ class CaffeClassifier(ImagesModule):
 
         if previous_detection is None:
             previous_detection = create_detection(
-                server=self.name,
-                ver=self.version,
-                property_type=self.prop_type,
-                t=tstamp,
+                server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
             )
 
         for pred, confidence in predictions:
             if not type(pred) is str:
-                label = self.labels.get(
-                    pred,
-                    inspect.signature(create_detection).parameters["value"].default,
-                )
+                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
             else:
                 label = pred
             region_id = previous_detection["region_id"]

@@ -65,10 +65,4 @@ if __name__ == "__main__":
     a.add_argument("--out_csv", required=True, help="output csv file")
     args = a.parse_args()
 
-    doc_to_csv(
-        args.doc,
-        args.out_csv,
-        args.rightsholder,
-        int(args.broadcast_id),
-        args.is_binary,
-    )
+    doc_to_csv(args.doc, args.out_csv, args.rightsholder, int(args.broadcast_id), args.is_binary)

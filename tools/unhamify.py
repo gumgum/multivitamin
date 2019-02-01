@@ -46,9 +46,7 @@ if __name__ == "__main__":
 
     eligible_props = []
     for label in labels:
-        eligible_props.append(
-            create_eligible_prop(property_type=config["property_type"], value=label)
-        )
+        eligible_props.append(create_eligible_prop(property_type=config["property_type"], value=label))
 
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
@@ -70,12 +68,8 @@ if __name__ == "__main__":
                 med_ret = MediaRetriever(url)
                 w, h = med_ret.get_w_h()
                 avros[url].set_dims(w, h)
-                avros[url].append_annotation_task(
-                    create_annotation_task(labels=eligible_props)
-                )
-                avros[url].set_footprints(
-                    [create_footprint(annotator="theorem", server="HAM")]
-                )
+                avros[url].append_annotation_task(create_annotation_task(labels=eligible_props))
+                avros[url].set_footprints([create_footprint(annotator="theorem", server="HAM")])
 
             regs = []
             for region in ham_ann["region"]:
@@ -104,11 +98,7 @@ if __name__ == "__main__":
 
     for k, v in avros.items():
         v.sort_image_anns_by_timestamp()
-        if AvroIO.is_valid_avro_doc_static(
-            v.get_response(), open(args.cv_schema_file).read()
-        ):
+        if AvroIO.is_valid_avro_doc_static(v.get_response(), open(args.cv_schema_file).read()):
             outfn = os.path.basename(k) + ".json"
             print(outfn)
-            AvroIO.write_json(
-                v.get_response(), os.path.join(args.out_dir, outfn), indent=2
-            )
+            AvroIO.write_json(v.get_response(), os.path.join(args.out_dir, outfn), indent=2)

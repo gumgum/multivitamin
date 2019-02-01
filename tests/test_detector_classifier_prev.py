@@ -29,19 +29,13 @@ def test_app():
     req = {"url": test_video, "sample_rate": 5.0}
     req = RequestAPI(req)
     log.info("Processing request: {}".format(req))
-    ssd = SSDDetector(
-        server_name="ObjectDetector", version="1.0", net_data_dir="/tmp/ssd/net_data/"
-    )
+    ssd = SSDDetector(server_name="ObjectDetector", version="1.0", net_data_dir="/tmp/ssd/net_data/")
     resp = ssd.process(req)
     assert resp == "SUCCESS"
     ssd.update_response()
 
     req.reset_media_api()
-    clf = CaffeClassifier(
-        server_name="MakeModelClassifier",
-        version="1.0",
-        net_data_dir="/tmp/clf/net_data",
-    )
+    clf = CaffeClassifier(server_name="MakeModelClassifier", version="1.0", net_data_dir="/tmp/clf/net_data")
     clf.set_prev_pois({"value": "car"})
     resp = clf.process(req)
     assert resp == "SUCCESS"
@@ -67,9 +61,7 @@ def _download_obj_det():
     dl_file = "{}/net_data.zip".format(tmp_folder)
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
-    s3_client.download_file(
-        "cvapis-data", "ssd-detector/objectdetector/net_data.zip", dl_file
-    )
+    s3_client.download_file("cvapis-data", "ssd-detector/objectdetector/net_data.zip", dl_file)
     log.info("Model downloaded")
     with open(dl_file, "rb") as f:
         log.info("Unzipping")
@@ -86,9 +78,7 @@ def _download_clf():
     dl_file = "{}/net_data.zip".format(tmp_folder)
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
-    s3_client.download_file(
-        "cvapis-data", "classifiers/makemodelclassifier/net_data.zip", dl_file
-    )
+    s3_client.download_file("cvapis-data", "classifiers/makemodelclassifier/net_data.zip", dl_file)
     log.info("Model downloaded")
     with open(dl_file, "rb") as f:
         log.info("Unzipping")

@@ -11,10 +11,7 @@ import glog as log
 if __name__ == "__main__":
     a = argparse.ArgumentParser("python3 avro_merging --list list_pairs.txt")
     a.add_argument(
-        "--list_pairs",
-        default="list_pairs.txt",
-        type=str,
-        help="path to a file with pairs of avro docs to bd merged",
+        "--list_pairs", default="list_pairs.txt", type=str, help="path to a file with pairs of avro docs to bd merged"
     )
     a.add_argument("--dump_dir", default="./merged")
     args = a.parse_args()

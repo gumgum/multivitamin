@@ -35,9 +35,7 @@ def read_media():
         do_something(frame)
 
     # set the start and end point for video reading and sample_rate
-    for frame, tstamp in vid_ret.get_frames_iterator(
-        sample_rate=SAMPLE_RATE, start_tstamp=4.15, end_tstamp=10.33
-    ):
+    for frame, tstamp in vid_ret.get_frames_iterator(sample_rate=SAMPLE_RATE, start_tstamp=4.15, end_tstamp=10.33):
         do_something(frame)
 
     # jump to a particular timestamp

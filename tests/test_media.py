@@ -33,11 +33,7 @@ video_url = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2
 
 
 def test_frame_seek_error(video_url=video_url):
-    log.info(
-        "Testing frame seek equivalency for frame num: {} for URL: {}".format(
-            arbitrary_frame_nr, video_url
-        )
-    )
+    log.info("Testing frame seek equivalency for frame num: {} for URL: {}".format(arbitrary_frame_nr, video_url))
     start = time.time()
     mr = media.MediaRetriever(video_url)
     src_tstamp = 0

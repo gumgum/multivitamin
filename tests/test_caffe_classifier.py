@@ -35,9 +35,7 @@ def test_init():
     else:
         os.makedirs(net_data_dir)
 
-    for key, net_data_bytes in generate_fileobj_from_s3_folder(
-        S3_BUCKET_NAME, S3_NET_DATA_FOLDER
-    ):
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
         filename = os.path.basename(key)
         log.info("{}/{}".format(net_data_dir, filename))
         with open("{}/{}".format(net_data_dir, filename), "wb") as file:

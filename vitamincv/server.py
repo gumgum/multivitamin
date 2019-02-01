@@ -79,9 +79,7 @@ class Server(Flask):
             Note: this starts a healthcheck endpoint in a separate thread
         """
         log.info(f"Starting HealthCheck endpoint at /health on port {PORT}")
-        threading.Thread(
-            target=self.run, kwargs={"host": "0.0.0.0", "port": PORT}, daemon=True
-        ).start()
+        threading.Thread(target=self.run, kwargs={"host": "0.0.0.0", "port": PORT}, daemon=True).start()
         log.info("Starting server...")
         self._start()
 

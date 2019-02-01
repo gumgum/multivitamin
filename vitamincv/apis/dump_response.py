@@ -35,14 +35,10 @@ class DumpResponse(CommAPI):
         if s3_key and not s3_bucket:
             raise ValueError("s3 key defined but s3 bucket not defined")
         if not pushing_folder and not s3_key:
-            raise ValueError(
-                "pushing_folder and s3 key not defined, we cannot set where to dump."
-            )
+            raise ValueError("pushing_folder and s3 key not defined, we cannot set where to dump.")
 
     def pull(self, n=1):
-        raise ValueError(
-            "Response2s3 cannot be used as a pulling CommAPI, only pushing"
-        )
+        raise ValueError("Response2s3 cannot be used as a pulling CommAPI, only pushing")
 
     def push(self, responses):
         """Push a list of Response objects to be written to pushing_folder
@@ -57,9 +53,7 @@ class DumpResponse(CommAPI):
             outfn = None
             fname_local = self.get_fname(res)
             if self.pushing_folder:
-                outfn = os.path.join(
-                    self.pushing_folder, get_current_date(), fname_local
-                )
+                outfn = os.path.join(self.pushing_folder, get_current_date(), fname_local)
             else:
                 tmp_dir = tempfile.mkdtemp()
                 outfn = os.path.join(tmp_dir, fname_local)
@@ -73,13 +67,9 @@ class DumpResponse(CommAPI):
             if self.s3_bucket and self.s3_key:
                 s3client = boto3.client("s3")
                 key_fullpath = os.path.join(self.s3_key, fname_local)
-                log.info(
-                    "Pushing {} to {}/{}".format(outfn, self.s3_bucket, key_fullpath)
-                )
+                log.info("Pushing {} to {}/{}".format(outfn, self.s3_bucket, key_fullpath))
                 with open(outfn, "rb") as data:
-                    s3client.put_object(
-                        Bucket=self.s3_bucket, Key=key_fullpath, Body=data
-                    )
+                    s3client.put_object(Bucket=self.s3_bucket, Key=key_fullpath, Body=data)
 
             if not self.pushing_folder:
                 if os.path.exists(tmp_dir):

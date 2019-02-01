@@ -4,6 +4,7 @@ import numpy as np
 from vitamincv.data.contour import Contour
 from vitamincv.data.limited_dict import LimitedDict
 
+
 class Detection(LimitedDict):
     def __init__(self, *args, **kwargs):
         # Avro JSON Properties
@@ -30,7 +31,7 @@ class Detection(LimitedDict):
         self._confidence_default = 0.0
         self._fraction_default = 1.0
         self._t_default = 0.0
-        self._contour_default = Contour(box=[(0,0),(1,1)])
+        self._contour_default = Contour(box=[(0, 0), (1, 1)])
         self._ver_default = ""
         self._region_id_default = ""
         self._property_id_default = 0
@@ -47,11 +48,11 @@ class Detection(LimitedDict):
     def box(self):
         p0, p1 = self.contour.box()
         if self.frame():
-            w,h,c = self.frame.shape
-            p0.x = p0.x * (w-1)
-            p0.y = p0.y * (h-1)
-            p1.x = p1.x * (w-1)
-            p1.y = p1.y * (h-1)
+            w, h, c = self.frame.shape
+            p0.x = p0.x * (w - 1)
+            p0.y = p0.y * (h - 1)
+            p1.x = p1.x * (w - 1)
+            p1.y = p1.y * (h - 1)
         return p0, p1
 
     def frame(self):
@@ -59,7 +60,7 @@ class Detection(LimitedDict):
 
     def crop(self):
         p0, p1 = self.box()
-        return self.frame[p0.x:p1.x, p0.y:p1.y].copy()
+        return self.frame[p0.x : p1.x, p0.y : p1.y].copy()
 
     ##############
     # PROPERTIES #
@@ -72,7 +73,7 @@ class Detection(LimitedDict):
 
     @server.setter
     def server(self, server):
-        assert(isinstance(server, str))
+        assert isinstance(server, str)
         self._server = server
 
     @server.deleter
@@ -86,7 +87,7 @@ class Detection(LimitedDict):
 
     @module_id.setter
     def module_id(self, module_id):
-        assert(isinstance(module_id, int))
+        assert isinstance(module_id, int)
         self._module_id = int(module_id)
 
     @module_id.deleter
@@ -100,7 +101,7 @@ class Detection(LimitedDict):
 
     @property_type.setter
     def property_type(self, property_type):
-        assert(isinstance(property_type, str))
+        assert isinstance(property_type, str)
         self._property_type = property_type
 
     @property_type.deleter
@@ -114,7 +115,7 @@ class Detection(LimitedDict):
 
     @value.setter
     def value(self, value):
-        assert(isinstance(value, str))
+        assert isinstance(value, str)
         self._value = value
 
     @value.deleter
@@ -128,7 +129,7 @@ class Detection(LimitedDict):
 
     @value_verbose.setter
     def value_verbose(self, value_verbose):
-        assert(isinstance(value_verbose, str))
+        assert isinstance(value_verbose, str)
         self._value_verbose = value_verbose
 
     @value_verbose.deleter
@@ -184,7 +185,7 @@ class Detection(LimitedDict):
 
     @contour.setter
     def contour(self, contour):
-        assert(isinstance(contour, Contour))
+        assert isinstance(contour, Contour)
         self._contour = contour
 
     @contour.deleter
@@ -198,7 +199,7 @@ class Detection(LimitedDict):
 
     @ver.setter
     def ver(self, ver):
-        assert(isinstance(ver, str))
+        assert isinstance(ver, str)
         self._ver = ver
 
     @ver.deleter
@@ -212,7 +213,7 @@ class Detection(LimitedDict):
 
     @region_id.setter
     def region_id(self, region_id):
-        assert(isinstance(region_id, str))
+        assert isinstance(region_id, str)
         self._region_id = region_id
 
     @region_id.deleter
@@ -239,7 +240,7 @@ class Detection(LimitedDict):
 
     @footprint_id.setter
     def footprint_id(self, footprint_id):
-        assert(isinstance(footprint_id, str))
+        assert isinstance(footprint_id, str)
         self._footprint_id = footprint_id
 
     @footprint_id.deleter
@@ -253,7 +254,7 @@ class Detection(LimitedDict):
 
     @company.setter
     def company(self, company):
-        assert(isinstance(company, str))
+        assert isinstance(company, str)
         self._company = company
 
     @company.deleter

@@ -27,9 +27,7 @@ class RequestAPI:
         try:
             if type(request) == type({}):  # dictionary
                 log.info("The request is a dictionary.")
-                self.request = (
-                    request
-                )  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                self.request = request  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             elif type(request) == type(""):  # string
                 log.info("The request is a string.")
                 if len(request) == 0:
@@ -41,10 +39,7 @@ class RequestAPI:
                     # log.info("Json loaded.")
                     if type(request_aux) == type([]):  # it's an array
                         log.info("The request is an array.")
-                        if (
-                            request_aux[0]
-                            == "com.amazon.sqs.javamessaging.MessageS3Pointer"
-                        ):
+                        if request_aux[0] == "com.amazon.sqs.javamessaging.MessageS3Pointer":
                             messageS3Pointer = request_aux[1]
                             # log.info("type(messageS3Pointer): " + str(type(messageS3Pointer)))
                             # log.info("messageS3Pointer: " + str(messageS3Pointer))
@@ -56,9 +51,7 @@ class RequestAPI:
                             s3_client = boto3.client("s3")
                             try:
                                 log.info("Retrieving s3 object.")
-                                obj = s3_client.get_object(
-                                    Bucket=s3BucketName, Key=s3Key
-                                )
+                                obj = s3_client.get_object(Bucket=s3BucketName, Key=s3Key)
                                 request_data = obj["Body"].read().decode("utf-8")
                                 log.info("Data retrieved from s3.")
                                 # log.info("request_data: " + str(request_data))
@@ -78,9 +71,7 @@ class RequestAPI:
                         # We need a checking encoding funtion for making it happen in the cases we are not sure.
                     else:
                         # log.info("we got a single json.")
-                        self.request = (
-                            request_aux
-                        )  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        self.request = request_aux  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         except ValueError as e:
             log.warning(e)
@@ -96,47 +87,30 @@ class RequestAPI:
 
             bin_decoding_flag = True  # CAREFUL HERE
             if "bin_decoding" in self.request:
-                bin_decoding_flag = (
-                    self.request["bin_decoding"] == "true"
-                    or self.request["bin_decoding"] == "True"
-                )
+                bin_decoding_flag = self.request["bin_decoding"] == "true" or self.request["bin_decoding"] == "True"
             if "prev_response_url" in self.request:
                 if len(self.request["prev_response_url"]) > 0:
                     if bin_decoding_flag:
-                        avro_io = AvroIO(
-                            use_schema_registry=self.prod_flag, use_base64=True
-                        )
-                        self.avro_api = AvroAPI(
-                            avro_io.decode_file(self.request["prev_response_url"])
-                        )
+                        avro_io = AvroIO(use_schema_registry=self.prod_flag, use_base64=True)
+                        self.avro_api = AvroAPI(avro_io.decode_file(self.request["prev_response_url"]))
                     else:
-                        self.avro_api = AvroAPI(
-                            AvroIO.read_json(self.request["prev_response_url"])
-                        )
+                        self.avro_api = AvroAPI(AvroIO.read_json(self.request["prev_response_url"]))
             elif "prev_response" in self.request:
                 if len(self.request["prev_response"]) > 0:
                     # log.info("type(self.request['prev_response']): " +str(type(self.request['prev_response'])))
                     # log.info("self.request['prev_response']: " + self.request['prev_response'])
                     if bin_decoding_flag:
-                        avro_io = AvroIO(
-                            use_schema_registry=self.prod_flag, use_base64=True
-                        )
+                        avro_io = AvroIO(use_schema_registry=self.prod_flag, use_base64=True)
                         log.info("Decoding binary.")
-                        self.avro_api = AvroAPI(
-                            avro_io.decode(self.request["prev_response"])
-                        )
+                        self.avro_api = AvroAPI(avro_io.decode(self.request["prev_response"]))
                     else:
                         avro_io = AvroIO(use_base64=False)
                         log.info("Decoding json.")
-                        self.avro_api = AvroAPI(
-                            avro_io.decode(self.request["prev_response"], False)
-                        )
+                        self.avro_api = AvroAPI(avro_io.decode(self.request["prev_response"], False))
                 else:
                     self.avro_api = AvroAPI()
         except Exception as e:
-            log.warning(
-                "Problems parsing previous response with exception: {}".format(e)
-            )
+            log.warning("Problems parsing previous response with exception: {}".format(e))
             self.avro_api = AvroAPI()
         self.reset_media_api(load_media)
 

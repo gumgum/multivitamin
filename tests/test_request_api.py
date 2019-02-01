@@ -25,10 +25,7 @@ def test_request_api():
     k = "kk"
     log.info("1--------------------")
     log.info(k + ": " + r1.get(k))
-    assert (
-        r1.get("url")
-        == "https://www.astrosafari.com/download/file.php?id=1608&sid=79f086b975b702945ca90b0ac3bd0202"
-    )
+    assert r1.get("url") == "https://www.astrosafari.com/download/file.php?id=1608&sid=79f086b975b702945ca90b0ac3bd0202"
     log.info("2--------------------")
     r2 = RequestAPI(request2)
     log.info("3--------------------")

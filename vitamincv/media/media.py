@@ -27,9 +27,7 @@ class FramesIterator:
     Note: Do not use multiple times/attempt to restart from the start of the video. This feature is incomplete.
     """
 
-    def __init__(
-        self, video_cap, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize
-    ):
+    def __init__(self, video_cap, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
         """Frames iterator constructor
 
         Args:
@@ -59,9 +57,7 @@ class FramesIterator:
         while ret and self.cur_tstamp <= self.end_tstamp:
             tstamp = self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
             ret = self.cap.grab()
-            if (tstamp - self.cur_tstamp + FRAME_EPS) >= (
-                self.period
-            ) or self.first_frame:
+            if (tstamp - self.cur_tstamp + FRAME_EPS) >= (self.period) or self.first_frame:
                 ret, frame = self.cap.retrieve()
                 self.cur_tstamp = tstamp
                 self.first_frame = False
@@ -95,9 +91,7 @@ class MediaRetriever:
         log.info("Resetting media retriever")
         self.set_url(self.url)
 
-    def get_frames_iterator(
-        self, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize
-    ):
+    def get_frames_iterator(self, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
         """If image, returns a list of length 0 with a tuple (image, tstamp),
         If video, returns a FramesIterator
 
@@ -191,11 +185,7 @@ class MediaRetriever:
                         _tmp = _tmp[:, :, :3]
                     self.image = _tmp[:, :, ::-1].copy()  # rgb->bgr
                 else:
-                    log.warning(
-                        "Response: {}, unable to download: {}".format(
-                            response, self.url
-                        )
-                    )
+                    log.warning("Response: {}, unable to download: {}".format(response, self.url))
                     self.image = None
         elif self.is_video:
             self.cap = cv2.VideoCapture(self.url, cv2.CAP_FFMPEG)

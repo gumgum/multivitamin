@@ -39,9 +39,7 @@ def get_props_from_region(region):
 
 
 class FrameDrawer:
-    def __init__(
-        self, doc_fn=None, avro_api=None, decode=False, dump=False, out="./tmp"
-    ):
+    def __init__(self, doc_fn=None, avro_api=None, decode=False, dump=False, out="./tmp"):
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -75,9 +73,7 @@ class FrameDrawer:
         thickness = 2
         log.info("dump_folder: " + str(dump_folder))
         log.info("tstamps: " + str(tstamps))
-        if (
-            tstamps == []
-        ):  # An empty list of timestamps implies no dumping. None implies dump all frames.
+        if tstamps == []:  # An empty list of timestamps implies no dumping. None implies dump all frames.
             return
         if not dump_folder:
             dump_folder = self.out
@@ -100,15 +96,7 @@ class FrameDrawer:
                 img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                 prop_strs = get_props_from_region(region)
                 for i, prop in enumerate(prop_strs):
-                    img = cv2.putText(
-                        img,
-                        prop,
-                        (p0[0] + 3, p1[1] - 3 + i * 25),
-                        face,
-                        scale,
-                        rand_color,
-                        thickness,
-                    )
+                    img = cv2.putText(img, prop, (p0[0] + 3, p1[1] - 3 + i * 25), face, scale, rand_color, thickness)
             if dump_flag:
                 outfn = "{}/{}.jpg".format(dump_folder, tstamp)
                 cv2.imwrite(outfn, img)

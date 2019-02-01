@@ -4,6 +4,7 @@ from copy import copy
 from vitamincv.data.limited_dict import LimitedDict
 from vitamincv.metrics_api.distances import rectilinear_jaccard, rectilinear_intersection, rectilinear_union
 
+
 class Point(LimitedDict):
     def __init__(self, *args, **kwargs):
         self._x = None
@@ -61,7 +62,7 @@ class Point(LimitedDict):
 class Contour(list):
     def __init__(self, box=None, contour=None):
         if box:
-            assert(isinstance(box, list))
+            assert isinstance(box, list)
             self._create_contour_from_2dbox(box)
 
         if contour:
@@ -71,7 +72,7 @@ class Contour(list):
     def _create_contour_from_2dbox(self, box):
         box = np.array(box).flatten()
         box = box.reshape(2, 2)
-        pt_order = [(0,0), (1,0), (1,1), (0,1)]
+        pt_order = [(0, 0), (1, 0), (1, 1), (0, 1)]
         for idx, jdx in pt_order:
             pt = Point()
             pt.x = box[idx, 0]
@@ -79,7 +80,7 @@ class Contour(list):
             self.append(pt)
 
     def box(self):
-        assert(len(self)>0)
+        assert len(self) > 0
         p0 = copy(self[0])
         p1 = copy(self[0])
         for pt in self:

@@ -13,13 +13,7 @@ BATCH_SIZE = 2
 
 class ImagesModule(Module):
     def __init__(
-        self,
-        server_name,
-        version,
-        prop_type=None,
-        prop_id_map=None,
-        module_id_map=None,
-        batch_size=BATCH_SIZE,
+        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None, batch_size=BATCH_SIZE
     ):
         super().__init__(
             server_name=server_name,
@@ -41,9 +35,7 @@ class ImagesModule(Module):
         super().process(request, prev_media_data)
         self._load_media()
         self.num_problematic_frames = 0
-        for image_batch, tstamp_batch, det_batch in self.batch_generator(
-            self.preprocess_message()
-        ):
+        for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
             if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                 log.error("Too Many Problematic Iterations")
                 log.error("Returning with error code: " + str(self.code))
@@ -53,13 +45,9 @@ class ImagesModule(Module):
                 image_batch = self.preprocess_images(image_batch, det_batch)
                 prediction_batch_raw = self.process_images(image_batch)
                 prediction_batch = self.postprocess_predictions(prediction_batch_raw)
-                for predictions, tstamp, prev_det in zip(
-                    prediction_batch, tstamp_batch, det_batch
-                ):
+                for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
                     iterable = self.convert_to_detection(
-                        predictions=predictions,
-                        tstamp=tstamp,
-                        previous_detection=prev_det,
+                        predictions=predictions, tstamp=tstamp, previous_detection=prev_det
                     )
                     if not isinstance(iterable, Iterable) or isinstance(iterable, dict):
                         iterable = [iterable]
@@ -127,9 +115,7 @@ class ImagesModule(Module):
             dets = [None]
             if self.prev_media_data:
                 log.info("Processing with previous media_data")
-                log.debug(
-                    f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}"
-                )
+                log.debug(f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}")
                 if tstamp in self.prev_media_data.det_tstamp_map:
                     dets = self.prev_media_data.det_tstamp_map[tstamp]
                     log.info(f"Found {len(dets)} dets from previous media_data")

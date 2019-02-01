@@ -92,11 +92,7 @@ class AvroQuerier:
         if type(query) is not AvroQuery and type(query) is not AvroQueryBlock:
             return
 
-        idxs = (
-            self.process_qblock(query)
-            if type(query) is AvroQueryBlock
-            else self.process_q(query)
-        )
+        idxs = self.process_qblock(query) if type(query) is AvroQueryBlock else self.process_q(query)
         return self.data[sorted(idxs)].tolist()
 
     def group_query(self, queries, group_field):
@@ -225,11 +221,7 @@ class AvroQuerier:
         qmap = self.query_map
         for arg in args:
             qmap = qmap[arg]
-        result = set(
-            self.xp.nonzero(self.xp.logical_and(minimum <= qmap, qmap <= maximum))[
-                0
-            ].tolist()
-        )
+        result = set(self.xp.nonzero(self.xp.logical_and(minimum <= qmap, qmap <= maximum))[0].tolist())
         return result
 
     def numeric_match_query(self, value, *args):
@@ -243,9 +235,7 @@ class AvroQuerier:
         self.gpu = None
         deviceIDs = []
         try:
-            deviceIDs = GPUtil.getAvailable(
-                order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70
-            )
+            deviceIDs = GPUtil.getAvailable(order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70)
         except:
             log.warning("No GPUs Found -- This must be a CPU only machine")
 
@@ -270,19 +260,13 @@ class AvroQuerier:
         sub_dict = self.create_sub_dict(sub_dict, *args)
         for key, val in elem.items():
             if type(val) is list:
-                self._process_list(
-                    val, sub_dict, key, idx=list_idx, prev_args=prev_args + args
-                )
+                self._process_list(val, sub_dict, key, idx=list_idx, prev_args=prev_args + args)
             elif type(val) is dict:
-                self._process_dict(
-                    list_idx, val, sub_dict, key, prev_args=prev_args + args
-                )
+                self._process_dict(list_idx, val, sub_dict, key, prev_args=prev_args + args)
             elif type(val) is str:
                 self._process_val_str(list_idx, sub_dict, key, val)
             elif isinstance(val, numbers.Number):
-                self._process_val_num(
-                    list_idx, val, sub_dict, key, prev_args=prev_args + args
-                )
+                self._process_val_num(list_idx, val, sub_dict, key, prev_args=prev_args + args)
 
     def _process_list(self, val, sub_dict, *args, idx=None, prev_args=()):
         sub_dict = self.create_sub_dict(sub_dict, *args)

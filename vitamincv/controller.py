@@ -32,7 +32,7 @@ class Controller:
         response = None
         if request.prev_response:
             log.info("Loading from prev_response")
-            response = AvroResponse(doc=request.prev_response, request=request)
+            response = AvroResponse(response=request.prev_response, request=request)
         else:
             log.info("No prev_response")
             response = AvroResponse(request=request)
@@ -44,10 +44,10 @@ class Controller:
             log.info(f"Processing request for module: {type(module)}")
             prev_media_data = response.to_mediadata(module.get_prev_props_of_interest())
             code = module.process(request, prev_media_data)
-            
+
             log.info(f"{module.name} created {len(module.media_data.detections)} detections")
             log.info(f"{module.name} created {len(module.media_data.segments)} segments")
-            
+
             response.load_mediadata(module.media_data)
             log.debug(f"doc: {response.to_dict()}")
 

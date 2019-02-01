@@ -8,9 +8,7 @@ from vitamincv.avro_api.avro_query import *
 def test_load_data():
     global dets, segs
     S3_BUCKET = "vitamincv-data"
-    S3_KEY = (
-        "jsons/Montreal+Canadiens+%40+Toronto+Maple+Leafs+3-17_With_Human_Tracks.json"
-    )
+    S3_KEY = "jsons/Montreal+Canadiens+%40+Toronto+Maple+Leafs+3-17_With_Human_Tracks.json"
 
     S3 = boto3.resource("s3")
     file = S3.Object(S3_BUCKET, S3_KEY)
@@ -138,16 +136,12 @@ def test_query_footprint_id():
 
 def test_query_region_id():
     q = AvroQuery()
-    q.match_region_id(
-        "32.0320_(0.2004,0.7306)(0.2553,0.7306)(0.2553,0.8424)(0.2004,0.8424)"
-    )
+    q.match_region_id("32.0320_(0.2004,0.7306)(0.2553,0.7306)(0.2553,0.8424)(0.2004,0.8424)")
     num_results = len(det_querier.query(q))
     assert num_results > 0
 
     q = AvroQuery()
-    example = {
-        "region_id": "32.0320_(0.2004,0.7306)(0.2553,0.7306)(0.2553,0.8424)(0.2004,0.8424)"
-    }
+    example = {"region_id": "32.0320_(0.2004,0.7306)(0.2553,0.7306)(0.2553,0.8424)(0.2004,0.8424)"}
     q.set(example)
     assert num_results == len(det_querier.query(q))
 

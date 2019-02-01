@@ -18,11 +18,7 @@ def write_json(json_str, file_path, indent=None):
         elif type(json_str) is str:
             wf.write(json_str)
         else:
-            raise ValueError(
-                "json_str input is not a str or dict. Of type: {}".format(
-                    type(json_str)
-                )
-            )
+            raise ValueError("json_str input is not a str or dict. Of type: {}".format(type(json_str)))
 
 
 def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
@@ -37,9 +33,7 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
         Two points dict(x, y): p0 (upper left) and p1 (lower right)
     """
     if len(contour) != 4:
-        log.error(
-            "To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour"
-        )
+        log.error("To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour")
         return None
 
     # Convert number of pixel to max pixel index
@@ -100,9 +94,7 @@ def create_region_id(tstamp, contour):
     ymin = contour[0].get("y")
     ymax = contour[2].get("y")
 
-    return "{}_({},{})({},{})({},{})({},{})".format(
-        tstamp, xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
-    )
+    return "{}_({},{})({},{})({},{})({},{})".format(tstamp, xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax)
 
 
 def round_float(val):
@@ -140,9 +132,7 @@ def round_all_pts_in_contour(contour):
     """
     rounded_contour = []
     for pt in contour:
-        rounded_contour.append(
-            create_point(x=round_float(pt["x"]), y=round_float(pt["y"]))
-        )
+        rounded_contour.append(create_point(x=round_float(pt["x"]), y=round_float(pt["y"])))
     return rounded_contour
 
 
@@ -216,9 +206,7 @@ def get_current_date():
         current_date (str)
     """
     now = datetime.datetime.now()
-    date = "{:4}{:2}{:2}".format(
-        str(now.year).zfill(4), str(now.month).zfill(2), str(now.day).zfill(2)
-    )
+    date = "{:4}{:2}{:2}".format(str(now.year).zfill(4), str(now.month).zfill(2), str(now.day).zfill(2))
     return date
 
 

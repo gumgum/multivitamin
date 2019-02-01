@@ -12,19 +12,8 @@ import traceback
 
 from datetime import datetime
 
-from vitamincv.data.utils import (
-    points_equal,
-    times_equal,
-    create_region_id,
-    get_current_time,
-)
-from vitamincv.data import (
-    MediaData,
-    create_detection,
-    create_segment,
-    create_bbox_contour_from_points,
-    create_point,
-)
+from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
+from vitamincv.data import MediaData, create_detection, create_segment, create_bbox_contour_from_points, create_point
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import (
     create_footprint,
@@ -32,14 +21,10 @@ from vitamincv.data.avro_response.cv_schema_factory import (
     create_prop,
     create_region,
     create_image_ann,
-    create_video_ann
+    create_video_ann,
 )
 from vitamincv.data.avro_response.avro_io import AvroIO
-from vitamincv.data.avro_response.avro_query import (
-    AvroQuerier,
-    AvroQuery,
-    AvroQueryBlock
-)
+from vitamincv.data.avro_response.avro_query import AvroQuerier, AvroQuery, AvroQueryBlock
 from vitamincv.data.response_interface import Response
 
 import importlib.util
@@ -52,16 +37,18 @@ class AvroResponse(Response):
     """Wrapper with utilities around a single response document"""
 
     def set_response(self, response):
-        self._clear_maps()
-        self.detections = None
-        self.response = create_response()
-        self.max_gpu_mem = 0.75
-        self.check_for_gpu()
-        self.detection_querier = None
-        self.segment_querier = None
+        if not response:
+            response = create_response()
+        # self._clear_maps()
+        # self.detections = None
+        
+        # self.max_gpu_mem = 0.75
+        # self.check_for_gpu()
+        # self.detection_querier = None
+        # self.segment_querier = None
 
-        if not isinstance(response, Response):
-            raise ValueError(Response)
+        if not isinstance(response, dict):
+            raise ValueError(dict)
         self.response = response
 
     def load_mediadata(self, media_data):
@@ -102,14 +89,20 @@ class AvroResponse(Response):
             properties_of_interest (dict): dictionary with properties of interest
         """
         log.info("Converting response to mediadata")
-        dets = self._get_detections_from_response(properties_of_interest)
+        md = MediaData()
+        dets = self.get_detections_from_frame_anns()
         if dets:
             log.info(f"Found {len(dets)} dets")
-        segs = self._get_segments_from_response(properties_of_interest)  # TODO
-        if segs:
-            log.info(f"Found {len(segs)} segs")
-        md = MediaData(detections=dets, segments=segs)
-        md.create_detections_tstamp_map()
+        
+        md.detections = dets
+        md.filter_detections_by_properties_of_interest(properties_of_interest)
+
+        # segs = self._get_segments_from_response(properties_of_interest)  
+        # if segs:
+            # log.info(f"Found {len(segs)} segs")
+        # md.create_detections_tstamp_map()
+
+        md.update_maps()
         return md
 
     def to_dict(self):
@@ -192,9 +185,7 @@ class AvroResponse(Response):
         self.gpu = None
         deviceIDs = []
         try:
-            deviceIDs = GPUtil.getAvailable(
-                order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70
-            )
+            deviceIDs = GPUtil.getAvailable(order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70)
         except:
             log.warning("No GPUs Found -- This must be a CPU only machine")
 
@@ -305,9 +296,7 @@ class AvroResponse(Response):
         t2 = detection["t"]
         i = 0
         # https://stackoverflow.com/questions/21388026/find-closest-float-in-array-for-all-floats-in-another-array
-        for i, image_ann in enumerate(
-            list(self.response["media_annotation"]["frames_annotation"])
-        ):
+        for i, image_ann in enumerate(list(self.response["media_annotation"]["frames_annotation"])):
             t1 = image_ann["t"]
             if times_equal(float(t1), float(t2), eps=t_eps):
                 log.debug("Appending new region to existing frame annotation.")
@@ -320,9 +309,7 @@ class AvroResponse(Response):
             ):  # redundant I know. Just in case we remove the equality check from lines above
                 break
         if not tstamp_exists:
-            log.debug(
-                "Creating new frame annotation with tstamp: {}".format(detection["t"])
-            )
+            log.debug("Creating new frame annotation with tstamp: {}".format(detection["t"]))
             image_ann = create_image_ann(t=detection["t"], regions=[region])
             self.response["media_annotation"]["frames_annotation"].insert(i, image_ann)
 
@@ -356,18 +343,12 @@ class AvroResponse(Response):
 
     def sort_image_anns_by_timestamp(self):
         tmp = self.response["media_annotation"]["frames_annotation"]
-        self.response["media_annotation"]["frames_annotation"] = sorted(
-            tmp, key=lambda k: k["t"]
-        )
+        self.response["media_annotation"]["frames_annotation"] = sorted(tmp, key=lambda k: k["t"])
 
     def sort_tracks_summary_by_timestamp(self):
         tmp = self.response["media_annotation"]["tracks_summary"]
-        self.response["media_annotation"]["tracks_summary"] = sorted(
-            tmp, key=lambda k: k["t2"]
-        )
-        self.response["media_annotation"]["tracks_summary"] = sorted(
-            tmp, key=lambda k: k["t1"]
-        )
+        self.response["media_annotation"]["tracks_summary"] = sorted(tmp, key=lambda k: k["t2"])
+        self.response["media_annotation"]["tracks_summary"] = sorted(tmp, key=lambda k: k["t1"])
 
     def compute_video_desc(self):
         pass
@@ -431,29 +412,25 @@ class AvroResponse(Response):
             t2 = track["t2"]
             region_ids = track["region_ids"]
 
-            # Track ID isn't a current schema field
-            if track.get("track_id") is None:
-                track_id = str(datetime.now())
-            else:
-                track_id = track["track_id"]
-
+            dets = []
             for prop in track["props"]:
-                seg = create_segment(
-                    server=prop["server"],
-                    property_type=prop["property_type"],
-                    value=prop["value"],
-                    value_verbose=prop["value_verbose"],
-                    confidence=prop["confidence"],
-                    fraction=prop["fraction"],
-                    t1=t1,
-                    t2=t2,
-                    version=prop["ver"],
-                    property_id=prop["property_id"],
-                    region_ids=region_ids,
-                    track_id=track_id,
-                    company=prop["company"],
+                dets.append(
+                    create_detection(
+                        server=prop["server"],
+                        module_id=prop["module_id"],
+                        property_type=prop["property_type"],
+                        value=prop["value"],
+                        value_verbose=prop["value_verbose"],
+                        confidence=prop["confidence"],
+                        fraction=prop["fraction"],
+                        company=prop["company"],
+                        ver=prop["ver"],
+                        property_id=prop["property_id"],
+                        footprint_id=prop["footprint_id"]
+                    )
                 )
-                all_segments.append(seg)
+            seg = create_segment(t1=t1, t2=t2, detections=dets, region_ids=region_ids)
+            all_segments.append(seg)
         return all_segments
 
     def get_detections_from_frame_anns(self):
@@ -539,12 +516,7 @@ class AvroResponse(Response):
 
         filtered_results = sorted(
             [
-                frozenset(
-                    [
-                        json.dumps({key: d[key] for key in keys}, sort_keys=True)
-                        for d in dict_sets
-                    ]
-                )
+                frozenset([json.dumps({key: d[key] for key in keys}, sort_keys=True) for d in dict_sets])
                 for dict_sets in results
             ]
         )
@@ -553,9 +525,7 @@ class AvroResponse(Response):
         # unique_results = np.unique(filtered_results)
         # unique_results = unique_results.tolist()
         unique_results = set(filtered_results)
-        unique_results = [
-            tuple([json.loads(d) for d in dict_set]) for dict_set in unique_results
-        ]
+        unique_results = [tuple([json.loads(d) for d in dict_set]) for dict_set in unique_results]
         return unique_results
 
     def get_detections_from_frame_anns_t_p(self, tstamp, p):
@@ -627,9 +597,7 @@ class AvroResponse(Response):
         """
         codes = []
         for c in self.response["media_annotation"]["codes"]:
-            if partial_value_AND_match(c, query_footprint) and date_range_match(
-                c, query_footprint
-            ):
+            if partial_value_AND_match(c, query_footprint) and date_range_match(c, query_footprint):
                 codes.append(c)
         return codes
 
@@ -725,9 +693,7 @@ class AvroResponse(Response):
         pass
 
     def get_timestamps(self):
-        return sorted(
-            [x["t"] for x in self.response["media_annotation"]["frames_annotation"]]
-        )
+        return sorted([x["t"] for x in self.response["media_annotation"]["frames_annotation"]])
 
     def get_timestamps_from_footprints(self, server=None):
         tstamps = []
@@ -821,9 +787,7 @@ class AvroResponse(Response):
                 break
         return tracks
 
-    def get_temporal_signal_from_prop(
-        self, poi, use_track_summary_flag=True, tstamps_msecs=[]
-    ):
+    def get_temporal_signal_from_prop(self, poi, use_track_summary_flag=True, tstamps_msecs=[]):
         if use_track_summary_flag is False:
             log.info("Retrieving temporal signal from frame annotations")
             tstamps_secs = self.get_timestamps()
@@ -974,13 +938,9 @@ class AvroResponse(Response):
         def timestamp_in_range_query(query_map, value):
             if self.gpu is not None:
                 with cp.cuda.Device(self.gpu):
-                    idxs = cp.nonzero(
-                        cp.logical_and(query_map["t1"] < value, query_map["t2"] > value)
-                    )[0].tolist()
+                    idxs = cp.nonzero(cp.logical_and(query_map["t1"] < value, query_map["t2"] > value))[0].tolist()
             else:
-                idxs = np.nonzero(
-                    np.logical_and(query_map["t1"] < value, query_map["t2"] > value)
-                )[0].tolist()
+                idxs = np.nonzero(np.logical_and(query_map["t1"] < value, query_map["t2"] > value))[0].tolist()
             return set(idxs)
 
         def range_around_timestamp_query(query_map, t1=None, t2=None):
@@ -1059,9 +1019,7 @@ class AvroResponse(Response):
                 continue
 
             if query_map[key].get(value) is None:
-                log.warning(
-                    "Value for Key Not Found: {{{}: {}}}... Skipping".format(key, value)
-                )
+                log.warning("Value for Key Not Found: {{{}: {}}}... Skipping".format(key, value))
                 continue
 
             if type(value) is list:

@@ -4,21 +4,13 @@ import json
 
 from vitamincv.data.utils import create_region_id
 
+from nested_lookup import nested_lookup
 
 class MediaData:
-    def __init__(
-        self,
-        detections=None,
-        segments=None,
-        meta=None,
-        code=None,
-        prop_id_map=None,
-        module_id_map=None,
-    ):
+    def __init__(self, detections=None, segments=None, meta=None, code=None, prop_id_map=None, module_id_map=None):
         if detections is None:
             detections = []
         self.detections = detections
-
         if segments is None:
             segments = []
         self.segments = segments
@@ -27,7 +19,24 @@ class MediaData:
         self.code = code
         self.det_tstamp_map = {}
 
-    def create_detections_tstamp_map(self):
+    def filter_detections_by_properties_of_interest(self, props_of_interest):
+        if props_of_interest is None:
+            return
+
+        if isinstance(props_of_interest, dict):
+            props_of_interest = [props_of_interest]
+        
+        log.info(f"Filtering detections given props of interest: {json.dumps(props_of_interest, indent=2)}")
+        log.info(f"len(self.detections) before filtering: {len(self.detections)}")
+        for prop in props_of_interest:
+            for k, v in prop.items():
+                self.detections = list(filter(lambda det: det.get(k) == v, self.detections))
+        log.info(f"len(self.detections) after filtering: {len(self.detections)}")
+
+    def update_maps(self):
+        self.__create_detections_tstamp_map()
+
+    def __create_detections_tstamp_map(self):
         log.info("Creating detections tstamp map")
         if self.detections is None or self.detections == []:
             log.warning("self.detections is empty; cannot create det_tstamp_map")
@@ -46,17 +55,8 @@ class MediaData:
         return f"{self.meta}\nnum_detections: {len(self.detections)}"
 
 
-def create_metadata(
-    name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None
-):
-    return {
-        "name": name,
-        "ver": ver,
-        "url": url,
-        "dims": dims,
-        "sample_rate": sample_rate,
-        "footprint": footprint,
-    }
+def create_metadata(name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None):
+    return {"name": name, "ver": ver, "url": url, "dims": dims, "sample_rate": sample_rate, "footprint": footprint}
 
 
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
@@ -114,9 +114,6 @@ def create_detection(
 ):
     """Factory method to create a detection object
 
-    This object is meant to be used as a "middle man" representation of frame annotations between our avro cv schema and users.
-    Note: type is not enforced.
-
     Args:
         server (str): name of server
         property_type (str): type of prediction property, e.g. label, placement
@@ -133,12 +130,7 @@ def create_detection(
         dict: with the above properties
     """
     if not contour:
-        contour = [
-            create_point(0.0, 0.0),
-            create_point(1.0, 0.0),
-            create_point(1.0, 1.0),
-            create_point(0.0, 1.0),
-        ]
+        contour = [create_point(0.0, 0.0), create_point(1.0, 0.0), create_point(1.0, 1.0), create_point(0.0, 1.0)]
 
     if not region_id:
         region_id = create_region_id(t, contour)
@@ -161,16 +153,10 @@ def create_detection(
     }
 
 
-def create_segment(
-    t1=0.0,
-    t2=0.0,
-    detections=None
-):
+def create_segment(t1=0.0, t2=0.0, detections=None, region_ids=None):
     if not detections:
         detections = []
+    if not region_ids:
+        region_ids = []
 
-    return {
-        "t1": t1,
-        "t2": t2,
-        "detections": detections
-    }
+    return {"t1": t1, "t2": t2, "detections": detections, "region_ids": region_ids}

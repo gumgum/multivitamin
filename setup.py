@@ -28,9 +28,7 @@ class VerifyVersionCommand(install):
         tag = os.getenv("DRONE_TAG", "unknown")
 
         if tag != VERSION:
-            info = "Git tag: {0} does not match the version of this app: {1}".format(
-                tag, VERSION
-            )
+            info = "Git tag: {0} does not match the version of this app: {1}".format(tag, VERSION)
             sys.exit(info)
 
 
@@ -40,16 +38,7 @@ setup(
     description="Common CV APIs",
     url="https://bitbucket.org/gumgum/vitamincv/",
     author="GumGum Computer Vision",
-    packages=find_packages(
-        exclude=[
-            "docs*",
-            "tests*",
-            "examples*",
-            "docker*",
-            "tools*",
-            "vitamincv/data/*",
-        ]
-    ),
+    packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*", "vitamincv/data/*"]),
     install_requires=reqs,
     include_package_data=True,
     zip_safe=False,

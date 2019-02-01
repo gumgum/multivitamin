@@ -100,6 +100,4 @@ class LocalAPI(CommAPI):
 
         media_url = response.get_url()
         media_name = os.path.basename(media_url)
-        return os.path.join(
-            self.pushing_folder, f"{get_current_date}", f"{media_name}.json"
-        )
+        return os.path.join(self.pushing_folder, f"{get_current_date}", f"{media_name}.json")

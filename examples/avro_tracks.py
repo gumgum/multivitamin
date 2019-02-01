@@ -9,9 +9,7 @@ import csv
 import glog as log
 
 
-def append_trackssummary_from_csv(
-    input_json_filepath, input_csv_filepath, output_json_filepath
-):
+def append_trackssummary_from_csv(input_json_filepath, input_csv_filepath, output_json_filepath):
     if os.path.exists(input_json_filepath) == False:
         log.warning(input_json_filepath + " doesn't exist")
         return
@@ -60,16 +58,7 @@ def append_trackssummary_from_csv(
                 except:
                     it2 = titles.index("Timestamp Stop")
 
-                log.info(
-                    "indexes: "
-                    + str(isponsor)
-                    + ", "
-                    + str(iplacement)
-                    + ", "
-                    + str(it1)
-                    + ", "
-                    + str(it2)
-                )
+                log.info("indexes: " + str(isponsor) + ", " + str(iplacement) + ", " + str(it1) + ", " + str(it2))
             else:
                 placements.append(row[iplacement])
                 sponsors.append(row[isponsor])
@@ -128,17 +117,9 @@ def append_trackssummary_from_csv(
 
     for t1, t2, placement, sponsor in zip(t1s, t2s, placements, sponsors):
         # we create the placecement property
-        p1 = create_prop(
-            confidence=1,
-            ver="1.0",
-            server="HAM",
-            property_type="placement",
-            value=placement,
-        )
+        p1 = create_prop(confidence=1, ver="1.0", server="HAM", property_type="placement", value=placement)
         # we create the sponsor property
-        p2 = create_prop(
-            confidence=1, ver="1.0", server="HAM", property_type="logo", value=sponsor
-        )
+        p2 = create_prop(confidence=1, ver="1.0", server="HAM", property_type="logo", value=sponsor)
         ps = [p1, p2]
         # We create the track
         track = create_video_ann(t1=t1, t2=t2, props=ps)
@@ -189,9 +170,9 @@ def append_trackssummary_to_goldstrandard():
 if __name__ == "__main__":
     #########################
     # append_trackssummary_to_goldstrandard()
-    input_json_filepath = "/mnt/ldrive/gg/cvapis/tests/json_output/20181108/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.json"
+    input_json_filepath = (
+        "/mnt/ldrive/gg/cvapis/tests/json_output/20181108/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.json"
+    )
     input_csv_filepath = "/mnt/ldrive/gg/cvapis/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k.csv"
     output_json_filepath = "/mnt/ldrive/gg/cvapis/tests/json_output/20181108/csv/Winnipeg%20Jets%20%40%20St.%20Louis%20Blues-uvr287fay9k_With_Human_Tracks.json"
-    append_trackssummary_from_csv(
-        input_json_filepath, input_csv_filepath, output_json_filepath
-    )
+    append_trackssummary_from_csv(input_json_filepath, input_csv_filepath, output_json_filepath)

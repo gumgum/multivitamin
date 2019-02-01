@@ -52,23 +52,11 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
     # create labelmap.txt
     with open(os.path.join(out_dir, "labelmap.prototxt"), "w") as wf:
         wf.write(
-            "item {\n\tname: '"
-            + "background"
-            + "'\n\tlabel: "
-            + str(0)
-            + "\n\tdisplay_name: '"
-            + label
-            + "'\n}\n"
+            "item {\n\tname: '" + "background" + "'\n\tlabel: " + str(0) + "\n\tdisplay_name: '" + label + "'\n}\n"
         )
         for i, label in enumerate(labels):
             wf.write(
-                "item {\n\tname: '"
-                + label
-                + "'\n\tlabel: "
-                + str(i + 1)
-                + "\n\tdisplay_name: '"
-                + label
-                + "'\n}\n"
+                "item {\n\tname: '" + label + "'\n\tlabel: " + str(i + 1) + "\n\tdisplay_name: '" + label + "'\n}\n"
             )
 
     img_dir = os.path.join(out_dir, "imgs")
@@ -85,11 +73,7 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
 
     for det in tqdm.tqdm(detections):
         if det["property_type"] != property_type:
-            log.error(
-                """det["property_type"]: {} != property_type: {}""".format(
-                    det["property_type"], property_type
-                )
-            )
+            log.error("""det["property_type"]: {} != property_type: {}""".format(det["property_type"], property_type))
             continue
 
         tstamp = det["t"]
@@ -97,11 +81,7 @@ def to_SSD_ann_format(avro_api, property_type, out_dir):
         p0, p1 = p0p1_from_bbox_contour(det["contour"], w, h)
 
         ann_file = open(os.path.join(ann_dir, "{}.txt".format(tstamp)), "a")
-        ann_file.write(
-            "{} {} {} {} {}\n".format(
-                label2idx[det["value"]], p0[0], p0[1], p1[0], p1[1]
-            )
-        )
+        ann_file.write("{} {} {} {} {}\n".format(label2idx[det["value"]], p0[0], p0[1], p1[0], p1[1]))
         ann_file.close()
 
         img_file = os.path.join(img_dir, "{}.jpg".format(tstamp))

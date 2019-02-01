@@ -114,13 +114,7 @@ def create_video_ann(t1=0.0, t2=0.0, region_ids=None, props=None):
     if not props:
         props = []
 
-    return {
-        "t1": t1,
-        "t2": t2,
-        "regions": [],
-        "region_ids": region_ids,
-        "props": props,
-    }  # OBSOLETE
+    return {"t1": t1, "t2": t2, "regions": [], "region_ids": region_ids, "props": props}  # OBSOLETE
 
 
 def create_image_ann(t=0.0, regions=None):
@@ -133,19 +127,8 @@ def create_region(contour=None, props=None, father_id="", features="", id=""):
     if not props:
         props = []
     if not contour:
-        contour = [
-            create_point(0.0, 0.0),
-            create_point(1.0, 0.0),
-            create_point(1.0, 1.0),
-            create_point(0.0, 1.0),
-        ]
-    return {
-        "contour": contour,
-        "props": props,
-        "features": features,
-        "id": id,
-        "father_id": father_id,
-    }
+        contour = [create_point(0.0, 0.0), create_point(1.0, 0.0), create_point(1.0, 1.0), create_point(0.0, 1.0)]
+    return {"contour": contour, "props": props, "features": features, "id": id, "father_id": father_id}
 
 
 def create_prop(
@@ -194,9 +177,7 @@ def create_annotation_task(id="", tstamps=None, labels=None, tags=None):
     return {"id": id, "tstamps": tstamps, "labels": labels, "tags": tags}
 
 
-def create_eligible_prop(
-    server="", property_type="", value="", confidence_min=0.0, father_properties=None
-):
+def create_eligible_prop(server="", property_type="", value="", confidence_min=0.0, father_properties=None):
     if not father_properties:
         father_properties = []
     return {

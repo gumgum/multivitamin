@@ -26,23 +26,17 @@ class SQSAPI(CommAPI):
             log.info("Retrieved queue: {}".format(queue))
         except:
             log.info("The queue does not exist, creating it")
-            queue = self.sqs.create_queue(
-                QueueName=queue_name, Attributes={"DelaySeconds": "120"}
-            )
+            queue = self.sqs.create_queue(QueueName=queue_name, Attributes={"DelaySeconds": "120"})
         self.queue_url = queue["QueueUrl"]
         log.info("Retrieved queue_url: {}".format(self.queue_url))
 
     def pull(self, n=1):
         super().pull(n)
         log.info("Polling request from queue {}...".format(self.queue_url))
-        response = self.sqs.receive_message(
-            QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
-        )
+        response = self.sqs.receive_message(QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC)
         while "Messages" not in response:
             log.info("Polling request from queue {}...".format(self.queue_url))
-            response = self.sqs.receive_message(
-                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
-            )
+            response = self.sqs.receive_message(QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC)
         log.info("response: " + str(response))
         requests = []
         for m in response["Messages"]:

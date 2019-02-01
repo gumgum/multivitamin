@@ -5,9 +5,7 @@ from vitamincv.data.request import Request
 
 
 class Module(ABC):
-    def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
-    ):
+    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None):
         """Abstract base class that defines interface inheritance
 
         ImageModule, PropertiesModule
@@ -21,9 +19,7 @@ class Module(ABC):
         self.module_id_map = module_id_map
         self.prev_pois = None
         self.media_data = MediaData(
-            meta=create_metadata(self.name, self.version),
-            prop_id_map=prop_id_map,
-            module_id_map=module_id_map,
+            meta=create_metadata(self.name, self.version), prop_id_map=prop_id_map, module_id_map=module_id_map
         )
         self.code = "SUCCESS"
 

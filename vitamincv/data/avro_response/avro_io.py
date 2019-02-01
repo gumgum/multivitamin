@@ -10,14 +10,8 @@ import base64
 import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter, BinaryDecoder, BinaryEncoder
-from confluent_kafka.avro.cached_schema_registry_client import (
-    CachedSchemaRegistryClient,
-)
-from confluent_kafka.avro.serializer.message_serializer import (
-    MessageSerializer,
-    ContextStringIO,
-    MAGIC_BYTE,
-)
+from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegistryClient
+from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
 from confluent_kafka.avro.serializer import SerializerError
 
 from vitamincv.data.avro_response import config
@@ -99,9 +93,7 @@ class AvroIO:
                 with open(file, "wb") as wf:
                     wf.write(bytes)
             except avro.io.AvroTypeException:
-                log.error(
-                    "avro.io.AvroTypeException: the datum is not an example of the schema"
-                )
+                log.error("avro.io.AvroTypeException: the datum is not an example of the schema")
                 return False
             log.info("Encoded doc to file: {}".format(file))
         else:
@@ -128,9 +120,7 @@ class AvroIO:
             boolean: True if json is an example of schema
         """
         try:
-            writer = DataFileWriter(
-                tempfile.TemporaryFile(), DatumWriter(), self.impl.schema
-            )
+            writer = DataFileWriter(tempfile.TemporaryFile(), DatumWriter(), self.impl.schema)
             writer.append(doc)
             writer.close()
         except:
@@ -152,9 +142,7 @@ class AvroIO:
         else:
             avro_schema = schema
         try:
-            writer = DataFileWriter(
-                tempfile.TemporaryFile(), DatumWriter(), avro_schema
-            )
+            writer = DataFileWriter(tempfile.TemporaryFile(), DatumWriter(), avro_schema)
             writer.append(doc)
             writer.close()
         except:
@@ -170,9 +158,7 @@ class AvroIO:
 class _AvroIOLocal:
     def __init__(self):
         """Private implementation class for Avro IO of local files"""
-        local_schema_file = pkg_resources.resource_filename(
-            "vitamincv.avro_api", "image-science-response.avsc"
-        )
+        local_schema_file = pkg_resources.resource_filename("vitamincv.avro_api", "image-science-response.avsc")
         log.debug("Using local schema file {}".format(local_schema_file))
         if not os.path.exists(local_schema_file):
             raise FileNotFoundError("Schema file not found")
