@@ -1,5 +1,8 @@
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.comm_apis.work_handler import WorkerManager
+
+from vitamincv.applications.gen
+
 from PIL import Image
 from io import BytesIO
 from imohash import hashfileobject
@@ -37,7 +40,7 @@ class FrameExtractor(CVModule):
     def _append_to_sql(self):
         pass
 
-    def process(message):
+    def process(self, message):
         self.set_message(message)
         video_url = self.avro_api.get_url()
         self.media_api = MediaRetriever(video_url)
