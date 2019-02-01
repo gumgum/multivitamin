@@ -16,7 +16,7 @@ class FrameExtractor(CVModule):
 
         self._s3_client = boto3.client("s3")
 
-        self._encoding = "JPG"
+        self._encoding = "JPEG"
 
         self._manager = WorkerManager(func=self._upload_frame_helper,
                                       n=10,
