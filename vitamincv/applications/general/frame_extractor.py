@@ -75,7 +75,7 @@ class FrameExtractor(CVModule):
         video_hash = hashfileobject(filelike, hexdigest=True)
 
         contents = []
-        for frame, tstamp in self.media_api.get_frames_iterator():
+        for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=1.0):
             #self._upload_frame(frame, tstamp, video_hash)
             if frame is None:
                 continue
