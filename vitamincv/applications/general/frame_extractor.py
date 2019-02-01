@@ -69,7 +69,7 @@ class FrameExtractor(CVModule):
 
         filelike = self.media_api.download(return_filelike=True)
 
-        if filelike.len == 0:
+        if filelike.getbuffer().nbytes == 0:
             self.code = "ERROR_NO_IMAGES_LOADED"
 
         video_hash = hashfileobject(filelike, hexdigest=True)
