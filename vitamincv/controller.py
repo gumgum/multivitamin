@@ -42,7 +42,6 @@ class Controller:
 
         for module in self.modules:
             log.info(f"Processing request for module: {type(module)}")
-<<<<<<< HEAD
             prev_media_data = response.to_mediadata(module.get_prev_props_of_interest())
             code = module.process(request, prev_media_data)
             
@@ -50,12 +49,6 @@ class Controller:
             log.info(f"{module.name} created {len(module.media_data.segments)} segments")
             
             response.load_mediadata(module.media_data)
-=======
-            prev_module_data = response.response_to_mediadata(module.get_prev_props_of_interest())
-            code = module.process(request, prev_module_data)
-            log.info(f"{module.name} created {len(module.media_data.detections)} detections and {len(module.media_data.segments)} segments")
-            response.mediadata_to_response(module.media_data)
->>>>>>> parent of b8bd975... save state
             log.debug(f"doc: {response.to_dict()}")
 
         return response
