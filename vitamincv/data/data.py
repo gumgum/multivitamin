@@ -4,7 +4,6 @@ import json
 
 from vitamincv.data.utils import create_region_id
 
-from nested_lookup import nested_lookup
 
 class MediaData:
     def __init__(self, detections=None, segments=None, meta=None, code=None, prop_id_map=None, module_id_map=None):
@@ -18,9 +17,11 @@ class MediaData:
         self.meta = meta
         self.code = code
         self.det_tstamp_map = {}
+        self.det_regionid_map = {}
 
     def filter_detections_by_properties_of_interest(self, props_of_interest):
         if props_of_interest is None:
+            log.warning("props of interest is None, returning all detections")
             return
 
         if isinstance(props_of_interest, dict):
@@ -35,6 +36,7 @@ class MediaData:
 
     def update_maps(self):
         self.__create_detections_tstamp_map()
+        self.__create_detections_regionid_map()
 
     def __create_detections_tstamp_map(self):
         log.info("Creating detections tstamp map")
@@ -50,6 +52,21 @@ class MediaData:
                     continue
                 self.det_tstamp_map[t].append(det)
         log.debug(f"det_tstamp_map: {json.dumps(self.det_tstamp_map, indent=2)}")
+
+    def __create_detections_regionid_map(self):
+        log.info("Creating detections regionid map")
+        if self.detections is None or self.detections == []:
+            log.warning("self.detections is empty; cannot create det_tstamp_map")
+            return
+
+        if not self.det_regionid_map:
+            self.det_regionid_map = defaultdict(list)
+            for det in self.detections:
+                rid = det.get("region_id")
+                if rid is None:
+                    continue
+                self.det_regionid_map[rid].append(det)
+        log.debug(f"det_regionid_map: {json.dumps(self.det_regionid_map, indent=2)}")
 
     def __repr__(self):
         return f"{self.meta}\nnum_detections: {len(self.detections)}"
@@ -67,7 +84,6 @@ def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
         create_point(xmax, ymax, bound=bound),
         create_point(xmin, ymax, bound=bound),
     ]
-
 
 def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
     """Create x, y point
