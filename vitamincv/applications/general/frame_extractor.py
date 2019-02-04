@@ -10,8 +10,9 @@ from imohash import hashfileobject
 import boto3
 
 class FrameExtractor(CVModule):
-    def __init__(self, server_name, version):
+    def __init__(self, server_name, version, sample_rate=1.0):
         super().__init__(server_name, version)
+        self._sample_rate = sample_rate
 
         self._s3_bucket = "unified-frame-extraction"
         self._list_file = "contents"
@@ -83,7 +84,7 @@ class FrameExtractor(CVModule):
             pass
 
         contents = []
-        for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=1.0):
+        for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=self._sample_rate):
             #self._upload_frame(frame, tstamp, video_hash)
             if frame is None:
                 continue
