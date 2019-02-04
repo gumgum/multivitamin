@@ -6,7 +6,7 @@ from vitamincv.avro_api.cv_schema_factory import *
 
 from PIL import Image
 from io import BytesIO
-from imohash import hashfileobject
+# from imohash import hashfileobject
 import boto3
 
 import os
@@ -105,14 +105,16 @@ class FrameExtractor(CVModule):
         self.code = "SUCCESS"
         self.last_tstamp = 0.0
         log.info('Processing')
-        filelike = self.media_api.download(return_filelike=True)
+        # filelike = self.media_api.download(return_filelike=True)
 
         if filelike.getbuffer().nbytes == 0:
             self.code = "ERROR_NO_IMAGES_LOADED"
+
         log.info('Getting hash')
-        video_hash = hashfileobject(filelike, hexdigest=True)
+        # video_hash = hashfileobject(filelike, hexdigest=True)
+        video_hash = os.path.basename(self.avro_api.get_url()).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
-        
+
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_hash))
             if os.path.exists("{}/{}".format(self._local_dir, self.contents_file_key)):
@@ -129,10 +131,10 @@ class FrameExtractor(CVModule):
             pass
 
         contents = []
-        log.info('Getting frames') 
+        log.info('Getting frames')
         for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=self._sample_rate):
             #self._upload_frame(frame, tstamp, video_hash)
-            log.info('tstamp: ' + str(tstamp))
+            log.debug('tstamp: ' + str(tstamp))
             if frame is None:
                 continue
             self.last_tstamp = tstamp
