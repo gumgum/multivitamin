@@ -112,7 +112,7 @@ class FrameExtractor(CVModule):
 
         log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
-        video_hash = os.path.basename(self.avro_api.get_url()).rsplit(".", 1)[0]
+        video_hash = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
 
         if self._local_dir is not None:
