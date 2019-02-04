@@ -147,8 +147,8 @@ class FrameExtractor(CVModule):
             if self._s3_bucket is not None:
                 self._s3_write_manager.queue.put(data)
 
-        self._s3_write_manager.kill_workers_on_completion()
-        self._local_write_manager.kill_workers_on_completion()
+        # self._s3_write_manager.kill_workers_on_completion()
+        # self._local_write_manager.kill_workers_on_completion()
         if self._s3_bucket is not None:
             result = self._add_contents_to_s3(contents)
         if self._local_dir is not None:
