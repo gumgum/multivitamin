@@ -149,8 +149,10 @@ class FrameExtractor(CVModule):
 
         self._s3_write_manager.kill_workers_on_completion()
         self._local_write_manager.kill_workers_on_completion()
-        result = self._add_contents_to_s3(contents)
-        self._add_contents_to_local(contents)
+        if self._s3_bucket is not None:
+            result = self._add_contents_to_s3(contents)
+        if self._local_dir is not None:
+            self._add_contents_to_local(contents)
 
     def update_response(self):
         date = get_current_time()
