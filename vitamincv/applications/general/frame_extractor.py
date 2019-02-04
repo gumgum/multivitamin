@@ -107,8 +107,8 @@ class FrameExtractor(CVModule):
         log.info('Processing')
         # filelike = self.media_api.download(return_filelike=True)
 
-        if filelike.getbuffer().nbytes == 0:
-            self.code = "ERROR_NO_IMAGES_LOADED"
+        # if filelike.getbuffer().nbytes == 0:
+        #     self.code = "ERROR_NO_IMAGES_LOADED"
 
         log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
