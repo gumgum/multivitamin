@@ -20,6 +20,7 @@ class MediaData:
         self.det_regionid_map = {}
 
     def filter_detections_by_properties_of_interest(self, props_of_interest):
+        """Currently, unused"""
         if props_of_interest is None:
             log.warning("props of interest is None, returning all detections")
             return

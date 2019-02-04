@@ -89,13 +89,18 @@ class AvroResponse(Response):
             properties_of_interest (dict): dictionary with properties of interest
         """
         log.info("Converting response to mediadata")
+
         md = MediaData()
-        dets = self.get_detections_from_frame_anns()
+        dets = self._get_detections_from_response(properties_of_interest)
         if dets:
             log.info(f"Found {len(dets)} dets")
-        
         md.detections = dets
-        md.filter_detections_by_properties_of_interest(properties_of_interest)
+
+        # simplified querying
+        # dets = self.get_detections_from_frame_anns()
+        # if dets:
+        #     log.info(f"Found {len(dets)} dets")
+        # md.filter_detections_by_properties_of_interest(properties_of_interest)
 
         # segs = self._get_segments_from_response(properties_of_interest)  
         # if segs:
