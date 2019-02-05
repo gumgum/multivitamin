@@ -21,6 +21,7 @@ from vitamincv.data.avro_response.cv_schema_factory import (
     create_region,
     create_image_ann,
     create_video_ann,
+    create_prop
 )
 from vitamincv.data.avro_response.avro_io import AvroIO
 from vitamincv.data.avro_response.avro_query import AvroQuerier, AvroQuery, AvroQueryBlock
@@ -93,21 +94,20 @@ class AvroResponse(Response):
         log.info("Converting response to mediadata")
 
         md = MediaData()
-        dets = self._get_detections_from_response(properties_of_interest)
-        if dets:
-            log.info(f"Found {len(dets)} dets")
-        md.detections = dets
-
-        # simplified querying
-        # dets = self.get_detections_from_frame_anns()
+        # dets = self._get_detections_from_response(properties_of_interest)
         # if dets:
         #     log.info(f"Found {len(dets)} dets")
-        # md.filter_detections_by_properties_of_interest(properties_of_interest)
+        # md.detections = dets
 
-        # segs = self._get_segments_from_response(properties_of_interest)  
-        # if segs:
-            # log.info(f"Found {len(segs)} segs")
-        # md.create_detections_tstamp_map()
+        # to test: simplified querying
+        dets = self.get_detections_from_frame_anns()
+        if dets:
+            log.info(f"Found {len(dets)} dets")
+        md.filter_detections_by_properties_of_interest(properties_of_interest)
+
+        segs = self._get_segments_from_response(properties_of_interest)  
+        if segs:
+            log.info(f"Found {len(segs)} segs")
 
         md.update_maps()
         return md

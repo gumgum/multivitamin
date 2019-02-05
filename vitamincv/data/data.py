@@ -70,10 +70,14 @@ class MediaData:
         log.debug(f"det_regionid_map: {json.dumps(self.det_regionid_map, indent=2)}")
 
     def __repr__(self):
-        return f"{self.meta}\nnum_detections: {len(self.detections)}"
+        return f"{self.meta} \
+            num_detections: {len(self.detections)} \
+            num_segments: {len(self.segments)}"
 
 
 def create_metadata(name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None):
+    if not dims:
+        dims = []
     return {"name": name, "ver": ver, "url": url, "dims": dims, "sample_rate": sample_rate, "footprint": footprint}
 
 
@@ -170,10 +174,14 @@ def create_detection(
     }
 
 
-def create_segment(t1=0.0, t2=0.0, detections=None, region_ids=None):
+def create_segment(
+    name="",
+    ver="",
+    t1=0.0,
+    t2=0.0,
+    detections=None
+):
     if not detections:
         detections = []
-    if not region_ids:
-        region_ids = []
 
-    return {"t1": t1, "t2": t2, "detections": detections, "region_ids": region_ids}
+    return {"name": name, "ver": ver, "t1": t1, "t2": t2, "detections": detections}

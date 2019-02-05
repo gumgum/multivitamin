@@ -4,6 +4,5 @@ from .data import (
     create_detection,
     create_segment,
     create_bbox_contour_from_points,
-    create_point,
-    create_prop
+    create_point
 )

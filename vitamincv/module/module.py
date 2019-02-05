@@ -36,3 +36,6 @@ class Module(ABC):
         self.prev_media_data = prev_media_data
         self.media_data.meta["url"] = request.url
         self.media_data.meta["sample_rate"] = request.sample_rate
+
+    def __repr__(self):
+        return f"{self.name} {self.version}"

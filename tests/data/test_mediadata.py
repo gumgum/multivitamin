@@ -10,9 +10,6 @@ TEST_BUCKET = "vitamin-cv-test-data"
 TEST_DATA = "data/previous_responses/short_flamesatblues.json"
 
 
-
-
-
 from functools import reduce
 from itertools import groupby
 from operator import add, itemgetter
@@ -81,8 +78,8 @@ def _compute_unique_sets(dets_regionid_map, properties_of_interest, keyfunc):
                         dets_info.append(keyfunc(det))
                         # dets_info.append(det.get(key_of_interest))
         # uniq_sets.append(dets_info)
-        uniq_sets.append(dets_info)
-    return uniq_sets
+        uniq_sets.append(tuple(dets_info))
+    return tuple(uniq_sets)
     # print(json.dumps(uniq_sets, indent=2))
     # print(set(uniq_sets))
 
@@ -112,10 +109,11 @@ def t():
 
     prop1 = {"property_type": "placement"}
     prop2 = {"property_type": "logo"}
-    props = [prop1, prop2]
+    props = (prop1, prop2)
 
     x = _compute_unique_sets(c, props, lambda x:x['value'])
     print(x)
+    print(list(set(x)))
     # merger = merge_list_of_records_by('time', add)
     # print(json.dumps(a, indent=2))
     # print(json.dumps(b, indent=2))
