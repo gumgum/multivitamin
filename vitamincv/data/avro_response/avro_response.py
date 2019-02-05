@@ -18,7 +18,6 @@ from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import (
     create_footprint,
     create_response,
-    create_prop,
     create_region,
     create_image_ann,
     create_video_ann,
@@ -39,13 +38,13 @@ class AvroResponse(Response):
     def set_response(self, response):
         if not response:
             response = create_response()
-        # self._clear_maps()
-        # self.detections = None
+        self._clear_maps()
+        self.detections = None
         
-        # self.max_gpu_mem = 0.75
-        # self.check_for_gpu()
-        # self.detection_querier = None
-        # self.segment_querier = None
+        self.max_gpu_mem = 0.75
+        self.check_for_gpu()
+        self.detection_querier = None
+        self.segment_querier = None
 
         if not isinstance(response, dict):
             raise ValueError(dict)
@@ -77,10 +76,13 @@ class AvroResponse(Response):
             self.set_dims(*media_data.meta.get("dims"))
 
         for det in media_data.detections:
+            log.debug(f"Appending det: {det} to frame_anns")
             self.append_detection(det)
 
-        # for seg in mediadata.segments:
-        #    self.append_segments(seg)
+        for seg in media_data.segments:
+            log.debug(f"Appending seg: {seg} to tracks_summary")
+            self.append_track_to_tracks_summary(seg)
+        self.sort_tracks_summary_by_timestamp()
 
     def to_mediadata(self, properties_of_interest=None):
         """Convert response data to ModuleData type
