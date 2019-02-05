@@ -6,7 +6,6 @@ from vitamincv.avro_api.cv_schema_factory import *
 
 from PIL import Image
 from io import BytesIO
-# from imohash import hashfileobject
 import boto3
 
 import os
@@ -19,7 +18,8 @@ class FrameExtractor(CVModule):
         self._local_dir = local_dir
         self._s3_bucket = s3_bucket
         self._list_file = "contents"
-        self._rel_path_format = "{video_hash}/{filename}.{ext}"
+        self._img_name_format="{tstamp:010.3f}"
+        self._rel_path_format = "{video_id}/{filename}.{ext}"
         self._s3_url_format = "https://s3.amazonaws.com/{bucket}/{s3_key}"
 
         self._sql_db = ""
@@ -46,8 +46,9 @@ class FrameExtractor(CVModule):
     def _write_frame_helper(self, data):
         self._write_frame(**data)
 
-    def _write_frame(self, frame, tstamp, video_hash):
-        relative_path = self._rel_path_format.format(video_hash=video_hash, filename=tstamp, ext=self._encoding)
+    def _write_frame(self, frame, tstamp, video_id):
+        filename=self._img_name_format.format(tstamp=tstamp)
+        relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         full_path = "{}/{}".format(self._local_dir, relative_path)
         im_filelike = self._convert_frame_to_filelike(frame)
         with open(full_path, "wb") as f:
@@ -55,8 +56,9 @@ class FrameExtractor(CVModule):
 
     def _add_contents_to_local(self, contents):
         filelike = BytesIO()
-        for video_hash, tstamp in contents:
-            relative_path = self._rel_path_format.format(video_hash=video_hash, filename=tstamp, ext=self._encoding)
+        for video_id, tstamp in contents:
+            filename=self._img_name_format.format(tstamp=tstamp)
+            relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             full_path = "{}/{}".format(self._local_dir, relative_path)
             line = "{}\t{}\n".format(tstamp, full_path)
             filelike.write(line.encode())
@@ -75,21 +77,21 @@ class FrameExtractor(CVModule):
     def _upload_frame_helper(self, data):
         self._upload_frame(**data)
 
-    def _upload_frame(self, frame, tstamp, video_hash):
+    def _upload_frame(self, frame, tstamp, video_id):
         im_filelike = self._convert_frame_to_filelike(frame)
-        s3_key = self._rel_path_format.format(video_hash=video_hash, filename=tstamp, ext=self._encoding)
+        s3_key = self._rel_path_format.format(video_id=video_id, filename=tstamp, ext=self._encoding)
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
-        self._append_to_sql(video_hash, tstamp, s3_key, result)
+        self._append_to_sql(video_id, tstamp, s3_key, result)
 
-    def _append_to_sql(self, video_hash, tstamp, s3_key, result):
+    def _append_to_sql(self, video_id, tstamp, s3_key, result):
         pass
 
     def _add_contents_to_s3(self, contents):
         filelike = BytesIO()
-        for video_hash, tstamp in contents:
-            s3_key = self._rel_path_format.format(video_hash=video_hash, filename=tstamp, ext=self._encoding)
+        for video_id, tstamp in contents:
+            s3_key = self._rel_path_format.format(video_id=video_id, filename=tstamp, ext=self._encoding)
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
             line = "{}\t{}\n".format(tstamp, im_url)
             filelike.write(line.encode())
@@ -112,11 +114,11 @@ class FrameExtractor(CVModule):
 
         #log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
-        video_hash = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
-        self.contents_file_key = self._rel_path_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
+        video_id = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
+        self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="tsv")
 
         if self._local_dir is not None:
-            self._mklocaldirs("{}/{}".format(self._local_dir, video_hash))
+            self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
             if os.path.exists("{}/{}".format(self._local_dir, self.contents_file_key)):
                 log.info("Local Video already exists")
 
@@ -143,9 +145,9 @@ class FrameExtractor(CVModule):
             data = {
                 "frame": frame,
                 "tstamp": tstamp,
-                "video_hash": video_hash
+                "video_id": video_id
             }
-            contents.append((video_hash, tstamp))
+            contents.append((video_id, tstamp))
 
             if self._local_dir is not None:
                 self._local_write_manager.queue.put(data)
