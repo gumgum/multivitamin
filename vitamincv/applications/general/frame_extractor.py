@@ -132,7 +132,7 @@ class FrameExtractor(CVModule):
 
         try:
             self._s3_client.head_object(Bucket=self._s3_bucket,
-                                    Key=self._rel_path_format.format(video_hash=video_hash,
+                                    Key=self._rel_path_format.format(video_id=video_id,
                                                                    filename=self._list_file,
                                                                    ext="tsv"))
             log.info("Video already exists")
