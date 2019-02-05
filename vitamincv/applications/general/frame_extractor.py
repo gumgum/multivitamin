@@ -110,7 +110,7 @@ class FrameExtractor(CVModule):
         # if filelike.getbuffer().nbytes == 0:
         #     self.code = "ERROR_NO_IMAGES_LOADED"
 
-        log.info('Getting hash')
+        #log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
         video_hash = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_hash=video_hash, filename=self._list_file, ext="tsv")
@@ -132,8 +132,10 @@ class FrameExtractor(CVModule):
 
         contents = []
         log.info('Getting frames')
-        for frame, tstamp in self.media_api.get_frames_iterator(sample_rate=self._sample_rate):
+        for i,(frame, tstamp) in enumerate(self.media_api.get_frames_iterator(sample_rate=self._sample_rate)):
             #self._upload_frame(frame, tstamp, video_hash)
+            if i%100==0:
+              log.info('...tstamp: ' + str(tstamp))
             log.debug('tstamp: ' + str(tstamp))
             if frame is None:
                 continue
