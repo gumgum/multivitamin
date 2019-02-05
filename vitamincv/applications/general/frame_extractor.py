@@ -18,7 +18,7 @@ class FrameExtractor(CVModule):
         self._local_dir = local_dir
         self._s3_bucket = s3_bucket
         self._list_file = "contents"
-        self._img_name_format="{tstamp:010.3f}"
+        self._img_name_format="{tstamp:010d}"
         self._rel_path_format = "{video_id}/{filename}.{ext}"
         self._s3_url_format = "https://s3.amazonaws.com/{bucket}/{s3_key}"
 
@@ -44,7 +44,10 @@ class FrameExtractor(CVModule):
             os.makedirs(directory)
 
     def _write_frame_helper(self, data):
-        self._write_frame(**data)
+        try:
+            self._write_frame(**data)
+        except:
+            log.error("Local Write Failed")
 
     def _write_frame(self, frame, tstamp, video_id):
         filename=self._img_name_format.format(tstamp=tstamp)
@@ -75,11 +78,15 @@ class FrameExtractor(CVModule):
         return im_filelike
 
     def _upload_frame_helper(self, data):
-        self._upload_frame(**data)
+        try:
+            self._upload_frame(**data)
+        except:
+            log.error("Failed to write Frame to S3")
 
     def _upload_frame(self, frame, tstamp, video_id):
+        filename=self._img_name_format.format(tstamp=tstamp)
         im_filelike = self._convert_frame_to_filelike(frame)
-        s3_key = self._rel_path_format.format(video_id=video_id, filename=tstamp, ext=self._encoding)
+        s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
@@ -91,7 +98,8 @@ class FrameExtractor(CVModule):
     def _add_contents_to_s3(self, contents):
         filelike = BytesIO()
         for video_id, tstamp in contents:
-            s3_key = self._rel_path_format.format(video_id=video_id, filename=tstamp, ext=self._encoding)
+            filename=self._img_name_format.format(tstamp=tstamp)
+            s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
             line = "{}\t{}\n".format(tstamp, im_url)
             filelike.write(line.encode())
@@ -134,7 +142,8 @@ class FrameExtractor(CVModule):
 
         contents = []
         log.info('Getting frames')
-        for i,(frame, tstamp) in enumerate(self.media_api.get_frames_iterator(sample_rate=self._sample_rate)):
+        for i,(frame, tstamp_secs) in enumerate(self.media_api.get_frames_iterator(sample_rate=self._sample_rate)):
+            tstamp=int(tstamp_secs*1000)
             #self._upload_frame(frame, tstamp, video_hash)
             if i%100==0:
               log.info('...tstamp: ' + str(tstamp))
