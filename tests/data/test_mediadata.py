@@ -145,15 +145,15 @@ def t():
     # print(df.loc[np.all(df[list(q)] == pd.Series(q), axis=1)])
 
     # xstr = f'{q["property_type"]} == {q["t"]}'
-    # print(xstr)
-    print(df)
-    af = "placement"
-    # res = df.query('property_type  == @af')
-    # res = df.query(' (property_type == "placement") | (property_type == "logo") ')
-    # res = df.query("""(property_type == "placement") & (t == "3") | (property_type == "placement") & (t == "1")""")
-    res = df.query(qstr)
-    print(res)
-    # filterSeries = pd.Series(np.ones(df.shape[0],dtype=bool))
+    # # print(xstr)
+    # print(df)
+    # af = "placement"
+    # # res = df.query('property_type  == @af')
+    # # res = df.query(' (property_type == "placement") | (property_type == "logo") ')
+    # # res = df.query("""(property_type == "placement") & (t == "3") | (property_type == "placement") & (t == "1")""")
+    # res = df.query(qstr)
+    # print(res)
+    # # filterSeries = pd.Series(np.ones(df.shape[0],dtype=bool))
     # s = pd.Series()
     # for q in query:
     #     print('s')
@@ -173,8 +173,9 @@ def t():
     # newdf = df[(df["property_type"] == "placement") | (df["property_type"] == "logo")]
     # print(newdf)
     # print(json.dumps(newdf.to_dict('records'), indent=2))
-    # groupings = newdf.groupby(['t']).groups
-    # print(groupings)
-    # for k, group in groupings.items():
-    #     print(newdf.iloc[group])
+    groupings = df.groupby(['t']).groups
+    print(groupings)
+    for k, group in groupings.items():
+        print(k)
+        print(df.iloc[group].to_dict('records'))
 t()

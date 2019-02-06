@@ -11,9 +11,9 @@ class MediaData():
     def __init__(self, detections=None, segments=None, meta=None, code=None, prop_id_map=None, module_id_map=None):
         self.detections = detections
 
-        # if segments is None:
-        #     segments = []
-        # self.segments = segments
+        if segments is None:
+            segments = []
+        self.segments = segments
 
         self.meta = meta
         self.code = code
@@ -34,25 +34,27 @@ class MediaData():
     def detetions(self):
         return self.__detections
 
-    def filter_dets_by_properties_of_interest(self, pois=None):
-        if pois is None:
-            log.info("Properties of interest is None, not filtering detections")
-            return
-        
-        query_str = convert_list_of_query_dicts_to_pd_query(values_of_interest)
-        log.info(f"Querying dataframe with query_str: {query_str}")
+    def filter_dets_by_props_of_interest(self, pois):
+        query_str = _convert_list_of_query_dicts_to_pd_query(pois)
+        log.info(f"Querying dataframe for detections w/ query_str: {query_str}")
         log.info(f"len(detections) before filtering: {len(self.__detections)}")
         df = pd.DataFrame(self.__detections)
         self.detections = df.query(query_str).to_dict('records')
         log.info(f"len(detections) after  filtering: {len(self.__detections)}")
 
+    def get_detections_grouped_by_key(self, key):
+        df = pd.DataFrame(self.__detections)
+        groupings = df.groupby(key).groups
+        det_groupings = []
+        for k, group in groupings.items():
+            det_groupings.append(df.iloc[group].to_dict('records'))
+        return det_groupings
+
     def update_maps(self):
         self.__create_detections_tstamp_map()
     
     def __repr__(self):
-        return f"{self.meta} \
-            num_detections: {len(self.detections)} \
-            num_segments: {len(self.segments)}"
+        return f"{self.meta} num_detections: {len(self.detections)} num_segments: {len(self.segments)}"
 
     def __create_detections_tstamp_map(self):
         log.info("Creating detections tstamp map")
@@ -69,15 +71,10 @@ class MediaData():
                 self.det_tstamp_map[t].append(det)
         log.debug(f"det_tstamp_map: {json.dumps(self.det_tstamp_map, indent=2)}")
 
-def 
-        query_str = convert_list_of_query_dicts_to_pd_query(values_of_interest)
-        log.info(f"Querying dataframe with query_str: {query_str}")
-        return self.dets.query(query_str)
-
-def convert_list_of_query_dicts_to_pd_query(query):
+def _convert_list_of_query_dicts_to_pd_query(query):
     assert(isinstance(query, list))
-    
     qstr = ""
+    log.debug(f"Converting : {json.dumps(query, indent=2)} to")
     for i, q in enumerate(query):
         assert(isinstance(q, dict))
         for j, (k, v) in enumerate(q.items()):
@@ -86,6 +83,7 @@ def convert_list_of_query_dicts_to_pd_query(query):
                 qstr += " & "
         if i != len(query)-1:
             qstr += " | "
+    log.debug(f"{qstr}")
     return qstr
 
 def create_metadata(name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None):

@@ -23,11 +23,11 @@ class Module(ABC):
         )
         self.code = "SUCCESS"
 
-    def set_prev_values_of_interest(self, vois):
-        self.prev_vois = vois
+    def set_prev_props_of_interest(self, pois):
+        self.prev_pois = pois
 
-    def get_prev_values_of_interest(self):
-        return self.prev_vois
+    def get_prev_props_of_interest(self):
+        return self.prev_pois
 
     @abstractmethod
     def process(self, request, prev_media_data=None):

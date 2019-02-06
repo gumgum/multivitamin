@@ -12,7 +12,7 @@ import traceback
 
 from datetime import datetime
 
-from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time, filter_detections_by_properties_of_interest
+from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
 from vitamincv.data import MediaData, create_detection, create_segment, create_bbox_contour_from_points, create_point
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import (
@@ -24,7 +24,6 @@ from vitamincv.data.avro_response.cv_schema_factory import (
     create_prop
 )
 from vitamincv.data.avro_response.avro_io import AvroIO
-from vitamincv.data.avro_response.avro_query import AvroQuerier, AvroQuery, AvroQueryBlock
 from vitamincv.data.response_interface import Response
 
 import importlib.util
@@ -39,14 +38,6 @@ class AvroResponse(Response):
     def set_response(self, response):
         if not response:
             response = create_response()
-        self._clear_maps()
-        self.detections = None
-        
-        self.max_gpu_mem = 0.75
-        self.check_for_gpu()
-        self.detection_querier = None
-        self.segment_querier = None
-
         if not isinstance(response, dict):
             raise ValueError(dict)
         self.response = response
@@ -85,7 +76,7 @@ class AvroResponse(Response):
             self.append_track_to_tracks_summary(seg)
         self.sort_tracks_summary_by_timestamp()
 
-    def to_mediadata(self, properties_of_interest=None):
+    def to_mediadata(self, props_of_interest=None):
         """Convert response data to ModuleData type
 
         Args:
@@ -97,22 +88,15 @@ class AvroResponse(Response):
         
         dets = self.get_detections_from_frame_anns()
         md.detections = dets
-        md.filter_dets_by_properties_of_interest(properties_of_interest)
+        if props_of_interest is not None:
+            md.filter_dets_by_props_of_interest(props_of_interest)
 
-        # to test: simplified querying
-        dets = self.get_detections_from_frame_anns()
-        if dets:
-            log.info(f"Found {len(dets)} dets")
-        # dets = filter_detections_by_properties_of_interest(dets, properties_of_interest)
-        md.detections = dets
-
+        # TODO 
         # segs = self._get_segments_from_response(properties_of_interest)  
-        # if segs:
-        #     log.info(f"Found {len(segs)} segs")
+        # # if segs:
+        # #     log.info(f"Found {len(segs)} segs")
 
         md.update_maps()
-
-        md_query = MediaDataQuerier()
         return md
 
     def to_dict(self):
@@ -127,7 +111,10 @@ class AvroResponse(Response):
         self.response["media_annotation"]["codes"].append(code)
 
     def append_detection(self, detection, prop_id_map=None, t_eps=None):
-        """Append a detection struct (the middleman between avro schema and API user)
+        """TODO
+        Use region_id map for this method, reevaluate all the branchings
+        
+        Append a detection struct (the middleman between avro schema and API user)
         """
         log.debug("Appending detection w/ tstamp: {}".format(detection["t"]))
 
@@ -246,7 +233,7 @@ class AvroResponse(Response):
         # 
         # OBSOLETE
         # 
-        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+        for image_ann in self.response["media_annotation"]["frames_annotation"]:
             for region in image_ann["regions"]:
                 if region["id"] == region_id:
                     return region
