@@ -19,22 +19,6 @@ class MediaData:
         self.det_tstamp_map = {}
         self.det_regionid_map = {}
 
-    def filter_detections_by_properties_of_interest(self, props_of_interest):
-        """Currently, unused"""
-        if props_of_interest is None:
-            log.warning("props of interest is None, returning all detections")
-            return
-
-        if isinstance(props_of_interest, dict):
-            props_of_interest = [props_of_interest]
-        
-        log.info(f"Filtering detections given props of interest: {json.dumps(props_of_interest, indent=2)}")
-        log.info(f"len(self.detections) before filtering: {len(self.detections)}")
-        for prop in props_of_interest:
-            for k, v in prop.items():
-                self.detections = list(filter(lambda det: det.get(k) == v, self.detections))
-        log.info(f"len(self.detections) after filtering: {len(self.detections)}")
-
     def update_maps(self):
         self.__create_detections_tstamp_map()
         self.__create_detections_regionid_map()

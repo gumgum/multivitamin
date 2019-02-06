@@ -95,28 +95,29 @@ def _compute_unique_sets2(dets_regionid_map, properties_of_interest, keyfunc):
                 dets_info.append(list(map(keyfunc, filter(lambda det: det.get(key) == val, dets))))
         print(dets_info)
 
+from tinydb import TinyDB, Query, where
+import json
 def t():
-    a=[{'property_type': 'placement', 'value': 'board', 'high': 10}, 
-        {'property_type': 'logo', 'value': 'AAA', 'high': 5}]
+    dets = {
+        '1': [
+                {'property_type': 'placement', 'value': 'board', 't': 1}, 
+                {'property_type': 'logo', 'value': 'AAA', 't': 1},
+            ],
+         '2': [
+                {'property_type': 'placement', 'value': 'led', 't': 2}, 
+                {'property_type': 'logo', 'value': 'statefarm', 't': 2},
+         ],
+         '3': [
+                 {'property_type': 'placement', 'value': 'board', 't': 3}, 
+            {'property_type': 'logo', 'value': 'AAA', 't': 3}
+            
+        ]}
 
-    b=[{'property_type': 'placement', 'value': 'led', 'high': 10}, 
-        {'property_type': 'logo', 'value': 'statefarm', 'high': 5}]
-
-    d=[{'property_type': 'placement', 'value': 'board', 'high': 10}, 
-        {'property_type': 'logo', 'value': 'AAA', 'high': 5}]
-
-    c = {'1': a, '2': b, '3': d}
-
-    prop1 = {"property_type": "placement"}
-    prop2 = {"property_type": "logo"}
-    props = (prop1, prop2)
-
-    x = _compute_unique_sets(c, props, lambda x:x['value'])
-    print(x)
-    print(list(set(x)))
-    # merger = merge_list_of_records_by('time', add)
-    # print(json.dumps(a, indent=2))
-    # print(json.dumps(b, indent=2))
-    # print(json.dumps(merger(a + b), indent=2))
+    db = TinyDB('tmp.json')
+    Dets = Query()
+    db.insert(dets)
+    print(db.count)
+    x = db.search((where('property_type') == 'placement') | (where('property_type') == 'logo'))
+    print(json.dumps(x, indent=2))
 
 t()

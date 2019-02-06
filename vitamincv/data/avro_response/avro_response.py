@@ -12,7 +12,7 @@ import traceback
 
 from datetime import datetime
 
-from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
+from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time, filter_detections_by_properties_of_interest
 from vitamincv.data import MediaData, create_detection, create_segment, create_bbox_contour_from_points, create_point
 from vitamincv.data.avro_response import config
 from vitamincv.data.avro_response.cv_schema_factory import (
@@ -103,11 +103,12 @@ class AvroResponse(Response):
         dets = self.get_detections_from_frame_anns()
         if dets:
             log.info(f"Found {len(dets)} dets")
-        md.filter_detections_by_properties_of_interest(properties_of_interest)
-
-        segs = self._get_segments_from_response(properties_of_interest)  
-        if segs:
-            log.info(f"Found {len(segs)} segs")
+        dets = filter_detections_by_properties_of_interest(dets, properties_of_interest)
+        md.detections = dets
+        
+        # segs = self._get_segments_from_response(properties_of_interest)  
+        # if segs:
+        #     log.info(f"Found {len(segs)} segs")
 
         md.update_maps()
         return md
