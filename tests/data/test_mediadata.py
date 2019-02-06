@@ -86,7 +86,7 @@ def _compute_unique_sets(dets_regionid_map, properties_of_interest, keyfunc):
 def _compute_unique_sets2(dets_regionid_map, properties_of_interest, keyfunc):
     if isinstance(properties_of_interest, dict):
         properties_of_interest = [properties_of_interest]
-    
+
     uniq_sets = []
     for regionid, dets in dets_regionid_map.items():
         dets_info = []
@@ -97,27 +97,84 @@ def _compute_unique_sets2(dets_regionid_map, properties_of_interest, keyfunc):
 
 from tinydb import TinyDB, Query, where
 import json
+import pandas as pd
+
+import numpy as np
 def t():
-    dets = {
-        '1': [
-                {'property_type': 'placement', 'value': 'board', 't': 1}, 
-                {'property_type': 'logo', 'value': 'AAA', 't': 1},
-            ],
-         '2': [
-                {'property_type': 'placement', 'value': 'led', 't': 2}, 
-                {'property_type': 'logo', 'value': 'statefarm', 't': 2},
-         ],
-         '3': [
-                 {'property_type': 'placement', 'value': 'board', 't': 3}, 
-            {'property_type': 'logo', 'value': 'AAA', 't': 3}
-            
-        ]}
+    dets = [
+        {'property_type': 'placement', 'value': 'board', 't': 1}, 
+        {'property_type': 'placement', 'value': 'led', 't': 2}, 
+        {'property_type': 'logo', 'value': 'AAA', 't': 1},
+        {'property_type': 'logo', 'value': 'statefarm', 't': 2},
+        {'property_type': 'placement', 'value': 'board', 't': 3}, 
+        {'property_type': 'logo', 'value': 'AAA', 't': 3},
+        {'property_type': 'hfe', 'value': 'AAA', 't': 3}
+        ]
+    
+    query = [
+        {'property_type': 'placement', 't': 3},
+        {'property_type': 'placement', 't': 1}
+    ]
 
-    db = TinyDB('tmp.json')
-    Dets = Query()
-    db.insert(dets)
-    print(db.count)
-    x = db.search((where('property_type') == 'placement') | (where('property_type') == 'logo'))
-    print(json.dumps(x, indent=2))
+    qstr = ""
+    for i, q in enumerate(query):
+        for j, (k, v) in enumerate(q.items()):
+            qstr += f'({k} == "{v}")'
+            if j != len(q)-1:
+                qstr += " & "
+        if i != len(query)-1:
+            qstr += " | "
+    print(qstr)
 
+    # query = {'property_type': 'placement', 't': 3}
+    
+    df = pd.DataFrame(dets)
+    # q = {'property_type': 'placement', 't': 3}
+    # q2 = {'property_type': 'placement', 't': 1}
+
+    # s1 = (df[list(q)] == pd.Series(q)).all(axis=1)
+    # s2 = (df[list(q2)] == pd.Series(q2)).all(axis=1)
+
+    # print(s1)
+    # print(s2)
+    # v = s1 | s2
+    # print(v)
+    # print(df[v])
+
+    
+    # print(df.loc[np.all(df[list(q)] == pd.Series(q), axis=1)])
+
+    # xstr = f'{q["property_type"]} == {q["t"]}'
+    # print(xstr)
+    print(df)
+    af = "placement"
+    # res = df.query('property_type  == @af')
+    # res = df.query(' (property_type == "placement") | (property_type == "logo") ')
+    # res = df.query("""(property_type == "placement") & (t == "3") | (property_type == "placement") & (t == "1")""")
+    res = df.query(qstr)
+    print(res)
+    # filterSeries = pd.Series(np.ones(df.shape[0],dtype=bool))
+    # s = pd.Series()
+    # for q in query:
+    #     print('s')
+    #     print(s)
+    #     tmp = (df[list(q)] == pd.Series(q)).all(axis=1)
+    #     print('tmp')
+    #     print(tmp)
+    #     s = s.add(tmp)
+    # print('end')
+    # print(s)
+    # print(type(s))
+    # # v = df[(df[list(x)] == pd.Series(x)).all(axis=1)]
+    # print(v.to_dict('records'))
+
+    # print(df.groupby(['t']).groups)
+
+    # newdf = df[(df["property_type"] == "placement") | (df["property_type"] == "logo")]
+    # print(newdf)
+    # print(json.dumps(newdf.to_dict('records'), indent=2))
+    # groupings = newdf.groupby(['t']).groups
+    # print(groupings)
+    # for k, group in groupings.items():
+    #     print(newdf.iloc[group])
 t()

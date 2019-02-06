@@ -1,27 +1,58 @@
 import glog as log
 from collections import defaultdict
 import json
+import pandas as pd
 
 from vitamincv.data.utils import create_region_id
+from vitamincv.data.data_query import MediaDataQuerier
 
 
-class MediaData:
+class MediaData():
     def __init__(self, detections=None, segments=None, meta=None, code=None, prop_id_map=None, module_id_map=None):
-        if detections is None:
-            detections = []
         self.detections = detections
-        if segments is None:
-            segments = []
-        self.segments = segments
+
+        # if segments is None:
+        #     segments = []
+        # self.segments = segments
 
         self.meta = meta
         self.code = code
         self.det_tstamp_map = {}
-        self.det_regionid_map = {}
+
+    @property
+    def detections(self):
+        return self.__detections
+
+    @detections.setter
+    def detections(self, dets):
+        if dets is None:
+            self.__detections = []
+        else:
+            self.__detections = dets
+    
+    @detections.getter
+    def detetions(self):
+        return self.__detections
+
+    def filter_dets_by_properties_of_interest(self, pois=None):
+        if pois is None:
+            log.info("Properties of interest is None, not filtering detections")
+            return
+        
+        query_str = convert_list_of_query_dicts_to_pd_query(values_of_interest)
+        log.info(f"Querying dataframe with query_str: {query_str}")
+        log.info(f"len(detections) before filtering: {len(self.__detections)}")
+        df = pd.DataFrame(self.__detections)
+        self.detections = df.query(query_str).to_dict('records')
+        log.info(f"len(detections) after  filtering: {len(self.__detections)}")
 
     def update_maps(self):
         self.__create_detections_tstamp_map()
-        self.__create_detections_regionid_map()
+    
+    def __repr__(self):
+        return f"{self.meta} \
+            num_detections: {len(self.detections)} \
+            num_segments: {len(self.segments)}"
 
     def __create_detections_tstamp_map(self):
         log.info("Creating detections tstamp map")
@@ -38,26 +69,24 @@ class MediaData:
                 self.det_tstamp_map[t].append(det)
         log.debug(f"det_tstamp_map: {json.dumps(self.det_tstamp_map, indent=2)}")
 
-    def __create_detections_regionid_map(self):
-        log.info("Creating detections regionid map")
-        if self.detections is None or self.detections == []:
-            log.warning("self.detections is empty; cannot create det_tstamp_map")
-            return
+def 
+        query_str = convert_list_of_query_dicts_to_pd_query(values_of_interest)
+        log.info(f"Querying dataframe with query_str: {query_str}")
+        return self.dets.query(query_str)
 
-        if not self.det_regionid_map:
-            self.det_regionid_map = defaultdict(list)
-            for det in self.detections:
-                rid = det.get("region_id")
-                if rid is None:
-                    continue
-                self.det_regionid_map[rid].append(det)
-        log.debug(f"det_regionid_map: {json.dumps(self.det_regionid_map, indent=2)}")
-
-    def __repr__(self):
-        return f"{self.meta} \
-            num_detections: {len(self.detections)} \
-            num_segments: {len(self.segments)}"
-
+def convert_list_of_query_dicts_to_pd_query(query):
+    assert(isinstance(query, list))
+    
+    qstr = ""
+    for i, q in enumerate(query):
+        assert(isinstance(q, dict))
+        for j, (k, v) in enumerate(q.items()):
+            qstr += f'({k} == "{v}")'
+            if j != len(q)-1:
+                qstr += " & "
+        if i != len(query)-1:
+            qstr += " | "
+    return qstr
 
 def create_metadata(name="", ver="", url="", dims=None, sample_rate=1.0, footprint=None):
     if not dims:

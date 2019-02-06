@@ -42,7 +42,7 @@ class Controller:
 
         for module in self.modules:
             log.info(f"Processing request for module: {type(module)}")
-            prev_media_data = response.to_mediadata(module.get_prev_props_of_interest())
+            prev_media_data = response.to_mediadata(module.get_prev_values_of_interest())
             code = module.process(request, prev_media_data)
 
             log.info(f"{module.name} created {len(module.media_data.detections)} detections")

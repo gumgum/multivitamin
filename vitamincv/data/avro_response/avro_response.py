@@ -94,23 +94,25 @@ class AvroResponse(Response):
         log.info("Converting response to mediadata")
 
         md = MediaData()
-        # dets = self._get_detections_from_response(properties_of_interest)
-        # if dets:
-        #     log.info(f"Found {len(dets)} dets")
-        # md.detections = dets
+        
+        dets = self.get_detections_from_frame_anns()
+        md.detections = dets
+        md.filter_dets_by_properties_of_interest(properties_of_interest)
 
         # to test: simplified querying
         dets = self.get_detections_from_frame_anns()
         if dets:
             log.info(f"Found {len(dets)} dets")
-        dets = filter_detections_by_properties_of_interest(dets, properties_of_interest)
+        # dets = filter_detections_by_properties_of_interest(dets, properties_of_interest)
         md.detections = dets
-        
+
         # segs = self._get_segments_from_response(properties_of_interest)  
         # if segs:
         #     log.info(f"Found {len(segs)} segs")
 
         md.update_maps()
+
+        md_query = MediaDataQuerier()
         return md
 
     def to_dict(self):
@@ -118,87 +120,6 @@ class AvroResponse(Response):
 
     def to_bytes(self):
         return None
-
-    def _get_detections_from_response(self, props):
-        """Given a list of properties get the corresponding detections where one property is fully met
-
-        Args:
-            props: A dict, or list of dicts, of detection key/value pairs
-
-        Returns:
-            list[dict]: list of detections matching one of the props
-        """
-        if type(props) is dict:
-            props = [props]
-
-        if props is None:
-            props = [{"name": "*"}]  # hacky way to query all frames?
-
-        try:
-            # if self.detection_querier is None: #ASK MATTHEW
-            self.build_detection_querier()
-
-            Q = AvroQueryBlock()
-            Q.set_operation("OR")
-            for prop in props:
-                log.info(f"Querying for property: {prop}")
-                q = AvroQuery()
-                q.set(prop)
-                Q.add(q)
-
-            return self.detection_querier.query(Q)
-        except:
-            log.info("Could not query detections")
-            log.warning(traceback.print_exc())
-            return None
-
-    def _get_segments_from_response(self, props):
-        """Given a list of properties get the corresponding segments where one property is fully met
-
-        Args:
-            props: A dict, or list of dicts, of segment key/value pairs
-
-        Returns:
-            list[dict]: list of segments matching one of the props
-        """
-        if type(props) is dict:
-            props = [props]
-
-        if props is None:
-            props = [{"name": "*"}]  # hacky way to query all frames?
-
-        try:
-            # if self.detection_querier is None: #ASK MATTHEW
-            self.build_segment_querier()
-
-            Q = AvroQueryBlock()
-            Q.set_operation("OR")
-            for prop in props:
-                log.info(f"Querying for property: {prop}")
-                q = AvroQuery()
-                q.set(prop)
-                Q.add(q)
-
-            return self.segment_querier.query(Q)
-        except:
-            log.info("Could not query segments")
-            log.warning(traceback.print_exc())
-            return None
-
-    def reset_queriers(self):
-        self.detection_querier = None
-        self.segment_querier = None
-
-    def check_for_gpu(self):
-        self.gpu = None
-        deviceIDs = []
-        try:
-            deviceIDs = GPUtil.getAvailable(order="memory", maxMemory=self.max_gpu_mem, maxLoad=0.70)
-        except:
-            log.warning("No GPUs Found -- This must be a CPU only machine")
-
-        if len(deviceIDs) > 0:
-            self.gpu = deviceIDs[0]
 
     """Modifiers"""
 
@@ -321,6 +242,16 @@ class AvroResponse(Response):
             image_ann = create_image_ann(t=detection["t"], regions=[region])
             self.response["media_annotation"]["frames_annotation"].insert(i, image_ann)
 
+    def get_region_from_region_id(self, region_id):
+        # 
+        # OBSOLETE
+        # 
+        for image_ann in self.doc["media_annotation"]["frames_annotation"]:
+            for region in image_ann["regions"]:
+                if region["id"] == region_id:
+                    return region
+        return None
+
     def append_image_anns(self, image_anns):
         for image_ann in image_anns:
             self.append_image_ann(image_ann)
@@ -413,6 +344,7 @@ class AvroResponse(Response):
         Returns:
             list[dict]: list of segments
         """
+        log.info("Getting all segments from tracks_summary")
         all_segments = []
         log.info(f"len(self.get_tracks()) = {len(self.get_tracks())}")
         for track in self.get_tracks():
@@ -447,6 +379,7 @@ class AvroResponse(Response):
         Returns:
             list[dict]: list of detections sorted by t
         """
+        log.info("Getting all detections from frame_anns")
         all_detections = []
         for image_ann in self.get_image_anns():
             tstamp = image_ann["t"]
@@ -469,105 +402,8 @@ class AvroResponse(Response):
                         footprint_id=prop["footprint_id"],
                     )
                     all_detections.append(det)
-            # all_detections.append(single_frame_detections)
+        log.info(f"{len(all_detections)} detections")
         return all_detections
-
-    def get_detections_grouped_by_region_id(self, *props):
-        """Given a list of frames_ann properties get the corresponding detections where one property is fully met
-
-        Args:
-            props (list): Any number of lists of detection key/value pairs
-
-        Returns:
-            list[tuple]: A list of grouped detections
-        """
-        props = list(props)
-        for idx, prop in enumerate(props):
-            if type(prop) is dict:
-                props[idx] = [prop]
-
-        if self.detection_querier is None:
-            self.build_detection_querier()
-
-        Qs = []
-        for prop_list in props:
-            Q = AvroQueryBlock()
-            Q.set_operation("OR")
-            for prop in prop_list:
-                q = AvroQuery()
-                q.set(prop)
-                Q.add(q)
-            Qs.append(Q)
-        dets = []
-        try:
-            dets = self.detection_querier.group_query(Qs, "region_id")
-        except Exception as e:
-            log.warning(e)
-            log.info("No detections were found.")
-            log.info(traceback.print_exc())
-        return dets
-
-    def get_unique_detection_property_groups_by_region_id(self, *props, keys=None):
-        """Given two lists of frames_ann properties get the unique combinations of given keys
-
-        Args:
-            props (list): Any number of lists of detection key/value pairs
-            keys (any iterable): An iterable defining the which keys to define unique-ness against
-
-        Returns:
-            list[tuple]: A list of unique combinations defined by keys
-        """
-        results = self.get_detections_grouped_by_region_id(*props)
-
-        if keys is None:
-            keys = results[0].keys()
-
-        filtered_results = sorted(
-            [
-                frozenset([json.dumps({key: d[key] for key in keys}, sort_keys=True) for d in dict_sets])
-                for dict_sets in results
-            ]
-        )
-
-        # filtered_results = np.array(filtered_results)
-        # unique_results = np.unique(filtered_results)
-        # unique_results = unique_results.tolist()
-        unique_results = set(filtered_results)
-        unique_results = [tuple([json.loads(d) for d in dict_set]) for dict_set in unique_results]
-        return unique_results
-
-    def get_detections_from_frame_anns_t_p(self, tstamp, p):
-        """Transform all frames_annotations for a certain timestamp and property of interest to a list of a list of detections
-        
-        A replica of vision_server/CAvroDevice.hpp::getImagesDetections. 
-
-        Returns:
-            list[list[dict]]: outer list corresponds to single tstamp frame, inner list is a list of regions for that tstamp
-        """
-        image_ann = self.get_image_ann_from_t(tstamp)
-        single_frame_detections = []
-        if not image_ann:
-            return single_frame_detections
-        for region in image_ann["regions"]:
-            for prop in region["props"]:
-                if not partial_value_AND_match(prop, p):
-                    continue
-                det = create_detection(
-                    server=prop["server"],
-                    module_id=detection["module_id"],
-                    property_type=prop["property_type"],
-                    value=prop["value"],
-                    value_verbose=prop["value_verbose"],
-                    confidence=prop["confidence"],
-                    fraction=prop["fraction"],
-                    t=tstamp,
-                    contour=region["contour"],
-                    ver=prop["ver"],
-                    property_id=prop["property_id"],
-                    region_id=region["id"],
-                )
-                single_frame_detections.append(det)
-        return single_frame_detections
 
     def get_image_anns(self):
         """Get all frame annotations
@@ -593,80 +429,6 @@ class AvroResponse(Response):
         """
         return self.response["media_annotation"]["codes"]
 
-    def get_footprint(self, query_footprint):
-        """Get all footprints from doc that match query_footprint with AND logic
-        i.e. only if all fields in query_footprint are a match, returns footprints
-        Note that in the case of dates, we'll be awaiting date_min date_max and we'll look for the footprints within that range.
-        Args:
-            query_footprint (dict): footprint to be matched
-
-        Returns:
-            footprints (list): list of footprints.
-        """
-        codes = []
-        for c in self.response["media_annotation"]["codes"]:
-            if partial_value_AND_match(c, query_footprint) and date_range_match(c, query_footprint):
-                codes.append(c)
-        return codes
-
-    def get_image_anns_from_prop(self, query_prop):
-        """Get all image annotations from doc that match query_prop with AND logic
-        i.e. only if all fields in query_prop are a match, returns regions
-
-        Args:
-            query_prop (dict): properties to be matched
-
-        Returns:
-            regions (list): list of dictionaries of regions
-        """
-        image_anns = []
-        for image_ann in self.response["media_annotation"]["frames_annotation"]:
-            regions = []
-            for region in image_ann["regions"]:
-                for prop in region["props"]:
-                    if partial_value_AND_match(prop, query_prop):
-                        regions.append(region)
-            if regions:
-                image_anns.append({"t": image_ann["t"], "regions": regions})
-        return image_anns
-
-    def get_regions_from_prop(self, query_prop):
-        """Get all regions from doc that match query_prop with AND logic
-        i.e. only if all fields in query_prop are a match, returns regions
-
-        Args:
-            query_prop (dict): properties to be matched
-
-        Returns:
-            regions (list): list of dictionaries of regions
-        """
-        regions = []
-        ts = []
-        for image_ann in self.response["media_annotation"]["frames_annotation"]:
-            t = image_ann["t"]
-            for region in image_ann["regions"]:
-                for prop in region["props"]:
-                    if partial_value_AND_match(prop, query_prop):
-                        regions.append(region)
-                        ts.append(t)
-        return regions, ts
-
-    def get_image_ann_from_t(self, t):
-        """Get image ann from a specific timestamp, t
-
-        Args:
-            t (float): timestamp
-        
-        Returns:
-            image_ann (dict): image annotation (cv schema), None if there is 
-        """
-        if not self._t2index:
-            self.build_t2index_map()
-        i = self._t2index.get(t)
-        if i is None:
-            return None
-        return self.response["media_annotation"]["frames_annotation"][i]
-
     def get_url(self):
         return self.response["media_annotation"]["url"]
 
@@ -684,21 +446,6 @@ class AvroResponse(Response):
 
     def get_json(self, indent=None):
         return json.dumps(self.response, indent=indent)
-
-    def get_detector_id(self):
-        pass
-
-    def get_module_id(self):
-        pass
-
-    def get_detector_version(self):
-        pass
-
-    def get_detector_min_conf(self):
-        pass
-
-    def get_labels(self):
-        pass
 
     def get_timestamps(self):
         return sorted([x["t"] for x in self.response["media_annotation"]["frames_annotation"]])
@@ -719,528 +466,6 @@ class AvroResponse(Response):
                 tstamps = list(set(tstamps) & set(c["tstamps"]))
         return tstamps
 
-    def get_annotator(self):
-        pass
-
     def get_tracks(self):
         return self.response["media_annotation"]["tracks_summary"]
 
-    def get_tracks_from_label(self, label):
-        input("NEEDS TO BE REVIEWED")
-        tracks = []
-        for track in self.response["media_annotation"]["tracks_summary"]:
-            if track["regions"][0]["props"][0]["value"] == label:
-                tracks.append(track)
-        return tracks
-
-    def get_tracks_from_prop(self, pois):
-        log.info("Getting tracks from props:")
-        for p in pois:
-            log.info(str(p))
-        log.info("-------------")
-        # input()
-        tracks = []
-        confidences = []
-        # we go through the tracks, and we check whether they show the poi or not.
-        # log.info(str(self.doc))
-        tracks_summary = self.response["media_annotation"]["tracks_summary"]
-        # log.info("We got a track summary, type: " + str(type(tracks_summary)))
-        # log.info(str(tracks_summary.keys()))
-        # tracks_summary=tracks_summary["array"]
-        log.info("len(tracks_summary): " + str(len(tracks_summary)))
-        # log.info(pprint.pformat(poi))
-        for t in tracks_summary:
-            # log.info("We got a track, type: " + str(type(t)))
-            toi_flag = False
-            props = t["props"]
-            n_props_present = 0
-            confidence_local = 1
-            for p in props:
-                # for all the props in poi we need a true
-                # log.info("p: " + str(p))
-                for poi in pois:
-                    # log.info("poi: " + str(poi))
-                    if partial_value_AND_match(p, poi):
-                        # toi_flag=True
-                        n_props_present += 1
-                        if p["confidence"] < confidence_local:
-                            confidence_local = p["confidence"]
-            # log.info("-------------")
-            # input()
-            if n_props_present == len(pois):
-                toi_flag = True
-            if toi_flag:
-                tracks.append(t)
-                confidences.append(confidence_local)
-        log.info("len(tracks): " + str(len(tracks)))
-        log.info("len(confidences): " + str(len(confidences)))
-        return tracks, confidences
-
-    def get_tracks_from_timestamp(self, tstamp):
-        tracks = []
-        for track in self.response["media_annotation"]["tracks_summary"]:
-            if track["t1"] < tstamp < track["t2"]:
-                tracks.append(track)
-        return track
-
-    def get_sorted_tracks_from_timestamp(self, tstamp):
-        tracks = []
-        found = False
-        for track in self.response["media_annotation"]["tracks_summary"]:
-            if track["t1"] < tstamp:
-                found = True
-                if tstamp < track["t2"]:
-                    tracks.append(track)
-            elif found:
-                break
-        return tracks
-
-    def get_temporal_signal_from_prop(self, poi, use_track_summary_flag=True, tstamps_msecs=[]):
-        if use_track_summary_flag is False:
-            log.info("Retrieving temporal signal from frame annotations")
-            tstamps_secs = self.get_timestamps()
-            tstamps_msecs = [int(1000 * x) for x in tstamps_secs]
-            s = [np.array([]) for c in range(len(tstamps_msecs))]
-            for i, tstamp in enumerate(tstamps_secs):
-                # if i>=1000:
-                #    break
-                if i % 100 == 0:
-                    log.debug("tstamp: " + str(tstamp))
-                dets = self.get_detections_from_frame_anns_t_p(tstamp, poi)
-                for d in dets:
-                    conf = d["confidence"]
-                    # log.info("Appending in i:" + str(i) +" conf:"+str(conf))
-                    s[i] = np.append(s[i], conf)
-            return s, tstamps_msecs
-
-        log.info("Retrieving temporal signal from tracks")
-        # We retrieve the tracks from the track_summary
-        tracks, confidences = self.get_tracks_from_prop(poi)
-        # we create a temporal signal with the temporal coordinates and the confidences.
-        s = []
-        tstamps = tstamps_msecs
-        # tstamps=get_timestamps_msecs()
-        if len(tstamps) == 0:
-            # log.warning("Setting default timestamps, 25fps, T=40msecs")
-            # tstamps=range(0,4*3600*1000,40)
-            log.warning("Setting default timestamps, 2fps, T=500msecs")
-            max_video_hours = 3
-            Tmsec = 1000
-            tstamps = range(0, max_video_hours * 3600 * 1000, Tmsec)
-        # s=np.zeros(len(tstamps))
-        s = [np.array([]) for c in range(len(tstamps))]
-
-        # we go through the properties and we update the signal
-        tmax = 0
-        for track, conf in zip(tracks, confidences):
-            # we get t1 and t2
-            t1 = track["t1"]
-            t2 = track["t2"]
-            # log.info("track: " + str(t1) +", " +str(t2)+", " + str(conf))
-            # we update tmax
-            if t2 > tmax:
-                tmax = t2
-            # we update the signal with the average confidence.
-            i1 = (np.abs(np.array(tstamps, dtype=np.uint64) / 1000.0 - t1)).argmin()
-            i2 = (np.abs(np.array(tstamps, dtype=np.uint64) / 1000.0 - t2)).argmin()
-            # log.info("i1|t1: " + str(i1) + "|" + str(t1) +", " + str(tstamps[i1]))
-            # log.info("i2|t2: " + str(i2) + "|" + str(t2) +", " + str(tstamps[i2]))
-            for i in range(i1, i2):
-                # log.info("Appending in i:" + str(i) +" conf:"+str(conf))
-                s[i] = np.append(s[i], conf)
-        log.info("Returning signal.")
-        return s, tstamps
-
-    def get_detections(self):
-        if self.detections is None:
-            self.build_detections_from_frames_ann()
-        return self.detections
-
-    def get_detections_from_region_id(self, region_id):
-        """Query for detections with a specific region_id
-
-        Args:
-            region_id (str): A detection region_id
-
-        Returns:
-            list: A list of detections
-        """
-        if self.detection_querier is None:
-            self.build_detection_querier()
-
-        q = AvroQuery()
-        q.match_region_id(region_id)
-
-        return self.detection_querier.query(q)
-
-    def get_region_ids_from_t(self, t):
-        if not self._t2region_ids:
-            self.build_t2region_id_map()
-        return self._t2region_ids[t]
-
-    def get_detections_from_t(self, t):
-        dets = []
-        for region_id in self.get_region_ids_from_t(t):
-            dets = dets + self._region_id2detections[region_id]
-        return dets
-
-    def get_matching_detections(self, **kwargs):
-        """Queries for detections with matching key/value pairs.
-
-        Keyword arguments that match keys in detections will be treated as exact matches. Refer to cv_shcema_factory.
-
-        Special Keyword Args:
-            t1 (float): Will match all segments where t1 is less than t
-            t2 (float): Will match all segments where t2 greater than t
-
-        Returns:
-            List of matching detections
-
-        TODOs:
-            1) Add range query for confidence
-        """
-        if getattr(self, "frames_ann_query_map", None) is None:
-            self.build_frames_ann_query_map()
-        desired_idxs = self._get_desired_indicies(self.frames_ann_query_map, kwargs)
-        return self.detections[sorted(desired_idxs)].tolist()
-
-    def get_matching_track_segments(self, **kwargs):
-        """Queries for segments with matching key/value pairs.
-
-        Keyword arguments that match keys in segments will be treated as exact matches. Refer to cv_shcema_factory.
-
-        Special Keyword Args:
-            t (float): Will match all segments where t is an element of t1 to t2, exclusive
-
-        Returns:
-            List of matching detections
-
-        TODOs:
-            1) Add range query for confidence
-        """
-        if getattr(self, "track_summary_query_map", None) is None:
-            self.build_track_summary_query_map()
-        desired_idxs = self._get_desired_indicies(self.track_summary_query_map, kwargs)
-        return self.track_segments[sorted(desired_idxs)].tolist()
-
-    def _get_desired_indicies(self, query_map, query):
-        """Hidden function to query the query_map for the relevant detection or segement indicies
-
-        Args:
-            query_map (dict): A dict of dicts of sets described in build_frames_ann_query_map or build_tracks_summary_query_map
-            query (dict): A dict of key/value pairs that match fields in segments and detections. There are some special keys described in get_matching_track_segments and get_matching_detections
-
-        Returns:
-            indicies (set): A set of the unique indices of segments/detections that match the query
-
-        """
-        desired_idxs = None
-
-        def intersect(desired_idxs, key, value):
-            if desired_idxs is None:
-                desired_idxs = query_map[key][value]
-                return desired_idxs
-            desired_idxs = desired_idxs.intersection(query_map[key][value])
-            return desired_idxs
-
-        def timestamp_in_range_query(query_map, value):
-            if self.gpu is not None:
-                with cp.cuda.Device(self.gpu):
-                    idxs = cp.nonzero(cp.logical_and(query_map["t1"] < value, query_map["t2"] > value))[0].tolist()
-            else:
-                idxs = np.nonzero(np.logical_and(query_map["t1"] < value, query_map["t2"] > value))[0].tolist()
-            return set(idxs)
-
-        def range_around_timestamp_query(query_map, t1=None, t2=None):
-            t1_idxs = None
-            t2_idxs = None
-            if self.gpu is not None:
-                with cp.cuda.Device(self.gpu):
-                    t = cp.array(query_map["t_list"])
-            else:
-                t = query_map["t_list"]
-
-            if t1 is not None:
-                t1_idxs = t > t1
-            if t2 is not None:
-                t2_idxs = t < t2
-
-            if t1_idxs is not None and t2_idxs is not None:
-                if self.gpu is not None:
-                    with cp.cuda.Device(self.gpu):
-                        idxs = cp.nonzero(cp.logical_and(t1_idxs, t2_idxs))[0].tolist()
-                else:
-                    idxs = np.nonzero(np.logical_and(t1_idxs, t2_idxs))[0].tolist()
-
-            elif t1_idxs is not None:
-                if self.gpu is not None:
-                    with cp.cuda.Device(self.gpu):
-                        idxs = cp.nonzero(t1_idxs)[0].tolist()
-                else:
-                    idxs = np.nonzero(t1_idxs)[0].tolist()
-
-            elif t2_idxs is not None:
-                if self.gpu is not None:
-                    with cp.cuda.Device(self.gpu):
-                        idxs = cp.nonzero(t2_idxs)[0].tolist()
-                else:
-                    idxs = np.nonzero(t1_idxs)[0].tolist()
-            else:
-                idxs = t.tolist()
-
-            return set(idxs)
-
-        skip_t1 = False
-        skip_t2 = False
-        for key, value in query.items():
-            if key == "t" and query_map.get("t1") is not None:
-                idxs = timestamp_in_range_query(query_map, value)
-                if desired_idxs is None:
-                    desired_idxs = idxs
-                else:
-                    desired_idxs = desired_idxs.intersection(idxs)
-                continue
-
-            if (key == "t1" and skip_t1) or (key == "t2" and skip_t2):
-                continue
-
-            if key == "t1" and query_map.get("t") is not None:
-                skip_t2 = True
-                idxs = range_around_timestamp_query(query_map, value, query.get("t2"))
-                if desired_idxs is None:
-                    desired_idxs = idxs
-                else:
-                    desired_idxs = desired_idxs.intersection(idxs)
-                continue
-
-            if key == "t2" and query_map.get("t") is not None:
-                skip_t1 = True
-                idxs = range_around_timestamp_query(query_map, query.get("t1"), value)
-                if desired_idxs is None:
-                    desired_idxs = idxs
-                else:
-                    desired_idxs = desired_idxs.intersection(idxs)
-                continue
-
-            if query_map.get(key) is None:
-                log.warning("Key Not Found: {}... Skipping".format(key))
-                continue
-
-            if query_map[key].get(value) is None:
-                log.warning("Value for Key Not Found: {{{}: {}}}... Skipping".format(key, value))
-                continue
-
-            if type(value) is list:
-                for elem in value:
-                    desired_idxs = intersect(desired_idxs, key, elem)
-            else:
-                desired_idxs = intersect(desired_idxs, key, value)
-
-        if desired_idxs is None:
-            desired_idxs = set()
-
-        return desired_idxs
-
-    def get_image_ann_from_region_id(self, region_id):
-        #
-        # OBSOLETE
-        #
-        for image_ann in self.response["media_annotation"]["frames_annotation"]:
-            for region in image_ann["regions"]:
-                if region["id"] == region_id:
-                    return image_ann
-        return None
-
-    def get_region_from_region_id(self, region_id):
-        #
-        # OBSOLETE
-        #
-        for image_ann in self.response["media_annotation"]["frames_annotation"]:
-            for region in image_ann["regions"]:
-                if region["id"] == region_id:
-                    return region
-        return None
-
-    def get_region_from_region_ids_and_tstamp(self, region_ids, tstamp):
-        #
-        # OBSOLETE
-        #
-        image_ann = self.get_image_ann_from_t(tstamp)
-        if image_ann:
-            for region in image_ann["regions"]:
-                if region["id"] in region_ids:
-                    return region
-        return None
-
-    """Builders"""
-
-    def build_detection_querier(self):
-        log.info("Building AvroQuerier")
-        self.detection_querier = AvroQuerier()
-        log.info("Getting detections")
-        dets = self.get_detections_from_frame_anns()
-        log.info(f"Found {len(dets)} detections")
-        self.detection_querier.load(dets)
-
-    def build_segment_querier(self):
-        log.info("Building AvroQuerier")
-        self.segment_querier = AvroQuerier()
-        log.info("Getting segments")
-        segments = self.get_segments_from_tracks_summary()
-        log.info(f"Found {len(segments)} segments")
-        self.segment_querier.load(segments)
-
-    def _clear_maps(self):
-        self._region_id2detections = {}
-        self._t2region_ids = {}
-        self._t2index = {}
-
-    def build_detections_from_frames_ann(self):
-        self.detections = np.array(self.get_detections_from_frame_anns())
-
-    def build_segments_from_tracks(self):
-        self.track_segments = np.array(self.get_segments_from_tracks_summary())
-
-    def build_region_id2detection_map(self):
-        #
-        # OBSOLETE
-        #
-        if self.detections is None:
-            self.build_detections_from_frames_ann()
-
-        for det in self.detections:
-            if not self._region_id2detections.get(det["region_id"]):
-                self._region_id2detections[det["region_id"]] = []
-            self._region_id2detections[det["region_id"]].append(det)
-
-    def build_t2region_id_map(self):
-        #
-        # OBSOLETE
-        #
-        if self.detections is None:
-            self.build_detections_from_frames_ann()
-
-        for dets_at_t in self.dets:
-            t = dets_at_t[0]["t"]
-            self._t2region_ids[t] = set()
-            for det in dets_at_t:
-                self._t2region_ids[t].add(det["region_id"])
-
-    def build_t2index_map(self):
-        #
-        # OBSOLETE
-        #
-        self._t2index = {}
-        for i, img_ann in enumerate(self.response["media_annotation"]["frames_annotation"]):
-            self._t2index[img_ann["t"]] = i
-
-    def build_frames_ann_query_map(self):
-        """Builds a python dict to quickly query for detections from frames annotation.
-
-        Philosphy:
-        Every detection is made up of a bunch of `key`, `value` pairs, and has a specific index in a list. The query_map is a dict of dicts of sets. query_map[`key`][`value`] returns a set of ints corresponding the indicies of the matching placements.
-        
-        TODOs:
-        1) Add query for contour size
-        2) Add query for confidence range
-        """
-        query_map = {}
-        if self.detections is None:
-            self.build_detections_from_frames_ann()
-
-        unsupported = set(["contour"])
-
-        query_map["t_list"] = np.array([])
-
-        for idx, det in enumerate(self.detections):
-            for key in det.keys():
-                val = det[key]
-                if key in unsupported:
-                    continue
-
-                if key == "t":
-                    query_map["t_list"] = np.append(query_map["t_list"], idx)
-
-                if key not in query_map.keys():
-                    query_map[key] = {}
-                if val not in query_map[key].keys():
-                    query_map[key][val] = set()
-                query_map[key][val].add(idx)
-
-        if self.gpu is not None:
-            with cp.cuda.Device(self.gpu):
-                query_map["t_list"] = cp.array(query_map["t_list"])
-
-        self.frames_ann_query_map = query_map
-
-    def build_track_summary_query_map(self):
-        """Builds a python dict to quickly query for segments from tracks summary.
-
-        Philosphy:
-        Every detection is made up of a bunch of `key`, `value` pairs, and has a specific index in a list. The query_map is a dict of dicts of sets. query_map[`key`][`value`] returns a set of ints corresponding the indicies of the matching placements.
-        
-        TODOs:
-        1) Add query for confidence range
-        """
-        query_map = {}
-        if getattr(self, "track_segments", None) is None:
-            self.build_segments_from_tracks()
-
-        for idx, segment in enumerate(self.track_segments):
-            for key in segment.keys():
-                val = segment[key]
-
-                if key not in query_map.keys():
-                    query_map[key] = {}
-
-                if key == "t1" or key == "t2":
-                    if type(query_map[key]) is dict:
-                        query_map[key] = np.array([])
-                    query_map[key] = np.append(query_map[key], val)
-                    continue
-
-                if type(val) is not list:
-                    val = [val]
-
-                for v in val:
-                    if v not in query_map[key].keys():
-                        query_map[key][v] = set()
-
-                    query_map[key][v].add(idx)
-
-        if self.gpu is not None:
-            with cp.cuda.Device(self.gpu):
-                if query_map.get("t1") is not None:
-                    query_map["t1"] = cp.array(query_map["t1"])
-                if query_map.get("t2") is not None:
-                    query_map["t2"] = cp.array(query_map["t2"])
-
-        self.track_summary_query_map = query_map
-
-
-def date_range_match(item, query):
-    if int(query["date_min"]) > int(item["date"]):
-        return False
-    if int(query["date_max"]) < int(item["date"]):
-        return False
-    return True
-
-
-def partial_value_AND_match(item, query_item):
-    """Boolean test to see if each key/value in `query_item` matches in itemself.
-    Skips comparision if default values
-    """
-    if isinstance(query_item, list):
-        for qitem in query_item:
-            if partial_value_AND_match(item, qitem):
-                return True
-        return False
-    else:
-        for qkey, qvals in query_item.items():
-            if qvals == 0.0 or qvals == "" or qvals == []:
-                continue
-            if qkey not in item.keys():
-                continue
-            if item[qkey] != qvals:
-                return False
-        return True

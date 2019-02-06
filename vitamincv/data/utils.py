@@ -20,22 +20,7 @@ def write_json(json_str, file_path, indent=None):
         else:
             raise ValueError("json_str input is not a str or dict. Of type: {}".format(type(json_str)))
 
-def filter_detections_by_properties_of_interest(detections, props_of_interest):
-    """Currently, unused"""
-    if props_of_interest is None:
-        log.warning("props of interest is None, returning all detections")
-        return detections
 
-    if isinstance(props_of_interest, dict):
-        props_of_interest = [props_of_interest]
-    
-    log.info(f"Filtering detections given props of interest: {json.dumps(props_of_interest, indent=2)}")
-    log.info(f"len(self.detections) before filtering: {len(detections)}")
-    for prop in props_of_interest:
-        for k, v in prop.items():
-            detections = list(filter(lambda det: det.get(k) == v, detections))
-    log.info(f"len(self.detections) after filtering: {len(detections)}")
-    return detections
 
 def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     """Convert cv_schema `contour` into p0 and p1 of a bounding box.
