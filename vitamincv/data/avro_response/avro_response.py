@@ -258,7 +258,6 @@ class AvroResponse(Response):
             self.response["media_annotation"]["tracks_summary"]["array"].append(track)
         else:
             self.response["media_annotation"]["tracks_summary"].append(track)
-            # log.info("len(self.doc['media_annotation']['tracks_summary']['array']): " + str(len(self.doc["media_annotation"]["tracks_summary"]["array"])))
 
     def append_annotation_tasks(self, annotation_tasks):
         for at in annotation_tasks:
@@ -325,74 +324,7 @@ class AvroResponse(Response):
         """
         return self.response["media_annotation"]["codes"]
 
-    def get_segments_from_tracks_summary(self):
-        """Transform all tracks_summary to a list of segements
-
-        Returns:
-            list[dict]: list of segments
-        """
-        log.info("Getting all segments from tracks_summary")
-        all_segments = []
-        log.info(f"len(self.get_tracks()) = {len(self.get_tracks())}")
-        for track in self.get_tracks():
-            t1 = track["t1"]
-            t2 = track["t2"]
-            region_ids = track["region_ids"]
-
-            dets = []
-            for prop in track["props"]:
-                dets.append(
-                    create_detection(
-                        server=prop["server"],
-                        module_id=prop["module_id"],
-                        property_type=prop["property_type"],
-                        value=prop["value"],
-                        value_verbose=prop["value_verbose"],
-                        confidence=prop["confidence"],
-                        fraction=prop["fraction"],
-                        company=prop["company"],
-                        ver=prop["ver"],
-                        property_id=prop["property_id"],
-                        footprint_id=prop["footprint_id"]
-                    )
-                )
-            seg = create_segment(t1=t1, t2=t2, detections=dets, region_ids=region_ids)
-            all_segments.append(seg)
-        return all_segments
-
-    def get_detections_from_frame_anns(self):
-        """Transform all frames_annotations to a list of detections 
-
-        Returns:
-            list[dict]: list of detections sorted by t
-        """
-        log.info("Getting all detections from frame_anns")
-        all_detections = []
-        for image_ann in self.get_image_anns():
-            tstamp = image_ann["t"]
-            for region in image_ann["regions"]:
-                for prop in region["props"]:
-                    det = create_detection(
-                        server=prop["server"],
-                        module_id=prop["module_id"],
-                        property_type=prop["property_type"],
-                        value=prop["value"],
-                        value_verbose=prop["value_verbose"],
-                        confidence=prop["confidence"],
-                        fraction=prop["fraction"],
-                        company=prop["company"],
-                        t=tstamp,
-                        contour=region["contour"],
-                        ver=prop["ver"],
-                        property_id=prop["property_id"],
-                        region_id=region["id"],
-                        footprint_id=prop["footprint_id"],
-                    )
-                    all_detections.append(det)
-        log.info(f"{len(all_detections)} detections")
-        return all_detections
-
-    def get_image_anns(self):
+     def get_image_anns(self):
         """Get all frame annotations
 
         Returns:
