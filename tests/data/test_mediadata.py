@@ -100,10 +100,25 @@ import json
 import pandas as pd
 
 import numpy as np
+
+from collections import defaultdict
+
+def get_detections_grouped_by_key(dets, key):
+    assert(isinstance(key, str))
+    df = pd.DataFrame(dets)
+    groupings = df.groupby([key]).groups
+    det_groupings = []
+    for k, group in groupings.items():
+        det_groupings.append(df.iloc[group].to_dict('records'))
+    return det_groupings
+
+import sys
 def t():
     dets = [
         {'property_type': 'placement', 'value': 'board', 't': 1}, 
+        {'property_type': 'logo', 'value': 'geico', 't': 1},
         {'property_type': 'placement', 'value': 'led', 't': 2}, 
+        {'property_type': 'placement', 'value': 'led', 't': 1}, 
         {'property_type': 'logo', 'value': 'AAA', 't': 1},
         {'property_type': 'logo', 'value': 'statefarm', 't': 2},
         {'property_type': 'placement', 'value': 'board', 't': 3}, 
@@ -111,24 +126,74 @@ def t():
         {'property_type': 'hfe', 'value': 'AAA', 't': 3}
         ]
     
+
+    dets_tm = {
+        '1': [
+            {'property_type': 'placement', 'value': 'board', 't': 1}, 
+            {'property_type': 'logo', 'value': 'AAA', 't': 1},
+        ],
+        '2': [
+            {'property_type': 'placement', 'value': 'led', 't': 2}, 
+            {'property_type': 'logo', 'value': 'statefarm', 't': 2},
+        ],
+        '3': [
+            {'property_type': 'placement', 'value': 'board', 't': 3}, 
+            {'property_type': 'logo', 'value': 'AAA', 't': 3},
+        ]
+    }
+
+
+    # dgroups = get_detections_grouped_by_key(dets, 't')
+    # print(json.dumps(dgroups, indent=2))
+
+    # for group in dgroups:
+    #     print(group)
+    #     dd = defaultdict(list)
+    #     for d in group:
+    #         for k, v in d.items():
+    #             dd[k].append(v)
+    #     print(dd)
+    #     sys.exit(1)
+
+    """
+    in words:
+
+    given a list of detections,
+    group by region_id, the detections by merging
+
+    iterate over the timestamps t
+        find all pairs of logos present, 
+
+    add to a dict
+    a = {
+        't': {('pl', 'sp'): 1}
+        }
+    """
+    df = pd.DataFrame(dets)
+    print(df)
+    dout = df.groupby(['t']).agg(lambda x: tuple(x)).applymap(list).reset_index()
+
+    print('\n\n')
+    for i, row in dout.iterrows():
+        print(row)
+        print('')
     query = [
         {'property_type': 'placement', 't': 3},
         {'property_type': 'placement', 't': 1}
     ]
 
-    qstr = ""
-    for i, q in enumerate(query):
-        for j, (k, v) in enumerate(q.items()):
-            qstr += f'({k} == "{v}")'
-            if j != len(q)-1:
-                qstr += " & "
-        if i != len(query)-1:
-            qstr += " | "
-    print(qstr)
+    # qstr = ""
+    # for i, q in enumerate(query):
+    #     for j, (k, v) in enumerate(q.items()):
+    #         qstr += f'({k} == "{v}")'
+    #         if j != len(q)-1:
+    #             qstr += " & "
+    #     if i != len(query)-1:
+    #         qstr += " | "
+    # print(qstr)
 
     # query = {'property_type': 'placement', 't': 3}
-    
-    df = pd.DataFrame(dets)
+
     # q = {'property_type': 'placement', 't': 3}
     # q2 = {'property_type': 'placement', 't': 1}
 
@@ -173,9 +238,9 @@ def t():
     # newdf = df[(df["property_type"] == "placement") | (df["property_type"] == "logo")]
     # print(newdf)
     # print(json.dumps(newdf.to_dict('records'), indent=2))
-    groupings = df.groupby(['t']).groups
-    print(groupings)
-    for k, group in groupings.items():
-        print(k)
-        print(df.iloc[group].to_dict('records'))
+    # grouped = df.groupby(['t'])
+    # print(groupings)
+    # for k, group in groupings.items():
+    #     print(k)
+    #     print(df.iloc[group].to_dict('records'))
 t()

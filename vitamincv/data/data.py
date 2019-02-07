@@ -34,7 +34,7 @@ class MediaData():
     def detetions(self):
         return self.__detections
 
-    def filter_dets_by_props_of_interest(self, pois):
+    def get_dets_by_props_of_interest(self, pois):
         query_str = _convert_list_of_query_dicts_to_pd_query(pois)
         log.info(f"Querying dataframe for detections w/ query_str: {query_str}")
         log.info(f"len(detections) before filtering: {len(self.__detections)}")
@@ -42,13 +42,16 @@ class MediaData():
         self.detections = df.query(query_str).to_dict('records')
         log.info(f"len(detections) after  filtering: {len(self.__detections)}")
 
-    def get_detections_grouped_by_key(self, key):
-        df = pd.DataFrame(self.__detections)
-        groupings = df.groupby(key).groups
-        det_groupings = []
-        for k, group in groupings.items():
-            det_groupings.append(df.iloc[group].to_dict('records'))
-        return det_groupings
+    # def get_detections_grouped_by_key(self, key):
+    #     assert(isinstance(key, str))
+    #     log.debug("{}".format(json.dumps(self.__detections, indent=2)))
+    #     log.debug("len dets: {}".format(len(self.__detections)))
+    #     df = pd.DataFrame(self.__detections)
+    #     groupings = df.groupby([key]).groups
+    #     det_groupings = []
+    #     for k, group in groupings.items():
+    #         det_groupings.append(df.iloc[group].to_dict('records'))
+    #     return det_groupings
 
     def update_maps(self):
         self.__create_detections_tstamp_map()
@@ -188,6 +191,7 @@ def create_detection(
 def create_segment(
     name="",
     ver="",
+    confidence=0.0,
     t1=0.0,
     t2=0.0,
     detections=None
@@ -195,4 +199,4 @@ def create_segment(
     if not detections:
         detections = []
 
-    return {"name": name, "ver": ver, "t1": t1, "t2": t2, "detections": detections}
+    return {"name": name, "ver": ver, "confidence": confidence, "t1": t1, "t2": t2, "detections": detections}
