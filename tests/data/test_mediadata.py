@@ -115,15 +115,15 @@ def get_detections_grouped_by_key(dets, key):
 import sys
 def t():
     dets = [
-        {'property_type': 'placement', 'value': 'board', 't': 1}, 
-        {'property_type': 'logo', 'value': 'geico', 't': 1},
-        {'property_type': 'placement', 'value': 'led', 't': 2}, 
-        {'property_type': 'placement', 'value': 'led', 't': 1}, 
-        {'property_type': 'logo', 'value': 'AAA', 't': 1},
-        {'property_type': 'logo', 'value': 'statefarm', 't': 2},
-        {'property_type': 'placement', 'value': 'board', 't': 3}, 
-        {'property_type': 'logo', 'value': 'AAA', 't': 3},
-        {'property_type': 'hfe', 'value': 'AAA', 't': 3}
+        {'property_type': 'placement', 'value': 'board', 't': 1, 'region_id': '1a'}, 
+        {'property_type': 'logo', 'value': 'geico', 't': 1, 'region_id': '1a'},
+        {'property_type': 'placement', 'value': 'led', 't': 2, 'region_id': '2a'}, 
+        {'property_type': 'placement', 'value': 'led', 't': 1, 'region_id': '1b'}, 
+        {'property_type': 'logo', 'value': 'AAA', 't': 1, 'region_id': '1b'},
+        {'property_type': 'logo', 'value': 'statefarm', 't': 2, 'region_id': '2a'},
+        {'property_type': 'placement', 'value': 'board', 't': 3, 'region_id': '3a'}, 
+        {'property_type': 'logo', 'value': 'AAA', 't': 3, 'region_id': '3a'},
+        {'property_type': 'hfe', 'value': 'AAA', 't': 3, 'region_id': '3b'}
         ]
     
 
@@ -142,7 +142,11 @@ def t():
         ]
     }
 
-
+    x = {'t': 1, 'property_type': ['placement', 'logo', 'placement', 'logo'], 'region_id': ['1a', '1a', '1b', '1b'], 'value': ['board', 'geico', 'led', 'AAA']}
+    # df = pd.DataFrame(x)
+    # dout = df.groupby(['region_id']).agg(lambda x: tuple(x)).applymap(list).reset_index()
+    # print(json.dumps(dout.to_dict('records'), indent=2))
+    # sys.exit(1)
     # dgroups = get_detections_grouped_by_key(dets, 't')
     # print(json.dumps(dgroups, indent=2))
 
@@ -174,9 +178,12 @@ def t():
     dout = df.groupby(['t']).agg(lambda x: tuple(x)).applymap(list).reset_index()
 
     print('\n\n')
-    for i, row in dout.iterrows():
-        print(row)
+    for i, series in dout.iterrows():
+        print(series)
+        sout = series.to_frame().groupby(['region_id']).agg(lambda x: tuple(x)).applymap(list).reset_index()
+        print(sout.to_dict())
         print('')
+        
     query = [
         {'property_type': 'placement', 't': 3},
         {'property_type': 'placement', 't': 1}
