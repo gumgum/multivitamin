@@ -128,7 +128,7 @@ class FrameExtractor(CVModule):
         # video_hash = hashfileobject(filelike, hexdigest=True)
         video_id = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="tsv")
-
+        self.contents_file_key =  "".join([e for e in self.contents_file_key if e.isalnum() or e in ["/", "."]])
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
             if os.path.exists("{}/{}".format(self._local_dir, self.contents_file_key)):
