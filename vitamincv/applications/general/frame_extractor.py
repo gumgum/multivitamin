@@ -136,9 +136,7 @@ class FrameExtractor(CVModule):
 
         try:
             self._s3_client.head_object(Bucket=self._s3_bucket,
-                                    Key=self._rel_path_format.format(video_id=video_id,
-                                                                   filename=self._list_file,
-                                                                   ext="tsv"))
+                                    Key=self.contents_file_key)
             log.info("Video already exists")
             return
         except:
