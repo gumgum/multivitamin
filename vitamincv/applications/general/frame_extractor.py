@@ -11,8 +11,8 @@ import boto3
 import os
 
 class FrameExtractor(CVModule):
-    def __init__(self, server_name, version, sample_rate=1.0, s3_bucket=None, local_dir=None):
-        super().__init__(server_name, version)
+    def __init__(self, server_name, version, sample_rate=1.0, s3_bucket=None, local_dir=None, module_id_map=None):
+        super().__init__(server_name, version, module_id_map=module_id_map)
         self._sample_rate = sample_rate
 
         self._local_dir = local_dir
@@ -53,6 +53,7 @@ class FrameExtractor(CVModule):
         filename=self._img_name_format.format(tstamp=tstamp)
         relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         full_path = "{}/{}".format(self._local_dir, relative_path)
+        full_path = "".join([e for e in s3_key if e.isalnum() or "/"])
         im_filelike = self._convert_frame_to_filelike(frame)
         with open(full_path, "wb") as f:
             f.write(im_filelike.read())
@@ -63,6 +64,7 @@ class FrameExtractor(CVModule):
             filename=self._img_name_format.format(tstamp=tstamp)
             relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             full_path = "{}/{}".format(self._local_dir, relative_path)
+            full_path = "".join([e for e in s3_key if e.isalnum() or "/"])
             line = "{}\t{}\n".format(tstamp, full_path)
             filelike.write(line.encode())
         filelike.seek(0)
@@ -87,6 +89,7 @@ class FrameExtractor(CVModule):
         filename=self._img_name_format.format(tstamp=tstamp)
         im_filelike = self._convert_frame_to_filelike(frame)
         s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+        s3_key = "".join([e for e in s3_key if e.isalnum() or "/"])
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
@@ -100,6 +103,7 @@ class FrameExtractor(CVModule):
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
             s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+            s3_key = "".join([e for e in s3_key if e.isalnum() or "/"])
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
             line = "{}\t{}\n".format(tstamp, im_url)
             filelike.write(line.encode())
@@ -187,6 +191,6 @@ class FrameExtractor(CVModule):
         self.avro_api.set_url_original(self.request_api.get_url())
         self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
         url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=self.contents_file_key)
-        p = create_prop(server=self.name, value=url, property_type="extraction")
+        p = create_prop(server=self.name, ver=self.version, value=url, property_type="extraction", footprint_id=fp["id"], property_id=1,  module_id=self.module_id_map.get(self.name, 0))
         track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=[p])
         self.avro_api.append_track_to_tracks_summary(track)
