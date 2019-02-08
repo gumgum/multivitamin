@@ -6,6 +6,7 @@ from vitamincv.avro_api.cv_schema_factory import *
 
 from PIL import Image
 from io import BytesIO
+import numpy as np
 import boto3
 
 import os
@@ -152,6 +153,7 @@ class FrameExtractor(CVModule):
             log.debug('tstamp: ' + str(tstamp))
             if frame is None:
                 continue
+            frame = np.ascontiguousarray(frame[:, :, ::-1])  # RGB to BGR
             self.last_tstamp = tstamp
             data = {
                 "frame": frame,
