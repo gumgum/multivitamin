@@ -6,6 +6,7 @@ from vitamincv.avro_api.cv_schema_factory import *
 
 from PIL import Image
 from io import BytesIO
+import numpy as np
 import boto3
 
 import os
@@ -53,7 +54,7 @@ class FrameExtractor(CVModule):
         filename=self._img_name_format.format(tstamp=tstamp)
         relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         full_path = "{}/{}".format(self._local_dir, relative_path)
-        full_path = "".join([e for e in s3_key if e.isalnum() or "/"])
+        full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
         im_filelike = self._convert_frame_to_filelike(frame)
         with open(full_path, "wb") as f:
             f.write(im_filelike.read())
@@ -64,7 +65,7 @@ class FrameExtractor(CVModule):
             filename=self._img_name_format.format(tstamp=tstamp)
             relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             full_path = "{}/{}".format(self._local_dir, relative_path)
-            full_path = "".join([e for e in s3_key if e.isalnum() or "/"])
+            full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
             line = "{}\t{}\n".format(tstamp, full_path)
             filelike.write(line.encode())
         filelike.seek(0)
@@ -89,7 +90,7 @@ class FrameExtractor(CVModule):
         filename=self._img_name_format.format(tstamp=tstamp)
         im_filelike = self._convert_frame_to_filelike(frame)
         s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
-        s3_key = "".join([e for e in s3_key if e.isalnum() or "/"])
+        s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
                                                 s3_key)
@@ -103,7 +104,7 @@ class FrameExtractor(CVModule):
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
             s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
-            s3_key = "".join([e for e in s3_key if e.isalnum() or "/"])
+            s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
             line = "{}\t{}\n".format(tstamp, im_url)
             filelike.write(line.encode())
@@ -128,7 +129,7 @@ class FrameExtractor(CVModule):
         # video_hash = hashfileobject(filelike, hexdigest=True)
         video_id = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="tsv")
-
+        self.contents_file_key =  "".join([e for e in self.contents_file_key if e.isalnum() or e in ["/", "."]])
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
             if os.path.exists("{}/{}".format(self._local_dir, self.contents_file_key)):
@@ -136,9 +137,7 @@ class FrameExtractor(CVModule):
 
         try:
             self._s3_client.head_object(Bucket=self._s3_bucket,
-                                    Key=self._rel_path_format.format(video_id=video_id,
-                                                                   filename=self._list_file,
-                                                                   ext="tsv"))
+                                    Key=self.contents_file_key)
             log.info("Video already exists")
             return
         except:
@@ -154,6 +153,7 @@ class FrameExtractor(CVModule):
             log.debug('tstamp: ' + str(tstamp))
             if frame is None:
                 continue
+            frame = np.ascontiguousarray(frame[:, :, ::-1])  # RGB to BGR
             self.last_tstamp = tstamp
             data = {
                 "frame": frame,
