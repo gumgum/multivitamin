@@ -8,6 +8,11 @@ import inspect
 import numbers
 
 from vitamincv.exceptions import ParseError
+from vitamincv.module import ImagesModule
+from vitamincv.data.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from vitamincv.module.utils import min_conf_filter_predictions
+from vitamincv.module.GPUUtilities import GPUUtility
+from vitamincv.data.data import create_detection
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -22,26 +27,18 @@ if glog_level is None:
                     \t3 -- Error"""
     )
 
-
 CAFFE_PYTHON = os.environ.get("CAFFE_PYTHON")
 if CAFFE_PYTHON:
     sys.path.append(os.path.abspath(CAFFE_PYTHON))
-
 if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
-    raise ImportError(
-        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON)
-    )
+    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
 else:
     raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
 
 from caffe.proto import caffe_pb2
-from vitamincv.module import ImagesModule
-from vitamincv.data.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
-from vitamincv.module.utils import min_conf_filter_predictions
-from vitamincv.module.GPUUtilities import GPUUtility
-from vitamincv.data.data import create_detection
+
 
 # GPU=True
 # DEVICE_ID=0
@@ -96,7 +93,7 @@ class CaffeClassifier(ImagesModule):
         try:
             with open(labels_file) as f:
                 self.labels = f.read().splitlines()
-        except:
+        except Exception as err:
             log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
             raise ParseError(err)
@@ -110,12 +107,8 @@ class CaffeClassifier(ImagesModule):
                 min_conf = confidence_min_dict[label]
             self.min_conf_filter[label] = min_conf
 
-        self.net = caffe.Net(
-            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
-        )
-
+        self.net = caffe.Net(os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST)
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
-
         self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
@@ -125,34 +118,7 @@ class CaffeClassifier(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    # def preprocess_image(self, image):
-    #     return self.transformer.preprocess('data', image)
-    def preprocess_images(self, images, previous_detections=None):
-        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
-
-        Args:
-            images (list): A list of images to be preprocessed
-            previous_detections (list): A list of previous detections of interest
-
-        Returns:
-            list: A list of transformed images
-        """
-        contours = None
-        if previous_detections:
-            contours = [det.get("contour") if det is not None else None for det in previous_detections]
-
-        transformed_images = []
-
-        if type(contours) is not list:
-            contours = [None for _ in range(len(images))]
-
-        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
-
-        transformed_images = [self.transformer.preprocess("data", image) for image in images]
-
-        return np.array(transformed_images)
-
-    def process_images(self, images):
+    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
         """ Network Forward Pass
 
         Args:
@@ -162,12 +128,39 @@ class CaffeClassifier(ImagesModule):
             list: List of floats corresponding to confidences between 0 and 1,
                     where each index represents a class
         """
+        preprocessed_images = self._preprocess_images(image_batch, prev_region_batch)
+        preds = self._forward_pass(preprocessed_images)
+        postprocessed_preds = self._postprocess_predictions(preds)
+        self._append_to_response(postprocessed_preds, tstamp_batch, prev_region_batch)
+
+    def _preprocess_images(self, images, previous_regions=None):
+        """Preprocess images for forward pass by cropping contours out using previous regions of interest and using caffe transform
+
+        Args:
+            images (list): A list of images to be preprocessed
+            previous_regions (list): A list of previous regions of interest
+
+        Returns:
+            list: A list of transformed images
+        """
+        contours = None
+        if previous_regions:
+            contours = [det.get("contour") if det is not None else None for det in previous_regions]
+        if type(contours) is not list:
+            contours = [None] * len(images)
+
+        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
+        transformed_images = []
+        transformed_images = [self.transformer.preprocess("data", image) for image in images]
+        return np.array(transformed_images)
+
+    def _forward_pass(self, images):
         self.net.blobs["data"].reshape(*images.shape)
         self.net.blobs["data"].data[...] = images
         preds = self.net.forward()[self.layer_name].copy()
         return preds
 
-    def postprocess_predictions(self, predictions_batch):
+    def _postprocess_predictions(self, predictions_batch):
         """Filters out predictions out per class based on confidence,
             and returns the top-N qualifying labels
 
@@ -191,12 +184,12 @@ class CaffeClassifier(ImagesModule):
             # Filter by ignore dict
             pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
-            n_top_pred = list(zip(pred_idxs_max2min, pred))[: self.top_n]
+            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
             n_top_preds.append(n_top_pred)
 
         return n_top_preds
 
-    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
+    def _append_to_response(self, preds_batch, tstamp_batch, prev_region_batch=None):
         """Converts predictions to detections
 
         Args:
@@ -205,18 +198,16 @@ class CaffeClassifier(ImagesModule):
 
             tstamp (float): A timestamp corresponding to the timestamp of an image
 
-            previous_detection (dict): A previous detections corresponding
+            previous_region (dict): A previous detections corresponding
                     to the `previous detection of interest` of an image
-
         """
-        if tstamp is None:
-            tstamp = inspect.signature(create_detection).parameters["t"].default
 
         if previous_detection is None:
             previous_detection = create_detection(
                 server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
             )
 
+        
         for pred, confidence in predictions:
             if not type(pred) is str:
                 label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)

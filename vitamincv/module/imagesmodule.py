@@ -25,35 +25,24 @@ class ImagesModule(Module):
         self.batch_size = batch_size
         log.info(f"Creating ImagesModule with batch_size: {batch_size}")
 
-    def process(self, request, prev_media_data=None):
+    def process(self, request, prev_response=None):
         """Process the message, calls process_images(batch, tstamps, contours=None)
 
         Returns:
             str code
         """
         log.info("Processing message")
-        super().process(request, prev_media_data)
+        super().process(request, prev_response)
         self._load_media()
         self.num_problematic_frames = 0
-        for image_batch, tstamp_batch, det_batch in self.batch_generator(self.preprocess_message()):
+        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.preprocess_request()):
             if self.num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                 log.error("Too Many Problematic Iterations")
                 log.error("Returning with error code: " + str(self.code))
                 return self.code
 
             try:
-                image_batch = self.preprocess_images(image_batch, det_batch)
-                prediction_batch_raw = self.process_images(image_batch)
-                prediction_batch = self.postprocess_predictions(prediction_batch_raw)
-                for predictions, tstamp, prev_det in zip(prediction_batch, tstamp_batch, det_batch):
-                    iterable = self.convert_to_detection(
-                        predictions=predictions, tstamp=tstamp, previous_detection=prev_det
-                    )
-                    if not isinstance(iterable, Iterable) or isinstance(iterable, dict):
-                        iterable = [iterable]
-
-                    for new_det in iterable:
-                        self.media_data.detections.append(new_det)
+                self.process_images(image_batch, tstamp_batch, prev_region_batch)
             except Exception as e:
                 log.error(e)
                 log.error(traceback.print_exc())
@@ -83,25 +72,23 @@ class ImagesModule(Module):
         if len(batch) > 0:
             yield zip(*batch)
 
-    def preprocess_message(self):
-        """Parses HTTP message for data
+    def preprocess_request(self):
+        """Parses request for data
 
         Yields:
             frame: An image a time tstamp of a video or image
             tstamp: The timestamp associated with the frame
-            det: The matching detection object
+            region: The matching region dict
         """
         frames_iterator = []
         try:
             frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
         except ValueError as e:
+            log.error(traceback.print_exc())
             log.error(e)
             self.code = "ERROR_NO_IMAGES_LOADED"
             return self.code
 
-        images = []
-        tstamps = []
-        detections_of_interest = []
         for i, (frame, tstamp) in enumerate(frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
@@ -111,38 +98,27 @@ class ImagesModule(Module):
                 log.warning("Invalid tstamp")
                 continue
 
-            log.info("tstamp: " + str(tstamp))
-            dets = [None]
-            if self.prev_media_data:
-                log.info("Processing with previous media_data")
-                log.debug(f"tstamp_map keys: {self.prev_media_data.det_tstamp_map.keys()}")
-                if tstamp in self.prev_media_data.det_tstamp_map:
-                    dets = self.prev_media_data.det_tstamp_map[tstamp]
-                    log.info(f"Found {len(dets)} dets from previous media_data")
-                else:
-                    log.info(f"Did not find a detection for tstamp: {tstamp}")
+            if i % 100 == 0:
+                log.info(f"tstamp: {tstamp}")
 
-                if len(dets) == 0:
-                    log.debug("No detections for tstamp " + str(tstamp))
+            regions = [None]
+            if self.prev_response:
+                log.info("Processing with previous response")
+                regions = self.prev_response.tstamp_regions_map.get(tstamp, [None])
+                log.info(f"Found {len(regions)} dets from previous media_data")
+
+                if len(regions) == 0:
+                    log.debug(f"No detections for tstamp {tstamp}")
                     continue
 
-            for det in dets:
-                yield frame, tstamp, det
-
-    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
-        pass
-
-    def preprocess_images(self, images, contours=None):
-        return images
+            for region in regions:
+                # Note: yield does not duplicate 'frame', copies pointers
+                yield frame, tstamp, region
 
     @abstractmethod
-    def process_images(self, images, tstamps, detections_of_interest=None):
+    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
         """Abstract method to be implemented by child module"""
         pass
 
-    def postprocess_predictions(self, predictions):
-        return predictions
-
     def _load_media(self):
         self.media = MediaRetriever(self.request.url)
-        self.media_data.meta["dims"] = self.media.get_w_h()

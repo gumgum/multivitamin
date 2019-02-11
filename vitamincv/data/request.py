@@ -44,9 +44,13 @@ class Request:
         log.info(f"Setting self.sample_rate to {self.sample_rate}")
 
         self.bin_encoding = self.request.get("bin_encoding", True)
+        if isinstance(self.bin_encoding, str):
+            self.bin_encoding = self.bin_encoding.lower() == "true"
         log.info(f"Setting self.bin_encoding to {self.bin_encoding}")
 
         self.bin_decoding = self.request.get("bin_decoding", True)
+        if isinstance(self.bin_decoding, str):
+            self.bin_decoding = self.bin_decoding.lower() == "true"
         log.info(f"Setting self.bin_decoding to {self.bin_decoding}")
 
         self.prev_response = self.request.get("prev_response")

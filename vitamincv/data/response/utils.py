@@ -1,9 +1,5 @@
 import os
-import sys
 import glog as log
-import pprint
-import json
-import datetime
 import tqdm
 import cv2
 

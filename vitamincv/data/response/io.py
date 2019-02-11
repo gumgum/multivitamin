@@ -14,11 +14,11 @@ from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegis
 from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
 from confluent_kafka.avro.serializer import SerializerError
 
-from vitamincv.data.avro_response import config
+from vitamincv.data.response import config
 
 
 class AvroIO:
-    def __init__(self, use_schema_registry=False, use_base64=True):
+    def __init__(self, use_schema_registry=True, use_base64=True):
         """Public interface for Avro IO functionality
         
         Args:
@@ -36,7 +36,7 @@ class AvroIO:
 
     def get_schema(self):
         """Return schema 
-        
+
         Returns:
             avro.schema.RecordSchema: schema
         """
@@ -51,7 +51,7 @@ class AvroIO:
         return str(self.impl.schema).replace("\\", "")
 
     def decode_file(self, file_path):
-        """Decode an Avro Binary using the CV schema
+        """Decode an Avro Binary using the schema
 
         Args:
             file_path (str) : avro binary file
@@ -65,15 +65,15 @@ class AvroIO:
         log.info("Decoding file: {}".format(file_path))
         return self.decode(open(file_path, "rb").read())
 
-    def decode(self, bytes, binary_flag=True):
+    def decode(self, bytes, use_base64=False, binary_flag=True):
         """Decode an Avro Binary using the CV schema from bytes"""
+        self.use_base64 = use_base64
         if self.use_base64:
-            bytes_aux = base64.b64decode(bytes)
+            bytes = base64.b64decode(bytes)
         if binary_flag:
-            return self.impl.decode(bytes_aux)
+            return self.impl.decode(bytes)
         else:
-            # log.info(str(bytes_aux))
-            return json.loads(str(bytes_aux))
+            return json.loads(str(bytes))
 
     def write(self, doc, file, serialize=True, indent=None):
         """Write Avro doc 

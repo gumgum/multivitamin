@@ -3,4 +3,5 @@ from enum import Enum
 
 class Codes(Enum):
     SUCCESS = 0
-    ERROR_NO_IMAGES_LOADED = 1
+    ERROR_LOADING_MEDIA = 1
+    ERROR_PROCESSING = 2

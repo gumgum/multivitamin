@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
-from vitamincv.data import MediaData, create_metadata
 from vitamincv.data.request import Request
+from vimtaincv.data.response import AvroResponse
+from codes import Codes
 
 
 class Module(ABC):
@@ -10,7 +11,7 @@ class Module(ABC):
 
         ImageModule, PropertiesModule
 
-        Handles processing of request and previous media_data
+        Handles processing of request and previous response
         """
         self.name = server_name
         self.version = version
@@ -18,10 +19,7 @@ class Module(ABC):
         self.prop_id_map = prop_id_map
         self.module_id_map = module_id_map
         self.prev_pois = None
-        self.media_data = MediaData(
-            meta=create_metadata(self.name, self.version), prop_id_map=prop_id_map, module_id_map=module_id_map
-        )
-        self.code = "SUCCESS"
+        self.code = Codes.SUCCESS.name
 
     def set_prev_props_of_interest(self, pois):
         self.prev_pois = pois
@@ -30,12 +28,12 @@ class Module(ABC):
         return self.prev_pois
 
     @abstractmethod
-    def process(self, request, prev_media_data=None):
-        assert isinstance(request, Request)
+    def process(self, request, prev_response=None):
+        assert(isinstance(request, Request))
+        assert(isinstance(prev_response, AvroResponse))
         self.request = request
-        self.prev_media_data = prev_media_data
-        self.media_data.meta["url"] = request.url
-        self.media_data.meta["sample_rate"] = request.sample_rate
+        self.prev_response = prev_response
+        self.response = AvroResponse()
 
     def __repr__(self):
         return f"{self.name} {self.version}"
