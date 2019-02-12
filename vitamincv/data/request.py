@@ -5,8 +5,8 @@ import glog as log
 import urllib
 import boto3
 
-from vitamincv.data.config import DEFAULT_SAMPLE_RATE
-
+# from vitamincv.data.config import DEFAULT_SAMPLE_RATE
+DEFAULT_SAMPLE_RATE = 1.0
 
 class Request:
     def __init__(self, request_dict, request_id=None):

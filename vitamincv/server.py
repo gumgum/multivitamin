@@ -50,6 +50,7 @@ class Server(Flask):
         self.input_comm = input_comm
         self.output_comms = output_comms
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
+        self.modules = modules
 
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
@@ -86,8 +87,9 @@ class Server(Flask):
                             log.info(e)
                             log.info(traceback.format_exc())
             except Exception as e:
-                log.info(e)
-                log.info(traceback.format_exc())
+                log.error(e)
+                log.error(traceback.format_exc())
+                log.error("Error processing request")
 
     def _process_request(self, request):
         """Send request_message through all the modules
@@ -101,7 +103,7 @@ class Server(Flask):
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
 
-        response = self._load_response(request)
+        response = Response.load_from_request(request)
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(request, response)

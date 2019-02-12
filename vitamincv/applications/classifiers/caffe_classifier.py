@@ -9,10 +9,10 @@ import numbers
 
 from vitamincv.exceptions import ParseError
 from vitamincv.module import ImagesModule
-from vitamincv.data.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from vitamincv.data.response.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
 from vitamincv.module.utils import min_conf_filter_predictions
 from vitamincv.module.GPUUtilities import GPUUtility
-from vitamincv.data.data import create_detection
+from vitamincv.data.response.data import *
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -189,7 +189,7 @@ class CaffeClassifier(ImagesModule):
 
         return n_top_preds
 
-    def _append_to_response(self, preds_batch, tstamp_batch, prev_region_batch=None):
+    def _append_to_response(self, preds_batch, tstamp_batch, prev_region_batch):
         """Converts predictions to detections
 
         Args:
@@ -201,28 +201,54 @@ class CaffeClassifier(ImagesModule):
             previous_region (dict): A previous detections corresponding
                     to the `previous detection of interest` of an image
         """
+        assert(len(preds_batch) == len(tstamp_batch) == len(prev_region_batch))
 
-        if previous_detection is None:
-            previous_detection = create_detection(
-                server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
-            )
+        for top_n_preds, tstamp, region in zip(preds_batch, tstamp_batch, prev_region_batch):
+            regions = []
+            for pred, conf in top_n_preds:
+                if not isinstance(pred, str):
+                    pred = self.labels.get(pred, inspect.signature(create_prop).parameters["value"].default)
+                log.info(f"Creating region for tstamp: {tstamp}")
+                region = create_region(
+                    #TODO chagne to data strucutres to check for float  liek below
+                    props = create_prop(
+                        server=self.name,
+                        ver=self.version,
+                        value=pred,
+                        property_type=self.prop_type,
+                        confidence=float(conf),
+                        confidence_min=float(self.confidence_min)
+                    )
+                )
+                regions.append(region)
+            self.response.append_image_ann(create_image_ann(t=tstamp, regions=regions))
+
+            #     image_ann = create_image_ann(
+            #         t=tstamp,
+
+
+            # )
+            # previous_detection = create_detection(
+            #     server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
+            # )
 
         
-        for pred, confidence in predictions:
-            if not type(pred) is str:
-                label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
-            else:
-                label = pred
-            region_id = previous_detection["region_id"]
-            contour = previous_detection["contour"]
-            det = create_detection(
-                server=self.name,
-                ver=self.version,
-                value=label,
-                region_id=region_id,
-                contour=contour,
-                property_type=self.prop_type,
-                confidence=confidence,
-                t=tstamp,
-            )
-            return det
+        # for pred, confidence in predictions:
+        #     if not type(pred) is str:
+        #         label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
+        #     else:
+        #         label = pred
+        #     region_id = previous_detection["region_id"]
+        #     contour = previous_detection["contour"]
+        #     det = create_detection(
+        #         server=self.name,
+        #         ver=self.version,
+        #         value=label,
+        #         region_id=region_id,
+        #         contour=contour,
+        #         property_type=self.prop_type,
+        #         confidence=confidence,
+        #         t=tstamp,
+        #     )
+        #     return det
+

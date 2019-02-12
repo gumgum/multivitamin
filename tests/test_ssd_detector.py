@@ -8,7 +8,7 @@ import cv2
 
 from vitamincv.applications.detectors.ssd_detector import SSDDetector
 from vitamincv.data.request import Request
-from vitamincv.data.avro_response import AvroResponse
+from vitamincv.data.response import Response, load_response_from_request
 from utils import generate_fileobj_from_s3_folder
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"
@@ -46,12 +46,10 @@ def test_init():
 
 def test_process():
     # Test on short video
-    message = {"url": "https://s3.amazonaws.com/video-ann-testing/short_flamesatblues.mp4"}
+    message = {"url": "https://s3.amazonaws.com/video-ann-testing/short_flamesatblues.mp4", "bin_encoding": "false", "bin_decoding": "false"}
     request = Request(message)
-    codes = cc.process(request)
-    log.info(len(cc.module_data.detections))
+    response = load_response_from_request(request)
+    response = cc.process(request, response)
 
-    response = AvroResponse()
-    response.mediadata_to_response(cc.module_data)
-    doc = response.to_dict()
+    doc = response.dictionary
     log.info(f"doc: {json.dumps(doc, indent=2)}")

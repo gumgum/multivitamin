@@ -44,9 +44,9 @@ from caffe.proto import caffe_pb2 as cpb2
 
 from vitamincv.module.GPUUtilities import GPUUtility
 from vitamincv.module import ImagesModule
-from vitamincv.data.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from vitamincv.data.response.data.utils import crop_image_from_bbox_contour
+from vitamincv.data.response.data import *
 from vitamincv.applications.utils import load_idmap, load_label_prototxt
-from vitamincv.data import create_detection, create_bbox_contour_from_points
 
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3
@@ -88,32 +88,7 @@ class SSDDetector(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def preprocess_images(self, images, previous_detections=None):
-        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
-
-        Args:
-            images (list): A list of images to be preprocessed
-            previous_detections (list): A list of previous detections of interest
-
-        Returns:
-            list: A list of transformed images
-        """
-        contours = None
-        if previous_detections:
-            contours = [det.get("contour") if det is not None else None for det in previous_detections]
-
-        transformed_images = []
-
-        if type(contours) is not list:
-            contours = [None for _ in range(len(images))]
-
-        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
-
-        transformed_images = [self.transformer.preprocess("data", image) for image in images]
-
-        return np.array(transformed_images)
-
-    def process_images(self, images):
+    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
         """Network forward pass
 
         Args:
@@ -123,12 +98,32 @@ class SSDDetector(ImagesModule):
             nd.array: List of tuples corresponding to each detection in the format of
                   (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
+        preprocessed_images = self._preprocess_images(image_batch)
+        preds = self._forward_pass(preprocessed_images)
+        postprocessed_preds = self._postprocess_predictions(preds)
+        self._append_to_response(postprocessed_preds, tstamp_batch)
+
+    def _forward_pass(self, images)
         self.net.blobs["data"].reshape(*images.shape)
         self.net.blobs["data"].data[...] = images
         preds = self.net.forward()[LAYER_NAME].copy()
         return np.squeeze(preds)
 
-    def postprocess_predictions(self, predictions):
+    def _preprocess_images(self, images):
+        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
+
+        Args:
+            images (list): A list of images to be preprocessed
+            previous_detections (list): A list of previous detections of interest
+
+        Returns:
+            list: A list of transformed images
+        """
+        transformed_images = []
+        transformed_images = [self.transformer.preprocess("data", image) for image in images]
+        return np.array(transformed_images)
+
+    def _postprocess_predictions(self, predictions):
         """Filters out predictions out per class based on confidence
 
         Args:
@@ -143,7 +138,7 @@ class SSDDetector(ImagesModule):
         filtered_preds = [preds[preds[:, 2] > CONFIDENCE_MIN] for preds in predictions]
         return filtered_preds
 
-    def convert_to_detection(self, predictions, tstamp=None, previous_detection=None):
+    def _append_to_response(self, predictions, tstamp=None):
         """Converts predictions to detections
 
         Args:

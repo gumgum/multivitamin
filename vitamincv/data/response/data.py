@@ -84,6 +84,7 @@ def create_image_ann(t=0.0, regions=None):
 
 
 def create_region(contour=None, props=None, father_id="", features="", id=""):
+    #TODO: create region_id
     if not props:
         props = []
     if not contour:

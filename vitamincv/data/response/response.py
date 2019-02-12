@@ -9,59 +9,49 @@ import pkg_resources
 import numpy as np
 import GPUtil
 import traceback
-
+from collections import defaultdict
 from datetime import datetime
 
-from vitamincv.data.utils import points_equal, times_equal, create_region_id, get_current_time
-from vitamincv.data import MediaData, create_detection, create_segment, create_bbox_contour_from_points, create_point
-from vitamincv.data.avro_response import config
-from vitamincv.data.avro_response.cv_schema_factory import (
-    create_footprint,
-    create_response,
-    create_region,
-    create_image_ann,
-    create_video_ann,
-    create_prop
-)
-from vitamincv.data.avro_response.avro_io import AvroIO
+from vitamincv.data.response.utils import points_equal, times_equal, create_region_id, get_current_time
+from vitamincv.data.response.io import AvroIO
+from vitamincv.data.response.data import *
 
+def load_response_from_request(request):
+    """Methodfor loading a previous response from a request"""
+    log.info("Loading a response")
+    try:
+        if not request.prev_response:
+            log.info("No prev_response")
+            return Response(request=request)
+        
+        if request.bin_encoding is True:
+            log.info("bin_encoding is True")
+            io = AvroIO()
+            if isinstance(request.prev_response, str):
+                log.info("prev_response is base64 encoded")
+                bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
+            else:
+                log.info("prev_response is in binary")
+                bytes = io.decode(request.prev_response, use_base64=False, binary_flag=True)
+            return Response(dictionary=io.decode(bytes), request=request)
+
+        if isinstance(request.prev_response, dict):
+            log.info("prev_response is a dict")
+            return Response(dictionary=request.prev_response, request=request)
+
+    except Exception as e:
+        log.error(traceback.print_exc())
+        log.error(e)
+        log.error("Error loading previous response")
+    log.info("Decoded prev_response")
 
 class Response():
     def __init__(self, dictionary=None, request=None):
         """Wrapper with utilities around a single response document"""
+        log.info("Constructing response")
         self.dictionary = dictionary
         self.request = request
-
-    @staticmethod 
-    def load(request):
-        """Staticmethod for loading a previous response"""
-        log.info("Loading a response")
-        
-        try:
-            if not request.prev_response:
-                log.info("No prev_response")
-                return Response(request=request)
-            
-            if request.bin_encoding is True:
-                log.info("bin_encoding is True")
-                io = AvroIO()
-                if isinstance(request.prev_response, str):
-                    log.info("prev_response is base64 encoded")
-                    bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
-                else:
-                    log.info("prev_response is in binary")
-                    bytes = io.decode(request.prev_response, use_base64=False, binary_flag=True)
-                return Response(dictionary=io.decode(bytes), request=request)
-
-            if isinstance(request.prev_response, dict):
-                log.info("prev_response is a dict")
-                return Response(dictionary=request.prev_response, request=request)
-
-        except Exception as e:
-            log.error(traceback.print_exc())
-            log.error(e)
-            log.error("Error loading previous response")
-        log.info("Decoded prev_response")
+        self.tstamp_map = None
 
     @property
     def dictionary(self):
@@ -69,8 +59,13 @@ class Response():
     
     @dictionary.setter
     def dictionary(self, dictionary):
-        self.dictionary = create_response() if dictionary is None else dictionary
-        # self.tstamp_map = _create_tstamp_regions_map()
+        if dictionary is None:
+            log.info("Dictionary is none, creating empty response")
+            self._dictionary = create_response() 
+        else:
+            log.info("Dictionary is NOT none, creating from previous response")
+            self._dictionary = dictionary
+        self._create_tstamp_map()
 
     @dictionary.getter
     def dictionary(self):
@@ -79,10 +74,17 @@ class Response():
     def to_bytes(self):
         raise NotImplementedError()
 
-    """Modifiers"""
+    def has_frame_anns(self):
+        return len(self.dictionary.get("media_annotation").get("frames_annotation")) > 0
+    
+    def update_maps(self):
+        self._create_tstamp_map()
 
-    def _create_tstamp_regions_map(self):
-        self.tstamp_regions_map = {}
+    def _create_tstamp_map(self):
+        log.info("Creating tstamp map")
+        self.tstamp_map = defaultdict(list)
+        for frame_ann in self.dictionary.get("media_annotation").get("frames_annotation"):
+            self.tstamp_map[frame_ann.get("t")] = frame_ann.get("regions")
 
     def append_footprint(self, code):
         self.response["media_annotation"]["codes"].append(code)
@@ -102,7 +104,7 @@ class Response():
             self.append_image_ann(image_ann)
 
     def append_image_ann(self, image_ann):
-        self.response["media_annotation"]["frames_annotation"].append(image_ann)
+        self._dictionary["media_annotation"]["frames_annotation"].append(image_ann)
 
     def append_region_to_image_ann(self, region, tstamp):
         # Potentially change frames_annotations into a map for O(1) lookup in the future
@@ -182,7 +184,7 @@ class Response():
         """
         return self.response["media_annotation"]["codes"]
 
-     def get_image_anns(self):
+    def get_image_anns(self):
         """Get all frame annotations
 
         Returns:
