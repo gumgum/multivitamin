@@ -89,125 +89,39 @@ class SSDDetector(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
-        """Network forward pass
 
-        Args:
-            images (np.array): A numpy array of images
-        """
-        transformed_images = np.array([self.transformer.preprocess("data", image) for image in image_batch])
-        self.net.blobs["data"].reshape(*transformed_images.shape)
-        self.net.blobs["data"].data[...] = transformed_images
-        preds_batch = np.squeeze(self.net.forward()[LAYER_NAME])
-        for (batch_index, pred, confidence, xmin, ymin, xmax, ymax), tstamp in zip(preds_batch, tstamp_batch):
-            if not isinstance(pred, str):
-                label = self.labelmap.get(pred, inspect.signature(create_prop).parameters["value"].default)
-            else:
-                label = pred
-            # if confidence < CONFIDENCE_MIN:
-            #     continue
-            x = [batch_index, pred, confidence, xmin, ymin, xmax, ymax]
-            log.info(f"preds: {x} -- tstamp {tstamp} -- label {label}")
-            contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
+    def process_images(self, images, tstamps, prev_detections=None):
+        for frame, tstamp in zip(images, tstamps):
+            im = self.transformer.preprocess('data', frame)
+            self.net.blobs['data'].data[...] = im
+            predictions = self.net.forward()[LAYER_NAME]
 
-        # preds = self._forward_pass(preprocessed_images)
-        # postprocessed_preds = self._postprocess_predictions(preds)
-        # self._append_to_response(preds, tstamp_batch)
+            regions = []
+            for pred_idx in range(predictions.shape[2]):
+                try:
+                    confidence = float(predictions[0, 0, pred_idx, 2])
+                    # if confidence < CONFIDENCE_MIN:
+                        # continue
+                    index = int(predictions[0, 0, pred_idx, 1])
+                    label = self.labelmap[index]
+                    xmin = float(predictions[0, 0, pred_idx, 3])
+                    ymin = float(predictions[0, 0, pred_idx, 4])
+                    xmax = float(predictions[0, 0, pred_idx, 5])
+                    ymax = float(predictions[0, 0, pred_idx, 6])
 
-    def _forward_pass(self, images):
-        """Forward pass of network on images"""
-        self.net.blobs["data"].reshape(*images.shape)
-        self.net.blobs["data"].data[...] = images
-        preds = self.net.forward()[LAYER_NAME].copy()
-        return np.squeeze(preds)
+                    contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=True)
+                    props = []
+                    props.append(create_prop(
+                        confidence=confidence,
+                        confidence_min=CONFIDENCE_MIN,
+                        ver=self.version,
+                        server=self.name,
+                        value=label,
+                        property_type=self.prop_type
+                    ))
+                    regions.append(create_region(contour=contour, props=props))
+                except:
+                    log.error(traceback.format_exc())
+            image_ann = create_image_ann(t=tstamp, regions=regions)
+            self.response.append_image_ann(image_ann)
 
-    def _preprocess_images(self, images):
-        """Preprocess images for forward pass by cropping regions out using previous detections of interest and using caffe transform
-
-        Args:
-            images (list): A list of images to be preprocessed
-            previous_detections (list): A list of previous detections of interest
-
-        Returns:
-            list: A list of transformed images
-        """
-        transformed_images = []
-        transformed_images = [self.transformer.preprocess("data", image) for image in images]
-        return np.array(transformed_images)
-
-    # def _postprocess_predictions(self, predictions):
-    #     """Filters out predictions out per class based on confidence
-
-    #     Args:
-    #         predictions (list): List of tuples corresponding to confidences between
-    #                 0 and 1, where each index represents a class
-
-    #     Returns:
-    #         list: A list of nd.arrays given by number of detections against (label, confidence, xmin, ymin, xmax, ymax)
-    #     """
-    #     frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
-    #     predictions = np.split(predictions, indicies_of_first_occurance[1:])
-    #     filtered_preds = [preds[preds[:, 2] > CONFIDENCE_MIN] for preds in predictions]
-    #     return filtered_preds
-
-    def _append_to_response(self, predictions_batch, tstamp_batch):
-        """Converts predictions to detections
-        """
-
-        assert(len(predictions_batch) == len(tstamp_batch))
-
-        for preds, tstamps in zip(predictions_batch, tstamp_batch):
-            log.info(f"tstamps: {tstamps}")
-            for batch_index, pred, confidence, xmin, ymin, xmax, ymax in preds:
-                if not isinstance(pred, str):
-                    label = self.labelmap.get(pred, inspect.signature(create_prop).parameters["value"].default)
-                else:
-                    label = pred
-                contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
-                log.info(batch_index, pred, confidence, xmin, ymin, xmax, ymax)
-            # det = create_detection(
-            #     server=self.name,
-            #     ver=self.version,
-            #     value=label,
-            #     contour=contour,
-            #     property_type=self.prop_type,
-            #     confidence=confidence,
-            #     t=tstamp,
-            # )
-            # yield det
-
-    # def process_images(self, images, tstamps, prev_detections=None):
-    #     for frame, tstamp in zip(images, tstamps):
-    #         im = self.transformer.preprocess('data', frame)
-    #         self.net.blobs['data'].data[...] = im
-
-    #         detections = self.net.forward()[LAYER_NAME]
-
-    #         _detections = []
-    #         for det_idx in range(detections.shape[2]):
-    #             try:
-    #                 confidence= detections[0,0,det_idx,2]
-    #                 if confidence<CONFIDENCE_MIN:
-    #                     continue
-    #                 index=int(detections[0,0,det_idx,1])
-    #                 label=self.labelmap[index]
-    #                 xmin = float(detections[0,0,det_idx,3])
-    #                 ymin = float(detections[0,0,det_idx,4])
-    #                 xmax = float(detections[0,0,det_idx,5])
-    #                 ymax = float(detections[0,0,det_idx,6])
-
-    #                 det = create_detection(
-    #                     contour=[create_point(xmin, ymin),
-    #                              create_point(xmax, ymin),
-    #                              create_point(xmax, ymax),
-    #                              create_point(xmin, ymax)],
-    #                     property_type=self.prop_type,
-    # 	        		value=label,
-    #                     confidence=detections[0,0,det_idx, 2],
-    #                     t=tstamp
-    #                 )
-    #                 self.detections.append(det)
-    #                 _detections.append(det)
-    #             except:
-    #                 log.error(traceback.format_exc())
-    #         log.debug("frame tstamp: {}".format(tstamp))

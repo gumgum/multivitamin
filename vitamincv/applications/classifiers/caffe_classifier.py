@@ -42,12 +42,12 @@ else:
 from caffe.proto import caffe_pb2
 
 
-# GPU=True
-# DEVICE_ID=0
-# LAYER_NAME = "prob"
-# N_TOP = 1
-# CONFIDENCE_MIN=0.1
-
+GPU=True
+DEVICE_ID=0
+LAYER_NAME = "prob"
+N_TOP = 1
+CONFIDENCE_MIN=0.1
+LOGOEXCLUDE=["Garbage", "Messy", "MessyDark"]
 
 class CaffeClassifier(ImagesModule):
     def __init__(
@@ -122,134 +122,100 @@ class CaffeClassifier(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
-        """ Network Forward Pass
-
-        Args:
-            images (np.array): A numpy array of images
-
-        Returns:
-            list: List of floats corresponding to confidences between 0 and 1,
-                    where each index represents a class
-        """
-        preprocessed_images = self._preprocess_images(image_batch, prev_region_batch)
-        preds = self._forward_pass(preprocessed_images)
-        postprocessed_preds = self._postprocess_predictions(preds)
-        self._append_to_response(postprocessed_preds, tstamp_batch, prev_region_batch)
-
-    def _preprocess_images(self, images, previous_regions=None):
-        """Preprocess images for forward pass by cropping contours out using previous regions of interest and using caffe transform
-
-        Args:
-            images (list): A list of images to be preprocessed
-            previous_regions (list): A list of previous regions of interest
-
-        Returns:
-            list: A list of transformed images
-        """
-        contours = None
-        if previous_regions:
-            contours = [det.get("contour") if det is not None else None for det in previous_regions]
-        if type(contours) is not list:
-            contours = [None] * len(images)
-
-        images = [crop_image_from_bbox_contour(image, contour) for image, contour in zip(images, contours)]
-        transformed_images = []
-        transformed_images = [self.transformer.preprocess("data", image) for image in images]
-        return np.array(transformed_images)
-
-    def _forward_pass(self, images):
-        self.net.blobs["data"].reshape(*images.shape)
-        self.net.blobs["data"].data[...] = images
-        preds = self.net.forward()[self.layer_name].copy()
-        return preds
-
-    def _postprocess_predictions(self, predictions_batch):
-        """Filters out predictions out per class based on confidence,
-            and returns the top-N qualifying labels
-
-        Args:
-            predictions (list): List of floats corresponding to confidences between
-                    0 and 1, where each index represents a class
-
-        Returns:
-            list: A list of tuples (<class index>, <confidence>) for the
-                    best, qualifying  N-predictions
-        """
-        if callable(self.postprocess_override):
-            processed_preds = self.postprocess_override(predictions_batch, *self.postprocess_args)
-            return processed_preds
-
-        preds = np.array(predictions_batch)
-        n_top_preds = []
-        for pred in preds:
-            pred_idxs_max2min = np.argsort(pred)[::-1]
-            pred = pred[pred_idxs_max2min]
-            # Filter by ignore dict
-            pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
-            # Get Top N
-            n_top_pred = list(zip(pred_idxs_max2min, pred))[: self.top_n]
-            n_top_preds.append(n_top_pred)
-
-        return n_top_preds
-
-    def _append_to_response(self, preds_batch, tstamp_batch, prev_region_batch):
-        """Converts predictions to detections
-
-        Args:
-            predictions (list): A list of predictions tuples
-                    (<class index>, <confidence>) for an image
-
-            tstamp (float): A timestamp corresponding to the timestamp of an image
-
-            previous_region (dict): A previous detections corresponding
-                    to the `previous detection of interest` of an image
-        """
-        assert len(preds_batch) == len(tstamp_batch) == len(prev_region_batch)
-
-        for top_n_preds, tstamp, region in zip(preds_batch, tstamp_batch, prev_region_batch):
-            regions = []
-            for pred, conf in top_n_preds:
-                if not isinstance(pred, str):
-                    pred = self.labels.get(pred, inspect.signature(create_prop).parameters["value"].default)
-                log.info(f"Creating region for tstamp: {tstamp}")
-                region = create_region(
-                    # TODO chagne to data strucutres to check for float  liek below
-                    props=create_prop(
-                        server=self.name,
-                        ver=self.version,
-                        value=pred,
-                        property_type=self.prop_type,
-                        confidence=float(conf),
-                        confidence_min=float(self.confidence_min),
-                    )
-                )
-                regions.append(region)
-            self.response.append_image_ann(create_image_ann(t=tstamp, regions=regions))
-
-            #     image_ann = create_image_ann(
-            #         t=tstamp,
-
-            # )
-            # previous_detection = create_detection(
-            #     server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
-            # )
-
-        # for pred, confidence in predictions:
-        #     if not type(pred) is str:
-        #         label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
-        #     else:
-        #         label = pred
-        #     region_id = previous_detection["region_id"]
-        #     contour = previous_detection["contour"]
-        #     det = create_detection(
-        #         server=self.name,
-        #         ver=self.version,
-        #         value=label,
-        #         region_id=region_id,
-        #         contour=contour,
-        #         property_type=self.prop_type,
-        #         confidence=confidence,
-        #         t=tstamp,
-        #     )
-        #     return det
+    def process_images(self, images, tstamps, prev_regions=None):
+        log.debug("Processing images")
+        log.debug("tstamps: "  + str(tstamps))
+        log.check_eq(len(images), len(tstamps))
+        # if prev_regions is not None:
+            # log.check_eq(len(images), len(prev_regions))
+        for i,(frame, tstamp) in enumerate(zip(images, tstamps)):
+            log.debug("tstamp: " +str(tstamp))
+            crop=frame
+            contour_prev=[create_point(0.0, 0.0),
+                                 create_point(1.0, 0.0),
+                                 create_point(1.0, 1.0),
+                                 create_point(0.0, 1.0)]
+            region_id_prev=""
+            # if prev_detections:
+            #     prev_det=prev_detections[i]
+            #     #log.debug("prev_det: " + str(prev_det))
+            #     #we get region_id_prev
+            #     region_id_prev=prev_det['region_id']
+            #     log.debug("region_id_prev: " + str(region_id_prev))
+            #     #we get the contour_prev
+            #     contour_prev=prev_det['contour']
+            #     height = frame.shape[0]
+            #     width = frame.shape[1]
+            #     #we get the crop
+            #     xmin=1.0
+            #     xmax=0.0
+            #     ymin=1.0
+            #     ymax=0.0
+            #     for p in contour_prev:
+            #         x=p['x']
+            #         y=p['y']
+            #         if x<xmin:
+            #             xmin=x
+            #         if x>xmax:
+            #             xmax=x
+            #         if y<ymin:
+            #             ymin=y
+            #         if y>ymax:
+            #             ymax=y
+            #     log.debug('[xmin,ymin,xmax,ymax]: ' + str([xmin,ymin,xmax,ymax]))
+            #     xmin=int(xmin*(width-1))
+            #     ymin=int(ymin*(height-1))
+            #     xmax=int(xmax*(width-1))
+            #     ymax=int(ymax*(height-1))
+            #     log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
+            #     crop=frame[ymin:ymax, xmin:xmax]
+            try:    
+                im = self.transformer.preprocess('data', crop)
+                self.net.blobs['data'].data[...] = im
+            
+                probs = self.net.forward()[self.layer_name]
+                log.debug('probs: ' + str(probs))
+                props = []
+                for p in probs:
+                    log.debug('p: ' + str(p))
+                    p_indexes = np.argsort(p)
+                    p_indexes = np.flip(p_indexes,0)
+                    while True:
+                        if len(p_indexes)==1:
+                            break
+                        index=p_indexes[0]
+                        label=self.labels[index]                            
+                        log.debug("label: " + str(label))
+                        if label in LOGOEXCLUDE:
+                            p_indexes=np.delete(p_indexes,0)
+                        else:
+                            break
+                    p_indexes = p_indexes[:N_TOP]
+                    
+                    log.debug("p_indexes: " + str(p_indexes))
+                    
+                    for i,property_id in enumerate(p_indexes):
+                        if i==N_TOP:
+                            break
+                        index=p_indexes[i]
+                        label=self.labels[index]                            
+                        confidence=p[index]
+                        
+                        if confidence<CONFIDENCE_MIN:
+                            label='Unknown'
+                        prop = create_prop(
+                            server=self.name,
+                            ver=self.version,
+                            value=label,
+                            property_type=self.prop_type,
+                            confidence=float(confidence),
+                            confidence_min=float(self.confidence_min)
+                        )
+                        props.append(prop)
+                regions = [create_region(props=props)]
+            except Exception as e:
+                log.error(e)
+            
+            image_ann = create_image_ann(t=tstamp, regions=regions)
+            self.response.append_image_ann(image_ann)
+            
