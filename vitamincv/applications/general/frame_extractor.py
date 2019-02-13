@@ -8,6 +8,7 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 import boto3
+import json
 
 import os
 
@@ -61,13 +62,16 @@ class FrameExtractor(CVModule):
 
     def _add_contents_to_local(self, contents):
         filelike = BytesIO()
+        contents_json = {"original_url": self.video_url, "frames": []}
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
             relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             full_path = "{}/{}".format(self._local_dir, relative_path)
             full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
-            line = "{}\t{}\n".format(tstamp, full_path)
-            filelike.write(line.encode())
+            # line = "{}\t{}\n".format(tstamp, full_path)
+            # filelike.write(line.encode())
+            contents_json["frames"].append((tstamp, full_path))
+        filelike.write(json.dumps(contents_json).encode())
         filelike.seek(0)
 
         with open("{}/{}".format(self._local_dir, self.contents_file_key), "wb") as f:
@@ -101,13 +105,16 @@ class FrameExtractor(CVModule):
 
     def _add_contents_to_s3(self, contents):
         filelike = BytesIO()
+        contents_json = {"original_url": self.video_url, "frames": []}
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
             s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
-            line = "{}\t{}\n".format(tstamp, im_url)
-            filelike.write(line.encode())
+            # line = "{}\t{}\n".format(tstamp, im_url)
+            # filelike.write(line.encode())
+            contents_json["frames"].append((tstamp, im_url))
+        filelike.write(json.dumps(contents_json).encode())
         filelike.seek(0)
 
         result = self._s3_client.upload_fileobj(filelike,
@@ -127,7 +134,8 @@ class FrameExtractor(CVModule):
 
         #log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
-        video_id = os.path.basename(self.request_api.request["url"]).rsplit(".", 1)[0]
+        self.video_url = self.request_api.request["url"]
+        video_id = os.path.basename(self.video_url).rsplit(".", 1)[0]
         self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="tsv")
         self.contents_file_key =  "".join([e for e in self.contents_file_key if e.isalnum() or e in ["/", "."]])
         if self._local_dir is not None:
