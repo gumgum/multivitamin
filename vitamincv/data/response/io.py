@@ -16,6 +16,7 @@ from confluent_kafka.avro.serializer import SerializerError
 
 from vitamincv.data.response import config
 
+
 class AvroIO:
     def __init__(self, use_schema_registry=True, use_base64=True):
         """Public interface for Avro IO functionality

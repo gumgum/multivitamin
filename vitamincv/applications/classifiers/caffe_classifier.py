@@ -33,7 +33,9 @@ if CAFFE_PYTHON:
 if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
-    raise ImportError("Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON))
+    raise ImportError(
+        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON)
+    )
 else:
     raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
 
@@ -62,7 +64,7 @@ class CaffeClassifier(ImagesModule):
         top_n=1,
         postprocess_predictions=None,
         postprocess_args=None,
-        **gpukwargs
+        **gpukwargs,
     ):
 
         super().__init__(
@@ -107,7 +109,9 @@ class CaffeClassifier(ImagesModule):
                 min_conf = confidence_min_dict[label]
             self.min_conf_filter[label] = min_conf
 
-        self.net = caffe.Net(os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST)
+        self.net = caffe.Net(
+            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
+        )
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
         self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
         if os.path.exists(mean_file):
@@ -184,7 +188,7 @@ class CaffeClassifier(ImagesModule):
             # Filter by ignore dict
             pred_idxs_max2min = min_conf_filter_predictions(self.min_conf_filter, pred_idxs_max2min, pred, self.labels)
             # Get Top N
-            n_top_pred = list(zip(pred_idxs_max2min, pred))[:self.top_n]
+            n_top_pred = list(zip(pred_idxs_max2min, pred))[: self.top_n]
             n_top_preds.append(n_top_pred)
 
         return n_top_preds
@@ -201,7 +205,7 @@ class CaffeClassifier(ImagesModule):
             previous_region (dict): A previous detections corresponding
                     to the `previous detection of interest` of an image
         """
-        assert(len(preds_batch) == len(tstamp_batch) == len(prev_region_batch))
+        assert len(preds_batch) == len(tstamp_batch) == len(prev_region_batch)
 
         for top_n_preds, tstamp, region in zip(preds_batch, tstamp_batch, prev_region_batch):
             regions = []
@@ -210,14 +214,14 @@ class CaffeClassifier(ImagesModule):
                     pred = self.labels.get(pred, inspect.signature(create_prop).parameters["value"].default)
                 log.info(f"Creating region for tstamp: {tstamp}")
                 region = create_region(
-                    #TODO chagne to data strucutres to check for float  liek below
-                    props = create_prop(
+                    # TODO chagne to data strucutres to check for float  liek below
+                    props=create_prop(
                         server=self.name,
                         ver=self.version,
                         value=pred,
                         property_type=self.prop_type,
                         confidence=float(conf),
-                        confidence_min=float(self.confidence_min)
+                        confidence_min=float(self.confidence_min),
                     )
                 )
                 regions.append(region)
@@ -226,13 +230,11 @@ class CaffeClassifier(ImagesModule):
             #     image_ann = create_image_ann(
             #         t=tstamp,
 
-
             # )
             # previous_detection = create_detection(
             #     server=self.name, ver=self.version, property_type=self.prop_type, t=tstamp
             # )
 
-        
         # for pred, confidence in predictions:
         #     if not type(pred) is str:
         #         label = self.labels.get(pred, inspect.signature(create_detection).parameters["value"].default)
@@ -251,4 +253,3 @@ class CaffeClassifier(ImagesModule):
         #         t=tstamp,
         #     )
         #     return det
-

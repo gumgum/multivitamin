@@ -16,6 +16,7 @@ from vitamincv.data.response.utils import points_equal, times_equal, create_regi
 from vitamincv.data.response.io import AvroIO
 from vitamincv.data.response.data import *
 
+
 def load_response_from_request(request):
     """Methodfor loading a previous response from a request"""
     log.info("Loading a response")
@@ -23,7 +24,7 @@ def load_response_from_request(request):
         if not request.prev_response:
             log.info("No prev_response")
             return Response(request=request)
-        
+
         if request.bin_encoding is True:
             log.info("bin_encoding is True")
             io = AvroIO()
@@ -45,7 +46,8 @@ def load_response_from_request(request):
         log.error("Error loading previous response")
     log.info("Decoded prev_response")
 
-class Response():
+
+class Response:
     def __init__(self, dictionary=None, request=None):
         """Wrapper with utilities around a single response document"""
         log.info("Constructing response")
@@ -56,14 +58,14 @@ class Response():
     @property
     def dictionary(self):
         return self._dictionary
-    
+
     @dictionary.setter
     def dictionary(self, dictionary):
         if dictionary is None:
-            log.info("Dictionary is none, creating empty response")
-            self._dictionary = create_response() 
+            log.info("Response.dictionary is none, creating empty response")
+            self._dictionary = create_response()
         else:
-            log.info("Dictionary is NOT none, creating from previous response")
+            log.info("Response.dictionary is NOT none, creating from previous response")
             self._dictionary = dictionary
         self._create_tstamp_map()
 
@@ -76,7 +78,7 @@ class Response():
 
     def has_frame_anns(self):
         return len(self.dictionary.get("media_annotation").get("frames_annotation")) > 0
-    
+
     def update_maps(self):
         self._create_tstamp_map()
 
@@ -90,9 +92,9 @@ class Response():
         self.response["media_annotation"]["codes"].append(code)
 
     def get_region_from_region_id(self, region_id):
-        # 
+        #
         # OBSOLETE
-        # 
+        #
         for image_ann in self.response["media_annotation"]["frames_annotation"]:
             for region in image_ann["regions"]:
                 if region["id"] == region_id:
@@ -247,4 +249,3 @@ class Response():
 
     def get_tracks(self):
         return self.response["media_annotation"]["tracks_summary"]
-

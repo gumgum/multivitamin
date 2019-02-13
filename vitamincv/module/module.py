@@ -5,6 +5,8 @@ from vitamincv.data.response import Response
 from vitamincv.module.codes import Codes
 
 import glog as log
+
+
 class Module(ABC):
     def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None):
         """Abstract base class that defines interface inheritance
@@ -29,8 +31,8 @@ class Module(ABC):
 
     @abstractmethod
     def process(self, request, response):
-        assert(isinstance(request, Request))
-        assert(isinstance(response, Response))
+        assert isinstance(request, Request)
+        assert isinstance(response, Response)
         self.request = request
         self.response = response
 

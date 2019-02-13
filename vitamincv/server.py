@@ -99,7 +99,7 @@ class Server(Flask):
 
         Returns:
             Response: outgoing response message
-        """    
+        """
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
 
@@ -124,5 +124,5 @@ class Server(Flask):
 
         if request.prev_response_url:
             raise NotImplementedError()
-        
+
         return response

@@ -22,7 +22,6 @@ def write_json(json_str, file_path, indent=None):
             raise ValueError("json_str input is not a str or dict. Of type: {}".format(type(json_str)))
 
 
-
 def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     """Convert cv_schema `contour` into p0 and p1 of a bounding box.
 

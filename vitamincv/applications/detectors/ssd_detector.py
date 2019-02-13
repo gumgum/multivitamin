@@ -44,7 +44,7 @@ from caffe.proto import caffe_pb2 as cpb2
 
 from vitamincv.module.GPUUtilities import GPUUtility
 from vitamincv.module import ImagesModule
-from vitamincv.data.response.data.utils import crop_image_from_bbox_contour
+from vitamincv.data.response.utils import crop_image_from_bbox_contour
 from vitamincv.data.response.data import *
 from vitamincv.applications.utils import load_idmap, load_label_prototxt
 
@@ -81,6 +81,7 @@ class SSDDetector(ImagesModule):
 
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
         if os.path.exists(mean_file):
+            log.info("Setting meanfile")
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
             data_meanfile = open(mean_file, "rb").read()
             blob_meanfile.ParseFromString(data_meanfile)
@@ -93,17 +94,28 @@ class SSDDetector(ImagesModule):
 
         Args:
             images (np.array): A numpy array of images
-
-        Returns:
-            nd.array: List of tuples corresponding to each detection in the format of
-                  (frame_index, label, confidence, xmin, ymin, xmax, ymax)
         """
-        preprocessed_images = self._preprocess_images(image_batch)
-        preds = self._forward_pass(preprocessed_images)
-        postprocessed_preds = self._postprocess_predictions(preds)
-        self._append_to_response(postprocessed_preds, tstamp_batch)
+        transformed_images = np.array([self.transformer.preprocess("data", image) for image in image_batch])
+        self.net.blobs["data"].reshape(*transformed_images.shape)
+        self.net.blobs["data"].data[...] = transformed_images
+        preds_batch = np.squeeze(self.net.forward()[LAYER_NAME])
+        for (batch_index, pred, confidence, xmin, ymin, xmax, ymax), tstamp in zip(preds_batch, tstamp_batch):
+            if not isinstance(pred, str):
+                label = self.labelmap.get(pred, inspect.signature(create_prop).parameters["value"].default)
+            else:
+                label = pred
+            # if confidence < CONFIDENCE_MIN:
+            #     continue
+            x = [batch_index, pred, confidence, xmin, ymin, xmax, ymax]
+            log.info(f"preds: {x} -- tstamp {tstamp} -- label {label}")
+            contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
 
-    def _forward_pass(self, images)
+        # preds = self._forward_pass(preprocessed_images)
+        # postprocessed_preds = self._postprocess_predictions(preds)
+        # self._append_to_response(preds, tstamp_batch)
+
+    def _forward_pass(self, images):
+        """Forward pass of network on images"""
         self.net.blobs["data"].reshape(*images.shape)
         self.net.blobs["data"].data[...] = images
         preds = self.net.forward()[LAYER_NAME].copy()
@@ -123,52 +135,46 @@ class SSDDetector(ImagesModule):
         transformed_images = [self.transformer.preprocess("data", image) for image in images]
         return np.array(transformed_images)
 
-    def _postprocess_predictions(self, predictions):
-        """Filters out predictions out per class based on confidence
+    # def _postprocess_predictions(self, predictions):
+    #     """Filters out predictions out per class based on confidence
 
-        Args:
-            predictions (list): List of tuples corresponding to confidences between
-                    0 and 1, where each index represents a class
+    #     Args:
+    #         predictions (list): List of tuples corresponding to confidences between
+    #                 0 and 1, where each index represents a class
 
-        Returns:
-            list: A list of nd.arrays given by number of detections against (label, confidence, xmin, ymin, xmax, ymax)
-        """
-        frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
-        predictions = np.split(predictions, indicies_of_first_occurance[1:])
-        filtered_preds = [preds[preds[:, 2] > CONFIDENCE_MIN] for preds in predictions]
-        return filtered_preds
+    #     Returns:
+    #         list: A list of nd.arrays given by number of detections against (label, confidence, xmin, ymin, xmax, ymax)
+    #     """
+    #     frame_indexes, indicies_of_first_occurance = np.unique(predictions[:, 0], return_index=True)
+    #     predictions = np.split(predictions, indicies_of_first_occurance[1:])
+    #     filtered_preds = [preds[preds[:, 2] > CONFIDENCE_MIN] for preds in predictions]
+    #     return filtered_preds
 
-    def _append_to_response(self, predictions, tstamp=None):
+    def _append_to_response(self, predictions_batch, tstamp_batch):
         """Converts predictions to detections
-
-        Args:
-            predictions (list): A list of predictions tuples
-                    (<class index>, <confidence>) for an image
-
-            tstamp (float): A timestamp corresponding to the timestamp of an image
-
-            previous_detection (dict): Not implimented in SSD detector, currently
-
         """
-        if tstamp is None:
-            tstamp = inspect.signature(create_detection).parameters["t"].default
 
-        for batch_index, pred, confidence, xmin, ymin, xmax, ymax in predictions:
-            if not isinstance(pred, str):
-                label = self.labelmap.get(pred, inspect.signature(create_detection).parameters["value"].default)
-            else:
-                label = pred
-            contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
-            det = create_detection(
-                server=self.name,
-                ver=self.version,
-                value=label,
-                contour=contour,
-                property_type=self.prop_type,
-                confidence=confidence,
-                t=tstamp,
-            )
-            yield det
+        assert(len(predictions_batch) == len(tstamp_batch))
+
+        for preds, tstamps in zip(predictions_batch, tstamp_batch):
+            log.info(f"tstamps: {tstamps}")
+            for batch_index, pred, confidence, xmin, ymin, xmax, ymax in preds:
+                if not isinstance(pred, str):
+                    label = self.labelmap.get(pred, inspect.signature(create_prop).parameters["value"].default)
+                else:
+                    label = pred
+                contour = create_bbox_contour_from_points(float(xmin), float(ymin), float(xmax), float(ymax), bound=True)
+                log.info(batch_index, pred, confidence, xmin, ymin, xmax, ymax)
+            # det = create_detection(
+            #     server=self.name,
+            #     ver=self.version,
+            #     value=label,
+            #     contour=contour,
+            #     property_type=self.prop_type,
+            #     confidence=confidence,
+            #     t=tstamp,
+            # )
+            # yield det
 
     # def process_images(self, images, tstamps, prev_detections=None):
     #     for frame, tstamp in zip(images, tstamps):
