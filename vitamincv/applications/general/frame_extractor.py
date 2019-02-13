@@ -22,6 +22,7 @@ class FrameExtractor(CVModule):
         self._list_file = "contents"
         self._img_name_format="{tstamp:010d}"
         self._rel_path_format = "{video_id}/{filename}.{ext}"
+        self._image_rel_path_format = "{video_id}/frames/{filename}.{ext}"
         self._s3_url_format = "https://s3.amazonaws.com/{bucket}/{s3_key}"
 
         self._sql_db = ""
@@ -53,7 +54,7 @@ class FrameExtractor(CVModule):
 
     def _write_frame(self, frame, tstamp, video_id):
         filename=self._img_name_format.format(tstamp=tstamp)
-        relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+        relative_path = self._image_rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         full_path = "{}/{}".format(self._local_dir, relative_path)
         full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
         im_filelike = self._convert_frame_to_filelike(frame)
@@ -65,7 +66,7 @@ class FrameExtractor(CVModule):
         contents_json = {"original_url": self.video_url, "frames": []}
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
-            relative_path = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+            relative_path = self._image_rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             full_path = "{}/{}".format(self._local_dir, relative_path)
             full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
             # line = "{}\t{}\n".format(tstamp, full_path)
@@ -93,7 +94,7 @@ class FrameExtractor(CVModule):
     def _upload_frame(self, frame, tstamp, video_id):
         filename=self._img_name_format.format(tstamp=tstamp)
         im_filelike = self._convert_frame_to_filelike(frame)
-        s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+        s3_key = self._image_rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
         s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
@@ -108,7 +109,7 @@ class FrameExtractor(CVModule):
         contents_json = {"original_url": self.video_url, "frames": []}
         for video_id, tstamp in contents:
             filename=self._img_name_format.format(tstamp=tstamp)
-            s3_key = self._rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
+            s3_key = self._image_rel_path_format.format(video_id=video_id, filename=filename, ext=self._encoding)
             s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
             im_url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=s3_key)
             # line = "{}\t{}\n".format(tstamp, im_url)
@@ -137,10 +138,11 @@ class FrameExtractor(CVModule):
         self.video_url = self.request_api.request["url"]
         video_id = os.path.basename(self.video_url).rsplit(".", 1)[0]
         video_id = "".join([e for e in video_id if e.isalnum() or e in ["/", "."]])
-        self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="tsv")
+        self.contents_file_key = self._rel_path_format.format(video_id=video_id, filename=self._list_file, ext="json")
         self.contents_file_key =  "".join([e for e in self.contents_file_key if e.isalnum() or e in ["/", "."]])
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
+            self._mklocaldirs("{}/{}/frames".format(self._local_dir, video_id))
             if os.path.exists("{}/{}".format(self._local_dir, self.contents_file_key)):
                 log.info("Local Video already exists")
 
