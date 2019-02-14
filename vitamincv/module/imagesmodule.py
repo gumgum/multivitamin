@@ -38,84 +38,77 @@ class ImagesModule(Module):
         frames_iterator=[]
         try:
             self.media = MediaRetriever(self.request.url)
-            frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
+            self.frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
         except Exception as e:
             self.code = Codes.ERROR_LOADING_MEDIA
             # TODO update response with error code
             return self.response
 
-        self.num_problematic_frames=0
-        # self.findrois()#This will update self.detections_of_interest
-        batch_images = []
-        batch_tstamps = []
-        batch_regions = []
-        log.info("Processing frames")
+        num_problematic_frames=0
+        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.tuple_generator()):
+            try:
+                self.process_images(image_batch, tstamp_batch, prev_region_batch)
+            except ValueError as e:
+                num_problematic_frames+=1
+                log.warning('Problem processing frames')
+                if num_problematic_frames>=MAX_PROBLEMATIC_FRAMES:
+                    log.error(e)
+                    self.code = Codes.ERROR_PROCESSING
+                    return self.response
+        log.debug("Finished processing.")
+        return self.response
 
-        #we go thru the frames
-        for i, (frame, tstamp) in enumerate(frames_iterator):
+    def batch_generator(self, iterator):
+        """Take an iterator, convert it to a chunking generator
+
+        Args:
+            iterator: Any iterable object where each element is a list or a tuple of length N
+
+        Yields:
+            list: A list of N batches of size `self.batch_size`. The last
+                    batch may be smaller than the others
+        """
+        batch = []
+        for iteration in iterator:
+            batch.append(iteration)
+            if len(batch) >= self.batch_size:
+                yield zip(*batch)
+                batch = []
+        if len(batch) > 0:
+            yield zip(*batch)
+
+    def tuple_generator(self):
+        """Parses request for data
+
+        Yields:
+            frame: An image a time tstamp of a video or image
+            tstamp: The timestamp associated with the frame
+            region: The matching region dict
+        """
+        for i, (frame, tstamp) in enumerate(self.frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
                 continue
+
             if tstamp is None:
                 log.warning("Invalid tstamp")
                 continue
 
-            log.info('tstamp: ' + str(tstamp))
-            if self.prev_pois is not None:#We are expected1 to focus on previous detections
-                dets=[]
-                # if tstamp in self.detections_t_map:
-                #     dets=self.detections_t_map[tstamp]
-                # if len(dets)==0:
-                #     #log.debug("No detections for tstamp " + str(tstamp))
-                #     continue
-                # batch_detections_of_interest.extend(dets)
-                # #we append the frame and the tstamps as many times as necessary to fit the length of dets
-                # log.debug('len(dets): ' + str(len(dets)))
-                # batch_images.extend([frame] * len(dets))
-                # batch_tstamps.extend([tstamp] * len(dets))
-                # log.debug('len(batch_detections_of_interest): ' + str(len(batch_detections_of_interest)))
-                # log.debug('len(batch_images): ' + str(len(batch_images)))
-                # log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-            else:#if there is no previous detections of interest we simply append frame and timestamp to the batches.
-                batch_images.append(frame)
-                batch_tstamps.append(tstamp)            
-            while len(batch_images)>=self.batch_size:
-                log.debug("batch ready to be processed.")
-                try:
-                    log.debug("Processing batch")
-                    self.process_images(
-                        batch_images[:self.batch_size],
-                        batch_tstamps[:self.batch_size],
-                        batch_regions[:self.batch_size]
-                        )
-                except ValueError as e:
-                    self.num_problematic_frames+=1
-                    log.warning('Problem processing frames')
-                    if self.num_problematic_frames>=MAX_PROBLEMATIC_FRAMES:
-                        log.error(e)
-                        self.code = Codes.ERROR_PROCESSING
-                        return self.response
+            log.info(f"tstamp: {tstamp}")
 
-                log.debug("Updating batch")
-                batch_images = batch_images[self.batch_size:]
-                batch_tstamps = batch_tstamps[self.batch_size:]
-                batch_regions = batch_regions[self.batch_size:]
-                log.debug('***************')
-                log.debug('len(batch_regions): ' + str(len(batch_regions)))
-                log.debug('len(batch_images): ' + str(len(batch_images)))
-                log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-        log.debug("We are done frame iterating.")
-        if len(batch_images)>0:
-            log.debug('len(batch_regions): ' + str(len(batch_regions)))
-            log.debug('len(batch_images): ' + str(len(batch_images)))
-            log.debug('len(batch_tstamps): ' + str(len(batch_tstamps)))
-            log.debug('len(batch_images): ' + str(len(batch_images)))
-            self.process_images(
-                batch_images, 
-                batch_tstamps,
-                batch_regions)
-        log.debug("Finished processing.")
-        return self.response
+            regions = [None]
+            if self.prev_response:
+                log.info("Processing with previous response")
+                regions = self.prev_response.tstamp_regions_map.get(tstamp, [None])
+                log.info(f"Found {len(regions)} dets from previous media_data")
+
+                if len(regions) == 0:
+                    log.debug(f"No detections for tstamp {tstamp}")
+                    continue
+
+            for region in regions:
+                # Note: yield does not duplicate 'frame', copies pointers
+                yield frame, tstamp, region
 
     @abstractmethod
     def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):

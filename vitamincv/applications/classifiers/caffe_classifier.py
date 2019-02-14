@@ -122,57 +122,20 @@ class CaffeClassifier(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def process_images(self, images, tstamps, prev_regions=None):
+    def process_images(self, images, tstamps, prev_regions):
         log.debug("Processing images")
         log.debug("tstamps: "  + str(tstamps))
-        log.check_eq(len(images), len(tstamps))
-        # if prev_regions is not None:
-            # log.check_eq(len(images), len(prev_regions))
-        for i,(frame, tstamp) in enumerate(zip(images, tstamps)):
-            log.debug("tstamp: " +str(tstamp))
-            crop=frame
-            contour_prev=[create_point(0.0, 0.0),
-                                 create_point(1.0, 0.0),
-                                 create_point(1.0, 1.0),
-                                 create_point(0.0, 1.0)]
-            region_id_prev=""
-            # if prev_detections:
-            #     prev_det=prev_detections[i]
-            #     #log.debug("prev_det: " + str(prev_det))
-            #     #we get region_id_prev
-            #     region_id_prev=prev_det['region_id']
-            #     log.debug("region_id_prev: " + str(region_id_prev))
-            #     #we get the contour_prev
-            #     contour_prev=prev_det['contour']
-            #     height = frame.shape[0]
-            #     width = frame.shape[1]
-            #     #we get the crop
-            #     xmin=1.0
-            #     xmax=0.0
-            #     ymin=1.0
-            #     ymax=0.0
-            #     for p in contour_prev:
-            #         x=p['x']
-            #         y=p['y']
-            #         if x<xmin:
-            #             xmin=x
-            #         if x>xmax:
-            #             xmax=x
-            #         if y<ymin:
-            #             ymin=y
-            #         if y>ymax:
-            #             ymax=y
-            #     log.debug('[xmin,ymin,xmax,ymax]: ' + str([xmin,ymin,xmax,ymax]))
-            #     xmin=int(xmin*(width-1))
-            #     ymin=int(ymin*(height-1))
-            #     xmax=int(xmax*(width-1))
-            #     ymax=int(ymax*(height-1))
-            #     log.debug('Cropping image with [xmin,xmax,ymin,ymax]: ' + str([xmin,xmax,ymin,ymax]))                
-            #     crop=frame[ymin:ymax, xmin:xmax]
+        assert(len(images) == len(tstamps) == len(prev_regions))
+        for i, (frame, tstamp, prev_region) in enumerate(zip(images, tstamps, prev_regions)):
+            log.info("caffe classifier tstamp: " +str(tstamp))
             try:    
-                im = self.transformer.preprocess('data', crop)
+                if prev_region is not None:
+                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
+
+                im = self.transformer.preprocess('data', frame)
                 self.net.blobs['data'].data[...] = im
             
+                #TODO : clean this up
                 probs = self.net.forward()[self.layer_name]
                 log.debug('probs: ' + str(probs))
                 props = []
@@ -211,11 +174,16 @@ class CaffeClassifier(ImagesModule):
                             confidence=float(confidence),
                             confidence_min=float(self.confidence_min)
                         )
-                        props.append(prop)
+                        if prev_region is not None:
+                            prev_region.get("props").append(prop)
+                        else:
+                            props.append(prop)
                 regions = [create_region(props=props)]
+                if prev_region is not None:
+                    regions = [prev_region]
+
+                image_ann = create_image_ann(t=tstamp, regions)
+                self.response.append_image_ann(image_ann)
             except Exception as e:
+                log.error(traceback.print_exc())
                 log.error(e)
-            
-            image_ann = create_image_ann(t=tstamp, regions=regions)
-            self.response.append_image_ann(image_ann)
-            

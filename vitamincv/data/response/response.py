@@ -85,8 +85,8 @@ class Response:
     def _create_tstamp_map(self):
         log.info("Creating tstamp map")
         self.tstamp_map = defaultdict(list)
-        for frame_ann in self.dictionary.get("media_annotation").get("frames_annotation"):
-            self.tstamp_map[frame_ann.get("t")] = frame_ann.get("regions")
+        for image_ann in self.dictionary.get("media_annotation").get("frames_annotation"):
+            self.tstamp_map[image_ann.get("t")] = image_ann.get("regions")
 
     def append_footprint(self, code):
         self.response["media_annotation"]["codes"].append(code)
