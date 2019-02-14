@@ -226,7 +226,8 @@ class CVModule(ABC):
                 if value is None:
                     log.warning("det['value'] should have a value at this point.")
                 det['server'] = self.name
-                det['module_id'] = module_id
+                if det["module_id"] == 0:
+                    det['module_id'] = module_id
                 det['ver'] = self.version
                 det['footprint_id'] = footprint_id
                 try:
