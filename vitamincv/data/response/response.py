@@ -67,26 +67,48 @@ class Response:
         else:
             log.info("Response.dictionary is NOT none, creating from previous response")
             self._dictionary = dictionary
-        self._create_tstamp_map()
+
+    def convert_to_schema(self):
+        """CURRENTLY USED FOR COMPATIBILITY W/ SCHEMA. SHOULD CHANGE SCHEMA TO REFLECT THIS RESPONSE, THEN REMOVE THIS METHOD"""
+        return None
 
     @dictionary.getter
     def dictionary(self):
         return self._dictionary
 
+    @property
+    def frame_anns(self):
+        return self._dictionary.get("media_annotation").get("frames_annotation")
+
     def to_bytes(self):
         raise NotImplementedError()
 
+    def append_region(self, t, region):
+        self._dictionary.get("media_annotation").get("frames_annotation")[t].append(region)
+
+    def append_regions(self, t, regions):
+        frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")[t]
+        if len(frame_anns)==0:
+            log.info(f"frame anns len == 0, creating new frame ann w/ len(regions): {len(regions)}")
+            self._dictionary.get("media_annotation").get("frames_annotation")[t].extend(regions)
+        else:
+            log.info(f"frame anns[t] len == {len(frame_anns)}, appending regions frame ann w/ len(regions): {len(regions)}")
+            self._dictionary.get("media_annotation").get("frames_annotation")[t].extend(regions)
+        log.info(f"len(frame_anns[t]): {len(frame_anns)}")
+        frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")[t]
+        log.info(f"len(frame_anns[t]): {len(frame_anns)}")
+        
     def has_frame_anns(self):
         return len(self.dictionary.get("media_annotation").get("frames_annotation")) > 0
 
-    def update_maps(self):
-        self._create_tstamp_map()
+    # def update_maps(self):
+        # self._create_tstamp_map()
 
-    def _create_tstamp_map(self):
-        log.info("Creating tstamp map")
-        self.tstamp_map = defaultdict(list)
-        for image_ann in self.dictionary.get("media_annotation").get("frames_annotation"):
-            self.tstamp_map[image_ann.get("t")] = image_ann.get("regions")
+    # def _create_tstamp_map(self):
+    #     log.info("Creating tstamp map")
+    #     self.tstamp_map = defaultdict(list)
+    #     for image_ann in self.dictionary.get("media_annotation").get("frames_annotation"):
+    #         self.tstamp_map[image_ann.get("t")] = image_ann.get("regions")
 
     def append_footprint(self, code):
         self.response["media_annotation"]["codes"].append(code)
@@ -106,6 +128,8 @@ class Response:
             self.append_image_ann(image_ann)
 
     def append_image_ann(self, image_ann):
+        if self.tstamp_map.get(image_ann.get("t")) is not None:
+            self._dictionary["media_annotation"]["frames_annotation"][image]
         self._dictionary["media_annotation"]["frames_annotation"].append(image_ann)
 
     def append_region_to_image_ann(self, region, tstamp):

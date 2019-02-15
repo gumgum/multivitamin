@@ -68,3 +68,17 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
 
 def list_contains_only_none(l):
     return l == [None] * len(l)
+
+def convert_list_of_query_dicts_to_pd_query(query):
+    assert(isinstance(query, list))
+    
+    qstr = ""
+    for i, q in enumerate(query):
+        assert(isinstance(q, dict))
+        for j, (k, v) in enumerate(q.items()):
+            qstr += f'({k} == "{v}")'
+            if j != len(q)-1:
+                qstr += " & "
+        if i != len(query)-1:
+            qstr += " | "
+    return qstr

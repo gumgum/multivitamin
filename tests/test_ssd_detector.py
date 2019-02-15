@@ -53,3 +53,5 @@ def test_process():
 
     doc = response.dictionary
     log.info(f"doc: {json.dumps(doc, indent=2)}")
+    with open("t.json", "w") as wf:
+        json.dump(doc, wf)

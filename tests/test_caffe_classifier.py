@@ -124,3 +124,5 @@ def test_process():
     dt = response.dictionary
     out = str(json.dumps(dt, indent=2))
     log.info(f"response dictionary: {out}")
+    with open("tc.json", "w") as wf:
+        json.dump(dt, wf)

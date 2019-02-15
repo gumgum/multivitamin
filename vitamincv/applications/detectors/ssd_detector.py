@@ -96,12 +96,12 @@ class SSDDetector(ImagesModule):
             self.net.blobs['data'].data[...] = im
             predictions = self.net.forward()[LAYER_NAME]
 
-            regions = []
+            # regions = []
             for pred_idx in range(predictions.shape[2]):
                 try:
                     confidence = float(predictions[0, 0, pred_idx, 2])
-                    # if confidence < CONFIDENCE_MIN:
-                        # continue
+                    if confidence < CONFIDENCE_MIN:
+                        continue
                     index = int(predictions[0, 0, pred_idx, 1])
                     label = self.labelmap[index]
                     xmin = float(predictions[0, 0, pred_idx, 3])
@@ -119,9 +119,9 @@ class SSDDetector(ImagesModule):
                         value=label,
                         property_type=self.prop_type
                     ))
-                    regions.append(create_region(contour=contour, props=props))
+                    # regions.append(create_region(contour=contour, props=props))
+                    self.response.append_region(t=tstamp, region=create_region(contour=contour, props=props))
                 except:
                     log.error(traceback.format_exc())
-            image_ann = create_image_ann(t=tstamp, regions=regions)
-            self.response.append_image_ann(image_ann)
+            # self.response.append_regions(t=tstamp, regions=regions)
 

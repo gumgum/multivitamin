@@ -1,11 +1,14 @@
+import sys
+import json
 from abc import abstractmethod
 import traceback
 from collections.abc import Iterable
-
+import pandas as pd
 import glog as log
 
 from vitamincv.module import Module, Codes
 from vitamincv.media import MediaRetriever
+
 
 
 MAX_PROBLEMATIC_FRAMES = 10
@@ -45,7 +48,7 @@ class ImagesModule(Module):
             return self.response
 
         num_problematic_frames=0
-        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.tuple_generator()):
+        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.preprocess_input()):
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
             except ValueError as e:
@@ -77,7 +80,7 @@ class ImagesModule(Module):
         if len(batch) > 0:
             yield zip(*batch)
 
-    def tuple_generator(self):
+    def preprocess_input(self):
         """Parses request for data
 
         Yields:
@@ -96,18 +99,20 @@ class ImagesModule(Module):
 
             log.info(f"tstamp: {tstamp}")
 
-            regions = [None]
-            if self.prev_response:
+            regions = []
+            if self.prev_pois and self.response.has_frame_anns():
                 log.info("Processing with previous response")
-                regions = self.prev_response.tstamp_regions_map.get(tstamp, [None])
-                log.info(f"Found {len(regions)} dets from previous media_data")
+                log.info(f"Querying on self.prev_pois: {self.prev_pois}")
 
-                if len(regions) == 0:
-                    log.debug(f"No detections for tstamp {tstamp}")
-                    continue
+                all_tstamp_regions = self.response.frame_anns.get(tstamp)
+                for tregion in all_tstamp_regions:
+                    if self._region_matches_prev_pois(tregion):
+                        regions.append(tregion)
 
+            if len(regions) == 0:
+                yield frame, tstamp, None
+            
             for region in regions:
-                # Note: yield does not duplicate 'frame', copies pointers
                 yield frame, tstamp, region
 
     @abstractmethod
@@ -115,4 +120,12 @@ class ImagesModule(Module):
         """Abstract method to be implemented by child module"""
         pass
 
+    def _region_matches_prev_pois(self, region):
+        """Returns true if region has properties that match prev_pois, 
+        else returns false
+        """
+        log.info(f"Querying pandas df with {self.pd_query_prev_pois}")
+        props_pd = pd.DataFrame(region.get("props"))
+        queried_pois = props_pd.query(self.pd_query_prev_pois)
+        return queried_pois.empty
 

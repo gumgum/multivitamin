@@ -229,3 +229,24 @@ def create_eligible_prop(server="", property_type="", value="", confidence_min=0
 
 def create_prop_pair(property_type="", value=""):
     return {"property_type": property_type, "value": value}
+
+
+def create_region_id(tstamp, contour):
+    """Create a region_id
+
+    Args:
+        tstamp (float): timestamp
+        contour (dict[float]): points of contour
+
+    Returns:
+        str: region_id
+    """
+    tstamp = round_float_to_str(tstamp)
+    contour = round_all_pts_in_contour_to_str(contour)
+    assert len(contour) == 4
+    xmin = contour[0].get("x")
+    xmax = contour[1].get("x")
+    ymin = contour[0].get("y")
+    ymax = contour[2].get("y")
+
+    return "{}_({},{})({},{})({},{})({},{})".format(tstamp, xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax)
