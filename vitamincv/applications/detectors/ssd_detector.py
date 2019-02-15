@@ -102,6 +102,7 @@ class SSDDetector(CVModule):
                         property_type=self.prop_type,
 		        		value=label,
                         confidence=detections[0,0,det_idx, 2],
+                        confidence_min=CONFIDENCE_MIN,
                         t=tstamp
                     )
                     self.detections.append(det)

@@ -6,7 +6,7 @@
 import glog as log
 
 def create_detection(server="",module_id=0, property_type="label", value="", value_verbose="",
-                     confidence=0.0, fraction=1.0, t=0.0, contour=None,
+                     confidence=0.0, confidence_min=0.0, fraction=1.0, t=0.0, contour=None,
                      ver="", region_id="", property_id=None, footprint_id="", company="gumgum"):
     """Factory method to create a detection object
 
@@ -41,6 +41,7 @@ def create_detection(server="",module_id=0, property_type="label", value="", val
         "value_verbose" : value_verbose,
         "property_id" : property_id,
         "confidence" : confidence,
+        "confidence_min" : confidence_min,
         "fraction" : fraction,
         "t" : t,
         "company":company,
