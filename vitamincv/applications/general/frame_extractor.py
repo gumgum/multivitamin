@@ -30,6 +30,8 @@ class FrameExtractor(CVModule):
         self._s3_client = boto3.client("s3")
 
         self._encoding = "JPEG"
+        self._content_type = "image/jpeg"
+        self._s3_upload_args = {"ContentType": self._content_type}
 
         self._s3_write_manager = WorkerManager(func=self._upload_frame_helper,
                                       n=100,
@@ -72,7 +74,7 @@ class FrameExtractor(CVModule):
             # line = "{}\t{}\n".format(tstamp, full_path)
             # filelike.write(line.encode())
             contents_json["frames"].append((tstamp, full_path))
-        filelike.write(json.dumps(contents_json).encode())
+        filelike.write(json.dumps(contents_json, indent=2).encode())
         filelike.seek(0)
 
         with open("{}/{}".format(self._local_dir, self.contents_file_key), "wb") as f:
@@ -98,7 +100,8 @@ class FrameExtractor(CVModule):
         s3_key = "".join([e for e in s3_key if e.isalnum() or e in ["/", "."]])
         result = self._s3_client.upload_fileobj(im_filelike,
                                                 self._s3_bucket,
-                                                s3_key)
+                                                s3_key,
+                                                ExtraArgs=self._s3_upload_args)
         self._append_to_sql(video_id, tstamp, s3_key, result)
 
     def _append_to_sql(self, video_id, tstamp, s3_key, result):
@@ -115,12 +118,13 @@ class FrameExtractor(CVModule):
             # line = "{}\t{}\n".format(tstamp, im_url)
             # filelike.write(line.encode())
             contents_json["frames"].append((tstamp, im_url))
-        filelike.write(json.dumps(contents_json).encode())
+        filelike.write(json.dumps(contents_json, indent=2).encode())
         filelike.seek(0)
 
         result = self._s3_client.upload_fileobj(filelike,
                                                 self._s3_bucket,
-                                                self.contents_file_key)
+                                                self.contents_file_key,
+                                                ExtraArgs={"ContentType": "application/json"})
         return result
 
     def process(self, message):
