@@ -7,7 +7,7 @@ from queue import Queue
 
 from vitamincv.data.request import Request
 from vitamincv.apis.comm_api import CommAPI
-from vitamincv.data.utils import get_current_date
+from vitamincv.data.response.utils import get_current_date
 
 FILEEXT = ".json"
 DEFAULT_FILE = "response" + FILEEXT
@@ -98,6 +98,6 @@ class LocalAPI(CommAPI):
         if self.default_file:
             return os.path.join(self.pushing_folder, DEFAULT_FILE)
 
-        media_url = response.get_url()
+        media_url = response.url
         media_name = os.path.basename(media_url)
         return os.path.join(self.pushing_folder, f"{get_current_date}", f"{media_name}.json")

@@ -66,6 +66,8 @@ class Request:
         self.flags = self.request.get("flags")
         log.info(f"Setting self.flags to {self.flags}")
 
+    def __repr__(self):
+        return f"request: {self.request}; request_id: {self.request_id}"
 
 def _standardize_url(url):
     log.info("Formatting urls in request")

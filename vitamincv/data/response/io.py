@@ -6,6 +6,7 @@ import pkg_resources
 import tempfile
 import struct
 import base64
+import traceback
 
 import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
@@ -15,6 +16,37 @@ from confluent_kafka.avro.serializer.message_serializer import MessageSerializer
 from confluent_kafka.avro.serializer import SerializerError
 
 from vitamincv.data.response import config
+from vitamincv.data.response import Response
+
+
+def load_response_from_request(request):
+    """Methodfor loading a previous response from a request"""
+    log.info("Loading a response")
+    try:
+        if not request.prev_response:
+            log.info("No prev_response")
+            return Response(request=request)
+
+        if request.bin_encoding is True:
+            log.info("bin_encoding is True")
+            io = AvroIO()
+            if isinstance(request.prev_response, str):
+                log.info("prev_response is base64 encoded")
+                bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
+            else:
+                log.info("prev_response is in binary")
+                bytes = io.decode(request.prev_response, use_base64=False, binary_flag=True)
+            return Response(dictionary=io.decode(bytes), request=request)
+
+        if isinstance(request.prev_response, dict):
+            log.info("prev_response is a dict")
+            return Response(dictionary=request.prev_response, request=request)
+
+    except Exception as e:
+        log.error(traceback.print_exc())
+        log.error(e)
+        log.error("Error loading previous response")
+    log.info("Decoded prev_response")
 
 
 class AvroIO:

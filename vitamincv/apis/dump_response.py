@@ -7,8 +7,8 @@ import shutil
 import boto3
 
 from vitamincv.apis.comm_api import CommAPI
-from vitamincv.data.utils import get_current_date, write_json
-from vitamincv.data.response_interface import Response
+from vitamincv.data.response.utils import get_current_date, write_json
+from vitamincv.data.response import Response
 
 INDENTATION = 2
 
@@ -62,7 +62,7 @@ class DumpResponse(CommAPI):
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
 
-            write_json(res.to_dict(), outfn, indent=INDENTATION)
+            write_json(res.dictionary, outfn, indent=INDENTATION)
 
             if self.s3_bucket and self.s3_key:
                 s3client = boto3.client("s3")
@@ -85,5 +85,5 @@ class DumpResponse(CommAPI):
         Returns:
             str: unique identifier
         """
-        media_url = response.get_url()
+        media_url = response.url
         return os.path.basename(media_url) + ".json"

@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 import json
 
+import glog as log
+
 from vitamincv.data.request import Request
 from vitamincv.data.response import Response
+from vitamincv.data.response.data import create_footprint
 from vitamincv.module.codes import Codes
 from vitamincv.module.utils import convert_list_of_query_dicts_to_pd_query
-
-import glog as log
 
 
 class Module(ABC):
@@ -24,6 +25,7 @@ class Module(ABC):
         self.module_id_map = module_id_map
         self.prev_pois = None
         self.code = Codes.SUCCESS
+        self.prev_regions_of_interest_count = 0
 
     def set_prev_props_of_interest(self, pois):
         """docs"""
@@ -41,6 +43,14 @@ class Module(ABC):
         assert isinstance(response, Response)
         self.request = request
         self.response = response
+
+    def update_and_return_response(self):
+        self.response.append_footprint(
+            create_footprint(
+                code=self.code.name,
+                ver=self.version,
+                ))
+        return self.response
 
     def __repr__(self):
         return f"{self.name} {self.version}"

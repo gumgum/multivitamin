@@ -1,4 +1,5 @@
 import os
+import json
 import traceback
 import glog as log
 import threading
@@ -9,7 +10,7 @@ from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
 
 from vitamincv.data.request import Request
-from vitamincv.data.request import Request
+from vitamincv.data.response.io import load_response_from_request
 from vitamincv.data.response import Response
 
 PORT = os.environ.get("PORT", 5000)
@@ -102,27 +103,12 @@ class Server(Flask):
         """
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
+        log.info(f"request: {request}")
 
-        response = Response.load_from_request(request)
+        response = load_response_from_request(request)
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(request, response)
-            log.debug(f"doc: {response.to_dict()}")
-
-        return response
-
-    def _load_response(self, request):
-        """Load response from a previous module"""
-
-        response = None
-        if request.prev_response:
-            log.info("Loading from prev_response")
-            response = Response.load(request)
-        else:
-            log.info("No prev_response")
-            response = Response(request=request)
-
-        if request.prev_response_url:
-            raise NotImplementedError()
+            log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
         return response

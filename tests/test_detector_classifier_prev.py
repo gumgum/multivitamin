@@ -19,7 +19,8 @@ import zipfile
 from vitamincv.applications.detectors.ssd_detector import SSDDetector
 from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 from vitamincv.data.request import Request
-from vitamincv.data.response import Response, load_response_from_request
+from vitamincv.data.response import Response
+from vitamincv.data.response.io import load_response_from_request
 from utils import generate_fileobj_from_s3_folder
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"

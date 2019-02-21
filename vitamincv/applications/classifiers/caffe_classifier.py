@@ -123,11 +123,11 @@ class CaffeClassifier(ImagesModule):
         self.transformer.set_transpose("data", (2, 0, 1))
 
     def process_images(self, images, tstamps, prev_regions):
-        log.debug("Processing images")
-        log.debug("tstamps: "  + str(tstamps))
+        # log.debug("Processing images")
+        # log.debug("tstamps: "  + str(tstamps))
         assert(len(images) == len(tstamps) == len(prev_regions))
         for i, (frame, tstamp, prev_region) in enumerate(zip(images, tstamps, prev_regions)):
-            log.info("caffe classifier tstamp: " +str(tstamp))
+            log.debug("caffe classifier tstamp: " +str(tstamp))
             try:    
                 if prev_region is not None:
                     frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
@@ -137,17 +137,17 @@ class CaffeClassifier(ImagesModule):
             
                 #TODO : clean this up
                 probs = self.net.forward()[self.layer_name]
-                log.debug('probs: ' + str(probs))
+                # log.debug('probs: ' + str(probs))
                 props = []
                 for p in probs:
-                    log.debug('p: ' + str(p))
+                    # log.debug('p: ' + str(p))
                     p_indexes = np.argsort(p)
                     p_indexes = np.flip(p_indexes,0)
                     while True:
                         if len(p_indexes)==1:
                             break
                         index=p_indexes[0]
-                        label=self.labels[index]                            
+                        label=self.labels[index]
                         log.debug("label: " + str(label))
                         if label in LOGOEXCLUDE:
                             p_indexes=np.delete(p_indexes,0)
@@ -155,15 +155,17 @@ class CaffeClassifier(ImagesModule):
                             break
                     p_indexes = p_indexes[:N_TOP]
                     
-                    log.debug("p_indexes: " + str(p_indexes))
+                    # log.debug("p_indexes: " + str(p_indexes))
                     
                     for i,property_id in enumerate(p_indexes):
                         if i==N_TOP:
                             break
                         index=p_indexes[i]
-                        label=self.labels[index]                            
+                        label=self.labels[index]
                         confidence=p[index]
                         
+                        #TODO remove this unknown
+
                         if confidence<CONFIDENCE_MIN:
                             label='Unknown'
                         prop = create_prop(

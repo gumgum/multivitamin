@@ -44,8 +44,11 @@ class ImagesModule(Module):
             self.frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
         except Exception as e:
             self.code = Codes.ERROR_LOADING_MEDIA
-            # TODO update response with error code
-            return self.response
+            return self.update_and_return_response()
+
+        if self.prev_pois and not self.response.has_frame_anns():
+            self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
+            return self.update_and_return_response()
 
         num_problematic_frames=0
         for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.preprocess_input()):
@@ -57,9 +60,12 @@ class ImagesModule(Module):
                 if num_problematic_frames>=MAX_PROBLEMATIC_FRAMES:
                     log.error(e)
                     self.code = Codes.ERROR_PROCESSING
-                    return self.response
-        log.debug("Finished processing.")
-        return self.response
+                    return self.update_and_return_response()
+        log.info("Finished processing.")
+
+        if self.prev_pois and self.prev_regions_of_interest_count == 0:
+            self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
+        return self.update_and_return_response()
 
     def batch_generator(self, iterator):
         """Take an iterator, convert it to a chunking generator
@@ -100,14 +106,16 @@ class ImagesModule(Module):
             log.info(f"tstamp: {tstamp}")
 
             regions = []
-            if self.prev_pois and self.response.has_frame_anns():
+            if self.prev_pois:
                 log.info("Processing with previous response")
                 log.info(f"Querying on self.prev_pois: {self.prev_pois}")
 
                 all_tstamp_regions = self.response.frame_anns.get(tstamp)
-                for tregion in all_tstamp_regions:
-                    if self._region_matches_prev_pois(tregion):
-                        regions.append(tregion)
+                if all_tstamp_regions is not None:
+                    for tregion in all_tstamp_regions:
+                        if self._region_matches_prev_pois(tregion):
+                            regions.append(tregion)
+                            self.prev_regions_of_interest_count += 1
 
             if len(regions) == 0:
                 yield frame, tstamp, None
@@ -124,8 +132,10 @@ class ImagesModule(Module):
         """Returns true if region has properties that match prev_pois, 
         else returns false
         """
-        log.info(f"Querying pandas df with {self.pd_query_prev_pois}")
+        log.debug(f"Prev pois query: {self.pd_query_prev_pois}")
+        log.debug(f"against region: {region}")
         props_pd = pd.DataFrame(region.get("props"))
         queried_pois = props_pd.query(self.pd_query_prev_pois)
-        return queried_pois.empty
+        log.debug(f"matches? : {not queried_pois.empty}")
+        return not queried_pois.empty
 
