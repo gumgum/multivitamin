@@ -6,15 +6,23 @@ from vitamincv.module import Module
 
 
 class PropertiesModule(Module):
-    def process(self, request, prev_media_data=None):
-        super().process(request, prev_media_data)
+    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None):
+        super().__init__(
+            server_name=server_name,
+            version=version,
+            prop_type=prop_type,
+            prop_id_map=prop_id_map,
+            module_id_map=module_id_map,
+        )
+        log.info("Creating PropertiesModule")
+
+    def process(self, request, response):
+        super().process(request, response)
         self.process_properties()
-        return "SUCCESS"
+        return self.update_and_return_response()
 
     @abstractmethod
     def process_properties(self):
-        """Abstract method to be implemented to the child PropertiesModule, which appends to
-
-        self.segments
+        """Abstract method to be implemented to the child PropertiesModule
         """
         pass

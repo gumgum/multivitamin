@@ -66,22 +66,7 @@ class Response:
     def append_footprint(self, footprint):
         self._dictionary["media_annotation"]["codes"].append(footprint)
 
-    def append_image_anns(self, image_anns):
-        for image_ann in image_anns:
-            self.append_image_ann(image_ann)
-
-    def append_image_ann(self, image_ann):
-        if self.tstamp_map.get(image_ann.get("t")) is not None:
-            self._dictionary["media_annotation"]["frames_annotation"][image]
-        self._dictionary["media_annotation"]["frames_annotation"].append(image_ann)
-
-    def append_region_to_image_ann(self, region, tstamp):
-        # Potentially change frames_annotations into a map for O(1) lookup in the future
-        for image_ann in self.response["media_annotation"]["frames_annotation"]:
-            if image_ann["t"] == tstamp:
-                image_ann["regions"].append(region)
-
-    def append_track_to_tracks_summary(self, track):
+    def append_video_ann(self, track):
         self._dictionary["media_annotation"]["tracks_summary"].append(track)
 
     def append_annotation_tasks(self, annotation_tasks):
@@ -162,7 +147,7 @@ class Response:
 
     @property
     def timestamps(self):
-        return sorted([x["t"] for x in self._dictionary["media_annotation"]["frames_annotation"]])
+        return sorted(self._dictionary["media_annotation"]["frames_annotation"].keys())
 
     def get_timestamps_from_footprints(self, server=None):
         tstamps = []

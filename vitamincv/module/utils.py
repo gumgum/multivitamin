@@ -1,6 +1,6 @@
 import os
 import glog as log
-
+import pandas as pd
 
 def load_idmap(idmap_filepath):
     """Load idmap
@@ -65,13 +65,17 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
             qualifying_preds.append(pred)
     return qualifying_preds
 
-
-def list_contains_only_none(l):
-    return l == [None] * len(l)
+def pandas_query_props_match(db_props, query_props_str):
+    """Returns True if query props match db props"""
+    log.debug(f"Prev pois query: {query_props_str}")
+    log.debug(f"against region: {db_props}")
+    queried_pois = db_props.query(query_props_str)
+    log.debug(f"matches? : {not queried_pois.empty}")
+    return not queried_pois.empty
 
 def convert_list_of_query_dicts_to_pd_query(query):
     assert(isinstance(query, list))
-    
+    log.debug(query)
     qstr = ""
     for i, q in enumerate(query):
         assert(isinstance(q, dict))
@@ -81,4 +85,5 @@ def convert_list_of_query_dicts_to_pd_query(query):
                 qstr += " & "
         if i != len(query)-1:
             qstr += " | "
+    log.debug(f"query: {query} transformed into pandas str query: {qstr}")
     return qstr

@@ -7,8 +7,8 @@ import pandas as pd
 import glog as log
 
 from vitamincv.module import Module, Codes
+from vitamincv.module.utils import pandas_query_props_match
 from vitamincv.media import MediaRetriever
-
 
 
 MAX_PROBLEMATIC_FRAMES = 10
@@ -113,7 +113,8 @@ class ImagesModule(Module):
                 all_tstamp_regions = self.response.frame_anns.get(tstamp)
                 if all_tstamp_regions is not None:
                     for tregion in all_tstamp_regions:
-                        if self._region_matches_prev_pois(tregion):
+                        if pandas_query_props_match(pd.DataFrame(tregion.get("props")), self.pd_query_prev_pois):
+                        # if self._region_matches_prev_pois(tregion):
                             regions.append(tregion)
                             self.prev_regions_of_interest_count += 1
 
@@ -127,15 +128,3 @@ class ImagesModule(Module):
     def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
         """Abstract method to be implemented by child module"""
         pass
-
-    def _region_matches_prev_pois(self, region):
-        """Returns true if region has properties that match prev_pois, 
-        else returns false
-        """
-        log.debug(f"Prev pois query: {self.pd_query_prev_pois}")
-        log.debug(f"against region: {region}")
-        props_pd = pd.DataFrame(region.get("props"))
-        queried_pois = props_pd.query(self.pd_query_prev_pois)
-        log.debug(f"matches? : {not queried_pois.empty}")
-        return not queried_pois.empty
-
