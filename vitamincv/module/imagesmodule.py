@@ -38,7 +38,7 @@ class ImagesModule(Module):
         log.info("Processing message")
         super().process(request, response)
 
-        frames_iterator=[]
+        frames_iterator = []
         try:
             self.media = MediaRetriever(self.request.url)
             self.frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
@@ -50,14 +50,14 @@ class ImagesModule(Module):
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
             return self.update_and_return_response()
 
-        num_problematic_frames=0
+        num_problematic_frames = 0
         for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.preprocess_input()):
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
             except ValueError as e:
-                num_problematic_frames+=1
-                log.warning('Problem processing frames')
-                if num_problematic_frames>=MAX_PROBLEMATIC_FRAMES:
+                num_problematic_frames += 1
+                log.warning("Problem processing frames")
+                if num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                     log.error(e)
                     self.code = Codes.ERROR_PROCESSING
                     return self.update_and_return_response()
@@ -114,13 +114,13 @@ class ImagesModule(Module):
                 if all_tstamp_regions is not None:
                     for tregion in all_tstamp_regions:
                         if pandas_query_props_match(pd.DataFrame(tregion.get("props")), self.pd_query_prev_pois):
-                        # if self._region_matches_prev_pois(tregion):
+                            # if self._region_matches_prev_pois(tregion):
                             regions.append(tregion)
                             self.prev_regions_of_interest_count += 1
 
             if len(regions) == 0:
                 yield frame, tstamp, None
-            
+
             for region in regions:
                 yield frame, tstamp, region
 

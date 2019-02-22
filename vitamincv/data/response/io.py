@@ -19,6 +19,17 @@ from vitamincv.data.response import config
 from vitamincv.data.response import Response
 
 
+def to_response(schema_response):
+    pass
+
+def from_schema_response(response):
+    pass
+
+class SchemaResponse():
+
+    @staticmethod
+    def to
+
 def load_response_from_request(request):
     """Methodfor loading a previous response from a request"""
     log.info("Loading a response")
@@ -31,7 +42,7 @@ def load_response_from_request(request):
             log.info("bin_encoding is True")
             io = AvroIO()
             if isinstance(request.prev_response, str):
-                log.info("prev_response is base64 encoded")
+                log.info("prev_response is base64 encoded binary")
                 bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
             else:
                 log.info("prev_response is in binary")
@@ -180,11 +191,6 @@ class AvroIO:
         except:
             return False
         return True
-
-
-##################################
-# Private implementation classes #
-##################################
 
 
 class _AvroIOLocal:

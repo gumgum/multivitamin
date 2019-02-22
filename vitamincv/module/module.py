@@ -45,11 +45,7 @@ class Module(ABC):
         self.response = response
 
     def update_and_return_response(self):
-        self.response.append_footprint(
-            create_footprint(
-                code=self.code.name,
-                ver=self.version,
-                ))
+        self.response.append_footprint(create_footprint(code=self.code.name, ver=self.version))
         return self.response
 
     def __repr__(self):

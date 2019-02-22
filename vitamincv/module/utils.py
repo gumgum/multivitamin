@@ -2,6 +2,7 @@ import os
 import glog as log
 import pandas as pd
 
+
 def load_idmap(idmap_filepath):
     """Load idmap
     
@@ -65,25 +66,50 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
             qualifying_preds.append(pred)
     return qualifying_preds
 
-def pandas_query_props_match(db_props, query_props_str):
-    """Returns True if query props match db props"""
-    log.debug(f"Prev pois query: {query_props_str}")
-    log.debug(f"against region: {db_props}")
-    queried_pois = db_props.query(query_props_str)
+
+def pandas_bool_exp_match_on_props(bool_exp, props):
+    """Evaluates the boolean expression on a list of properties
+    
+        Note: list of properties must be a pandas.DataFrame
+
+    Args:
+        bool_exp (str): boolean expression
+        props (pd.DataFrame): DataFrame containing list of dicts (properties)
+    
+    Returns:
+        bool: True if bool exp evals to True, else False
+    """
+    log.debug(f"bool_exp: {bool_exp}")
+    log.debug(f"against properties: {props}")
+    queried_pois = props.query(bool_exp)
     log.debug(f"matches? : {not queried_pois.empty}")
     return not queried_pois.empty
 
-def convert_list_of_query_dicts_to_pd_query(query):
-    assert(isinstance(query, list))
+
+def convert_list_of_query_dicts_to_bool_exp(query):
+    """Convert a list of query dicts to a boolean expression to be used in pandas.DataFrame.query
+
+        E.g.
+            [{"property_type":"object", "value":"face"}, {"value":"car"}]
+            is converted to
+            '(property_type == "object") & (value == "face") | (value == "car")'
+    
+    Args:
+        query (list[dict]): list of dictionaries containing key/values of interest
+    
+    Returns:
+        str: boolean expression
+    """
+    assert isinstance(query, list)
     log.debug(query)
-    qstr = ""
+    bool_exp = ""
     for i, q in enumerate(query):
-        assert(isinstance(q, dict))
+        assert isinstance(q, dict)
         for j, (k, v) in enumerate(q.items()):
-            qstr += f'({k} == "{v}")'
-            if j != len(q)-1:
-                qstr += " & "
-        if i != len(query)-1:
-            qstr += " | "
-    log.debug(f"query: {query} transformed into pandas str query: {qstr}")
-    return qstr
+            bool_exp += f'({k} == "{v}")'
+            if j != len(q) - 1:
+                bool_exp += " & "
+        if i != len(query) - 1:
+            bool_exp += " | "
+    log.debug(f"query: {query} transformed into boolean expression: {bool_exp}")
+    return bool_exp

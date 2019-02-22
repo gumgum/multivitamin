@@ -42,12 +42,13 @@ else:
 from caffe.proto import caffe_pb2
 
 
-GPU=True
-DEVICE_ID=0
+GPU = True
+DEVICE_ID = 0
 LAYER_NAME = "prob"
 N_TOP = 1
-CONFIDENCE_MIN=0.1
-LOGOEXCLUDE=["Garbage", "Messy", "MessyDark"]
+CONFIDENCE_MIN = 0.1
+LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
+
 
 class CaffeClassifier(ImagesModule):
     def __init__(
@@ -125,56 +126,56 @@ class CaffeClassifier(ImagesModule):
     def process_images(self, images, tstamps, prev_regions):
         # log.debug("Processing images")
         # log.debug("tstamps: "  + str(tstamps))
-        assert(len(images) == len(tstamps) == len(prev_regions))
+        assert len(images) == len(tstamps) == len(prev_regions)
         for i, (frame, tstamp, prev_region) in enumerate(zip(images, tstamps, prev_regions)):
-            log.debug("caffe classifier tstamp: " +str(tstamp))
-            try:    
+            log.debug("caffe classifier tstamp: " + str(tstamp))
+            try:
                 if prev_region is not None:
                     frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
 
-                im = self.transformer.preprocess('data', frame)
-                self.net.blobs['data'].data[...] = im
-            
-                #TODO : clean this up
+                im = self.transformer.preprocess("data", frame)
+                self.net.blobs["data"].data[...] = im
+
+                # TODO : clean this up
                 probs = self.net.forward()[self.layer_name]
                 # log.debug('probs: ' + str(probs))
                 props = []
                 for p in probs:
                     # log.debug('p: ' + str(p))
                     p_indexes = np.argsort(p)
-                    p_indexes = np.flip(p_indexes,0)
+                    p_indexes = np.flip(p_indexes, 0)
                     while True:
-                        if len(p_indexes)==1:
+                        if len(p_indexes) == 1:
                             break
-                        index=p_indexes[0]
-                        label=self.labels[index]
+                        index = p_indexes[0]
+                        label = self.labels[index]
                         log.debug("label: " + str(label))
                         if label in LOGOEXCLUDE:
-                            p_indexes=np.delete(p_indexes,0)
+                            p_indexes = np.delete(p_indexes, 0)
                         else:
                             break
                     p_indexes = p_indexes[:N_TOP]
-                    
-                    # log.debug("p_indexes: " + str(p_indexes))
-                    
-                    for i,property_id in enumerate(p_indexes):
-                        if i==N_TOP:
-                            break
-                        index=p_indexes[i]
-                        label=self.labels[index]
-                        confidence=p[index]
-                        
-                        #TODO remove this unknown
 
-                        if confidence<CONFIDENCE_MIN:
-                            label='Unknown'
+                    # log.debug("p_indexes: " + str(p_indexes))
+
+                    for i, property_id in enumerate(p_indexes):
+                        if i == N_TOP:
+                            break
+                        index = p_indexes[i]
+                        label = self.labels[index]
+                        confidence = p[index]
+
+                        # TODO remove this unknown
+
+                        if confidence < CONFIDENCE_MIN:
+                            label = "Unknown"
                         prop = create_prop(
                             server=self.name,
                             ver=self.version,
                             value=label,
                             property_type=self.prop_type,
                             confidence=float(confidence),
-                            confidence_min=float(self.confidence_min)
+                            confidence_min=float(self.confidence_min),
                         )
                         if prev_region is not None:
                             prev_region.get("props").append(prop)

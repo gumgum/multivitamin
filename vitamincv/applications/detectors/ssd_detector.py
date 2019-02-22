@@ -89,11 +89,10 @@ class SSDDetector(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-
     def process_images(self, images, tstamps, prev_detections=None):
         for frame, tstamp in zip(images, tstamps):
-            im = self.transformer.preprocess('data', frame)
-            self.net.blobs['data'].data[...] = im
+            im = self.transformer.preprocess("data", frame)
+            self.net.blobs["data"].data[...] = im
             predictions = self.net.forward()[LAYER_NAME]
 
             # regions = []
@@ -111,17 +110,18 @@ class SSDDetector(ImagesModule):
 
                     contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=True)
                     props = []
-                    props.append(create_prop(
-                        confidence=confidence,
-                        confidence_min=CONFIDENCE_MIN,
-                        ver=self.version,
-                        server=self.name,
-                        value=label,
-                        property_type=self.prop_type
-                    ))
+                    props.append(
+                        create_prop(
+                            confidence=confidence,
+                            confidence_min=CONFIDENCE_MIN,
+                            ver=self.version,
+                            server=self.name,
+                            value=label,
+                            property_type=self.prop_type,
+                        )
+                    )
                     # regions.append(create_region(contour=contour, props=props))
                     self.response.append_region(t=tstamp, region=create_region(contour=contour, props=props))
                 except:
                     log.error(traceback.format_exc())
             # self.response.append_regions(t=tstamp, regions=regions)
-

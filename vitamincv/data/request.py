@@ -69,6 +69,7 @@ class Request:
     def __repr__(self):
         return f"request: {self.request}; request_id: {self.request_id}"
 
+
 def _standardize_url(url):
     log.info("Formatting urls in request")
     if not url:

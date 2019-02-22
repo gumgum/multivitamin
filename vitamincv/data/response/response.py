@@ -50,16 +50,18 @@ class Response:
 
     def append_regions(self, t, regions):
         frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")[t]
-        if len(frame_anns)==0:
+        if len(frame_anns) == 0:
             log.info(f"frame anns len == 0, creating new frame ann w/ len(regions): {len(regions)}")
             self._dictionary.get("media_annotation").get("frames_annotation")[t].extend(regions)
         else:
-            log.info(f"frame anns[t] len == {len(frame_anns)}, appending regions frame ann w/ len(regions): {len(regions)}")
+            log.info(
+                f"frame anns[t] len == {len(frame_anns)}, appending regions frame ann w/ len(regions): {len(regions)}"
+            )
             self._dictionary.get("media_annotation").get("frames_annotation")[t].extend(regions)
         log.info(f"len(frame_anns[t]): {len(frame_anns)}")
         frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")[t]
         log.info(f"len(frame_anns[t]): {len(frame_anns)}")
-        
+
     def has_frame_anns(self):
         return len(self.dictionary.get("media_annotation").get("frames_annotation")) > 0
 
@@ -115,6 +117,7 @@ class Response:
         self._dictionary["media_annotation"]["codes"] = codes
 
     """Getters"""
+
     @property
     def media_summaries(self):
         """Get full media summary

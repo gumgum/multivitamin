@@ -14,8 +14,8 @@ class CommAPI(ABC):
         log.debug("Pulling " + str(n) + " items")
 
     @abstractmethod
-    def push(self, request_apis):
+    def push(self, response):
         n = 1
-        if type(request_apis) == type([]):
-            n = len(request_apis)
-        log.debug("Pushing " + str(n) + " items")
+        # if type(request_apis) == type([]):
+        #     n = len(request_apis)
+        # log.debug("Pushing " + str(n) + " items")

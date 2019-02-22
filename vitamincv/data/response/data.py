@@ -1,6 +1,7 @@
 import glog as log
 from collections import defaultdict
 
+
 def create_footprint(
     code="",
     ver="",
@@ -88,12 +89,7 @@ def create_region(contour=None, props=None, father_id="", features="", id=""):
     if not props:
         props = []
     if not contour:
-        contour = [
-            create_point(0.0, 0.0), 
-            create_point(1.0, 0.0), 
-            create_point(1.0, 1.0), 
-            create_point(0.0, 1.0)
-            ]
+        contour = [create_point(0.0, 0.0), create_point(1.0, 0.0), create_point(1.0, 1.0), create_point(0.0, 1.0)]
     return {"contour": contour, "props": props, "features": features, "id": id, "father_id": father_id}
 
 
