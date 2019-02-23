@@ -1,17 +1,15 @@
 import os
 import json
 import traceback
-import glog as log
 import threading
 
+import glog as log
 from flask import Flask, jsonify
 
 from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
-
 from vitamincv.data.request import Request
-from vitamincv.data.response.io import load_response_from_request
-from vitamincv.data.response import Response
+from vitamincv.data.response import Response, SchemaResponseConverter
 
 PORT = os.environ.get("PORT", 5000)
 
@@ -85,8 +83,9 @@ class Server(Flask):
                         try:
                             ret = output_comm.push(response)
                         except Exception as e:
-                            log.info(e)
-                            log.info(traceback.format_exc())
+                            log.error(e)
+                            log.error(traceback.format_exc())
+                            log.error(f"Error pushing to output_comm: {output_comm}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())
@@ -105,10 +104,14 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"request: {request}")
 
-        response = load_response_from_request(request)
+        converter = SchemaResponseConverter()
+        converter.construct_from_request(request)
+        response = converter.get_response()
+
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(request, response)
             log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
-        return response
+        converter.construct_from_response(response)
+        return converter.get_schema_response(request.base64_encoding, request.bin_encoding) 

@@ -19,47 +19,6 @@ from vitamincv.data.response import config
 from vitamincv.data.response import Response
 
 
-def to_response(schema_response):
-    pass
-
-def from_schema_response(response):
-    pass
-
-class SchemaResponse():
-
-    @staticmethod
-    def to
-
-def load_response_from_request(request):
-    """Methodfor loading a previous response from a request"""
-    log.info("Loading a response")
-    try:
-        if not request.prev_response:
-            log.info("No prev_response")
-            return Response(request=request)
-
-        if request.bin_encoding is True:
-            log.info("bin_encoding is True")
-            io = AvroIO()
-            if isinstance(request.prev_response, str):
-                log.info("prev_response is base64 encoded binary")
-                bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
-            else:
-                log.info("prev_response is in binary")
-                bytes = io.decode(request.prev_response, use_base64=False, binary_flag=True)
-            return Response(dictionary=io.decode(bytes), request=request)
-
-        if isinstance(request.prev_response, dict):
-            log.info("prev_response is a dict")
-            return Response(dictionary=request.prev_response, request=request)
-
-    except Exception as e:
-        log.error(traceback.print_exc())
-        log.error(e)
-        log.error("Error loading previous response")
-    log.info("Decoded prev_response")
-
-
 class AvroIO:
     def __init__(self, use_schema_registry=True, use_base64=True):
         """Public interface for Avro IO functionality
@@ -147,10 +106,11 @@ class AvroIO:
                 json.dump(doc, wf, indent=indent)
         return True
 
-    def encode(self, doc):
+    def encode(self, doc, use_base64=False):
         """Encode an avro doc to bytes"""
         bytes = self.impl.encode(doc)
-        if self.use_base64:
+        if use_base64:
+            log.info(f"use_base64={use_base64}")
             bytes = base64.b64encode(bytes)
         return bytes
 

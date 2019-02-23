@@ -7,7 +7,7 @@ import pandas as pd
 import glog as log
 
 from vitamincv.module import Module, Codes
-from vitamincv.module.utils import pandas_query_props_match
+from vitamincv.module.utils import pandas_bool_exp_match_on_props
 from vitamincv.media import MediaRetriever
 
 
@@ -38,7 +38,6 @@ class ImagesModule(Module):
         log.info("Processing message")
         super().process(request, response)
 
-        frames_iterator = []
         try:
             self.media = MediaRetriever(self.request.url)
             self.frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
@@ -47,6 +46,7 @@ class ImagesModule(Module):
             return self.update_and_return_response()
 
         if self.prev_pois and not self.response.has_frame_anns():
+            log.info("NO_PREV_REGIONS_OF_INTEREST")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
             return self.update_and_return_response()
 
@@ -64,6 +64,7 @@ class ImagesModule(Module):
         log.info("Finished processing.")
 
         if self.prev_pois and self.prev_regions_of_interest_count == 0:
+            log.info("NO_PREV_REGIONS_OF_INTEREST")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
         return self.update_and_return_response()
 
@@ -107,14 +108,16 @@ class ImagesModule(Module):
 
             regions = []
             if self.prev_pois:
-                log.info("Processing with previous response")
-                log.info(f"Querying on self.prev_pois: {self.prev_pois}")
+                log.debug("Processing with previous response")
+                log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
 
                 all_tstamp_regions = self.response.frame_anns.get(tstamp)
                 if all_tstamp_regions is not None:
                     for tregion in all_tstamp_regions:
-                        if pandas_query_props_match(pd.DataFrame(tregion.get("props")), self.pd_query_prev_pois):
-                            # if self._region_matches_prev_pois(tregion):
+                        if pandas_bool_exp_match_on_props(
+                                self.prev_pois_bool_exp, 
+                                pd.DataFrame(tregion.get("props"))
+                            ):
                             regions.append(tregion)
                             self.prev_regions_of_interest_count += 1
 

@@ -54,6 +54,11 @@ class Request:
             self.bin_decoding = self.bin_decoding.lower() == "true"
         log.info(f"Setting self.bin_decoding to {self.bin_decoding}")
 
+        self.base64_encoding = self.request.get("base64_encoding", False)
+        if isinstance(self.base64_encoding, str):
+            self.base64_encoding = self.base64_encoding.lower() == "true"
+        log.info(f"Setting self.base64_encoding to {self.base64_encoding}")
+
         self.prev_response = self.request.get("prev_response")
         log.info(f"Setting self.prev_response to {self.prev_response}")
 

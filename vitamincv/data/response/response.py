@@ -42,9 +42,6 @@ class Response:
     def frame_anns(self):
         return self._dictionary.get("media_annotation").get("frames_annotation")
 
-    def to_bytes(self):
-        raise NotImplementedError()
-
     def append_region(self, t, region):
         self._dictionary.get("media_annotation").get("frames_annotation")[t].append(region)
 
