@@ -52,7 +52,7 @@ class Response:
     def append_footprint(self, footprint):
         self._dictionary["media_annotation"]["codes"].append(footprint)
 
-    def append_track(self, track):
+    def append_video_ann(self, track):
         self._dictionary["media_annotation"]["tracks_summary"].append(track)
 
     def append_annotation_tasks(self, annotation_tasks):
@@ -124,7 +124,7 @@ class Response:
     @width.setter
     def width(self, w):
         assert(isinstance(w, int))
-        self._dictionary["media_annotation"]["w"]
+        self._dictionary["media_annotation"]["w"] = w
 
     @property
     def height(self):
@@ -133,7 +133,7 @@ class Response:
     @height.setter
     def height(self, h):
         assert(isinstance(h, int))
-        self._dictionary["media_annotation"]["h"]
+        self._dictionary["media_annotation"]["h"] = h
 
     @property
     def timestamps(self):

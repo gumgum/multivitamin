@@ -16,8 +16,8 @@ class PropertiesModule(Module):
         )
         log.info("Creating PropertiesModule")
 
-    def process(self, request, response):
-        super().process(request, response)
+    def process(self, response):
+        super().process(response)
         self.process_properties()
         return self.update_and_return_response()
 

@@ -3,7 +3,6 @@ import json
 
 import glog as log
 
-from vitamincv.data.request import Request
 from vitamincv.data.response import Response
 from vitamincv.data.response.data import create_footprint
 from vitamincv.data.response.utils import get_current_time
@@ -39,13 +38,13 @@ class Module(ABC):
         return self.prev_pois
 
     @abstractmethod
-    def process(self, request, response):
-        assert isinstance(request, Request)
+    def process(self, response):
         assert isinstance(response, Response)
-        self.request = request
         self.response = response
 
     def update_and_return_response(self):
+        """Update footprints, moduleID, propertyIDs
+        """
         num_footprints = len(self.response.footprints)
         time = get_current_time()
         self.response.append_footprint(
@@ -63,7 +62,21 @@ class Module(ABC):
         return self.response
 
     def _update_ids(self):
-        pass
+        for tstamp, regions in self.response.frame_anns.items():
+            for region in regions:
+                for prop in region["props"]:
+                    if prop["module_id"] == 0:
+                        prop["module_id"] = self.module_id_map[prop["server"]]
+                    if prop["property_id"] == 0:
+                        prop["property_id"] = self.prop_id_map[prop["value"]]
+        
+        for video_ann in self.response.tracks():
+            for prop in video_ann["props"]:
+                if prop["module_id"] == 0:
+                    prop["module_id"] = self.module_id_map[prop["server"]]
+                if prop["property_id"] == 0:
+                    prop["property_id"] = self.prop_id_map[prop["value"]] 
+
 
     def __repr__(self):
         return f"{self.name} {self.version}"

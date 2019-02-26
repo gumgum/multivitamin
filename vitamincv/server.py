@@ -11,7 +11,7 @@ from vitamincv.module import Module
 from vitamincv.data.request import Request
 from vitamincv.data.response import Response, SchemaResponseConverter
 
-PORT = os.environ.get("PORT", 5000)
+HEALTHPORT = os.environ.get("HEALTHPORT", 5000)
 
 
 class Server(Flask):
@@ -66,8 +66,8 @@ class Server(Flask):
 
             Note: this starts a healthcheck endpoint in a separate thread
         """
-        log.info(f"Starting HealthCheck endpoint at /health on port {PORT}")
-        threading.Thread(target=self.run, kwargs={"host": "0.0.0.0", "port": PORT}, daemon=True).start()
+        log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
+        threading.Thread(target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True).start()
         log.info("Starting server...")
         self._start()
 
@@ -110,7 +110,7 @@ class Server(Flask):
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
-            response = module.process(request, response)
+            response = module.process(response)
             log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
         converter.construct_from_response(response)

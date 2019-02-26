@@ -29,22 +29,23 @@ class ImagesModule(Module):
         self.batch_size = batch_size
         log.info(f"Creating ImagesModule with batch_size: {batch_size}")
 
-    def process(self, request, response):
+    def process(self, response):
         """Process the message, calls process_images(batch, tstamps, contours=None)
 
         Returns:
             str code
         """
         log.info("Processing message")
-        super().process(request, response)
+        super().process(response)
 
         try:
-            self.media = MediaRetriever(self.request.url)
-            self.frames_iterator = self.media.get_frames_iterator(self.request.sample_rate)
+            self.media = MediaRetriever(self.response.request.url)
+            self.frames_iterator = self.media.get_frames_iterator(self.response.request.sample_rate)
         except Exception as e:
             self.code = Codes.ERROR_LOADING_MEDIA
             return self.update_and_return_response()
 
+        self._update_w_h()
         
         if self.prev_pois and not self.response.has_frame_anns():
             log.info("NO_PREV_REGIONS_OF_INTEREST")
@@ -132,3 +133,9 @@ class ImagesModule(Module):
     def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
         """Abstract method to be implemented by child module"""
         pass
+
+    def _update_w_h(self):
+        (width, height) = self.media.get_w_h()
+        log.debug(f"Setting in response w: {width} h: {height}")
+        self.response.width = width
+        self.response.height = height
