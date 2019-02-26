@@ -160,7 +160,7 @@ def create_response(point_aux=None, footprint_aux=None, proppair_aux=None,
     return res
 
 def create_footprint(code="", ver="", company="gumgum", labels=None, server_track="",
-                     server="", date="20000101000000", annotator="",
+                     server="", date="20000101000000", annotator="", num_images_processed=0,
                      tstamps=None, id=""):
     if not labels:
         labels = []
@@ -176,6 +176,7 @@ def create_footprint(code="", ver="", company="gumgum", labels=None, server_trac
         "date" : date,
         "annotator" : annotator,
         "tstamps" : tstamps,
+        "num_images_processed": num_images_processed,
         "id" : id
     }
 
