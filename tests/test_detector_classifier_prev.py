@@ -19,7 +19,7 @@ from vitamincv.applications.classifiers.caffe_classifier import CaffeClassifier
 
 test_video = "https://s3.amazonaws.com/video-ann-testing/kitti-clip.mp4"
 dst_video = os.path.join('/tmp', os.path.basename(test_video))
-log.setLevel("DEBUG")
+# log.setLevel("DEBUG")
 
 def test_app():
     _download_video()
