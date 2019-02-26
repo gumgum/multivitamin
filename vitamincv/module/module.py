@@ -6,6 +6,7 @@ import glog as log
 from vitamincv.data.request import Request
 from vitamincv.data.response import Response
 from vitamincv.data.response.data import create_footprint
+from vitamincv.data.response.utils import get_current_time
 from vitamincv.module.codes import Codes
 from vitamincv.module.utils import convert_list_of_query_dicts_to_bool_exp
 
@@ -45,8 +46,24 @@ class Module(ABC):
         self.response = response
 
     def update_and_return_response(self):
-        self.response.append_footprint(create_footprint(code=self.code.name, ver=self.version))
+        num_footprints = len(self.response.footprints)
+        time = get_current_time()
+        self.response.append_footprint(
+            create_footprint(
+                code=self.code.name, 
+                server=self.name,
+                date=time,
+                ver=self.version, 
+                id="{}{}".format(time, num_footprints+1),
+                tstamps=self.response.timestamps
+                )
+            )
+        self.response.url_original = self.response.url
+        self._update_ids()
         return self.response
+
+    def _update_ids(self):
+        pass
 
     def __repr__(self):
         return f"{self.name} {self.version}"

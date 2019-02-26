@@ -45,6 +45,7 @@ class ImagesModule(Module):
             self.code = Codes.ERROR_LOADING_MEDIA
             return self.update_and_return_response()
 
+        
         if self.prev_pois and not self.response.has_frame_anns():
             log.info("NO_PREV_REGIONS_OF_INTEREST")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
