@@ -105,13 +105,6 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"request: {request}")
 
-        # converter = SchemaResponseConverter()
-        # try:
-            # converter.construct_from_request(request)
-        # except Exception as e:
-            # return
-        # response = converter.get_response()
-
         schema_response = request_to_schema_response(request)
         response = schema_response_to_response(schema_response)
 
