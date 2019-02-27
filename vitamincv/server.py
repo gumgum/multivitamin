@@ -9,7 +9,8 @@ from flask import Flask, jsonify
 from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
 from vitamincv.data.request import Request
-from vitamincv.data.response import Response, SchemaResponseConverter
+from vitamincv.data.response import Response
+from vitamincv.data.response.schema_response import request_to_response, response_to_schema_response
 
 HEALTHPORT = os.environ.get("HEALTHPORT", 5000)
 
@@ -104,14 +105,19 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"request: {request}")
 
-        converter = SchemaResponseConverter()
-        converter.construct_from_request(request)
-        response = converter.get_response()
+        # converter = SchemaResponseConverter()
+        # try:
+            # converter.construct_from_request(request)
+        # except Exception as e:
+            # return
+        # response = converter.get_response()
+
+        schema_response = request_to_schema_response(request)
+        response = schema_response_to_response(schema_response)
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(response)
             log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
-        converter.construct_from_response(response)
-        return converter.get_schema_response(request.base64_encoding, request.bin_encoding) 
+        return response_to_schema_response(response).data

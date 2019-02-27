@@ -7,7 +7,7 @@ import random
 import json
 import glog as log
 
-from vitamincv.data.avro_response import AvroIO, AvroAPI
+from vitamincv.data.response import Response, SchemaResponse
 from vitamincv.data.utils import p0p1_from_bbox_contour
 from vitamincv.media_api.media import MediaRetriever
 
@@ -39,7 +39,7 @@ def get_props_from_region(region):
 
 
 class FrameDrawer:
-    def __init__(self, doc_fn=None, avro_api=None, decode=False, dump=False, out="./tmp"):
+    def __init__(self, doc_fn=None, response=None, decode=False, dump=False, out="./tmp"):
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -86,15 +86,7 @@ class FrameDrawer:
             dump_flag = True
             if not os.path.exists(dump_folder):
                 os.makedirs(dump_folder)
-<<<<<<< HEAD:vitamincv/data/response/frame_drawer.py
 
-        for image_ann in self.avro_api.get_image_anns():
-            tstamp = image_ann["t"]
-            if tstamps:  # if not None
-                if tstamp not in tstamps:
-                    continue
-            img = self.med_ret.get_frame(tstamp)
-=======
         #we get the image_annotation tstamps
         tstamps_dets=self.avro_api.get_timestamps()
         log.info('tstamps_dets: ' + str(tstamps_dets))
@@ -105,10 +97,7 @@ class FrameDrawer:
         except:
             log.error(traceback.format_exc())
             exit(1)
-            
 
-
-        
         for i, (img, tstamp) in enumerate(frames_iterator):
             if img is None:
                 log.warning("Invalid frame")
@@ -122,7 +111,6 @@ class FrameDrawer:
             log.info("drawing frame for tstamp: " + str(tstamp))            
             #we get image_ann for that time_stamps
             image_ann=self.avro_api.get_image_ann_from_t(tstamp)
->>>>>>> origin/develop:vitamincv/avro_api/frame_drawer.py
             print(json.dumps(image_ann, indent=2))
             for region in image_ann["regions"]:
                 rand_color = get_rand_bgr()
