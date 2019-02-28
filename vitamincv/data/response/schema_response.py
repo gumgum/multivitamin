@@ -16,13 +16,7 @@ class SchemaResponse():
     def __init__(self, dictionary=None, request=None):
         self._dictionary = dictionary
         self.request = request
-    
-    @property
-    def url(self):
-        if self._dictionary is None:
-            return None
-        return self._dictionary["media_annotation"]["url"]
-    
+
     @property
     def dictionary(self):
         return self._dictionary
@@ -46,6 +40,12 @@ class SchemaResponse():
         log.info(f"base64 encoding: {self.request.base64_encoding}")
         io = AvroIO()
         return io.encode(self._dictionary, self.request.base64_encoding)
+
+    @property
+    def url(self):
+        if self._dictionary is None:
+            return None
+        return self._dictionary["media_annotation"]["url"]
 
 def request_to_schema_response(request):
     """Prev response can come in the following forms
