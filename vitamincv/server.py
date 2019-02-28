@@ -10,7 +10,12 @@ from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
 from vitamincv.data.request import Request
 from vitamincv.data.response import Response
-from vitamincv.data.response.schema_response import request_to_response, response_to_schema_response
+from vitamincv.data.response import (
+    request_to_schema_response,
+    schema_response_to_response,
+    response_to_schema_response,
+    SchemaResponse,
+)
 
 HEALTHPORT = os.environ.get("HEALTHPORT", 5000)
 
@@ -68,7 +73,9 @@ class Server(Flask):
             Note: this starts a healthcheck endpoint in a separate thread
         """
         log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
-        threading.Thread(target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True).start()
+        threading.Thread(
+            target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True
+        ).start()
         log.info("Starting server...")
         self._start()
 

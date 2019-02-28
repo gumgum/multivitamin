@@ -1,6 +1,10 @@
-# Wrapper around Response
-# constructor and setter has conversion to schema response
+"""SchemaResponse is a wrapper around vitamincv.data.Response
 
+Provided here are methods to convert between Response and SchemaResponse
+
+We have separate classes in order to have a separate between the modifiable internal
+representation of Response, and the more rigid/difficult to change schema response format
+"""
 import glog as log
 import copy
 
@@ -90,21 +94,21 @@ def schema_response_to_response(schema_response):
     """
     """
     log.info("Converting schema_response to response")
-    assert(isinstance(request, Response))
+    assert(isinstance(schema_response, SchemaResponse))
 
     if schema_response.dictionary is None: 
         log.info("Empty prev_response")
-        return Response(request=self._schema_response.request)
+        return Response(request=schema_response.request)
     
     log.info("Non empty prev_response")
     log.info("Converting frame_anns list to frame_anns dict")
     
-    frame_anns = copy.deepcopy(self._schema_response.dictionary.get("media_annotation").get("frames_annotation"))
+    frame_anns = copy.deepcopy(schema_response.dictionary.get("media_annotation").get("frames_annotation"))
     assert(isinstance(frame_anns, list))
     frame_anns_dict = {image_ann['t']: image_ann['regions'] for image_ann in frame_anns}
-    response_dict = copy.deepcopy(self._schema_response.dictionary)
+    response_dict = copy.deepcopy(schema_response.dictionary)
     response_dict["media_annotation"]["frames_annotation"] = frame_anns_dict
-    return Response(dictionary=response_dict, request=self._schema_response.request)
+    return Response(dictionary=response_dict, request=schema_response.request)
 
 def response_to_schema_response(response):
     """
@@ -115,8 +119,8 @@ def response_to_schema_response(response):
     frame_anns = response.dictionary.get("media_annotation").get("frames_annotation")
     assert(isinstance(frame_anns, dict))
     frame_anns_list = [{'t': tstamp, 'regions': regions} for tstamp, regions in frame_anns.items()]
-    response["media_annotation"]["frames_annotation"] = frame_anns_list
-    return SchemaResponse(dictionary=response, request=self._response.request)
+    response.dictionary["media_annotation"]["frames_annotation"] = frame_anns_list
+    return SchemaResponse(dictionary=response, request=response.request)
 
 
 

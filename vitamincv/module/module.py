@@ -41,6 +41,7 @@ class Module(ABC):
     def process(self, response):
         assert isinstance(response, Response)
         self.response = response
+        self.request = response.request
 
     def update_and_return_response(self):
         """Update footprints, moduleID, propertyIDs
@@ -62,21 +63,38 @@ class Module(ABC):
         return self.response
 
     def _update_ids(self):
+        """Internal method for updating property id and module id 
+           in frame_anns and tracks
+        """
         for tstamp, regions in self.response.frame_anns.items():
             for region in regions:
                 for prop in region["props"]:
-                    if prop["module_id"] == 0:
-                        prop["module_id"] = self.module_id_map[prop["server"]]
-                    if prop["property_id"] == 0:
-                        prop["property_id"] = self.prop_id_map[prop["value"]]
-        
-        for video_ann in self.response.tracks():
+                    self._update_property_id(prop)
+                    self._update_module_id(prop)
+
+        for video_ann in self.response.tracks:
             for prop in video_ann["props"]:
-                if prop["module_id"] == 0:
-                    prop["module_id"] = self.module_id_map[prop["server"]]
-                if prop["property_id"] == 0:
-                    prop["property_id"] = self.prop_id_map[prop["value"]] 
+                self._update_property_id(prop)
+                self._update_module_id(prop)
 
+    def _update_property_id(self, prop):
+        """Internal method for updating property id in a property
+        """
+        if self.prop_id_map is None:
+            return
+        if prop["property_id"] == 0:
+            value = prop.get("value", "")
+            prop["property_id"] = self.prop_id_map.get(value, 0)
 
+    def _update_module_id(self, prop):
+        """Internal method for updating module id in a property
+        """
+        if self.module_id_map is None:
+            return
+        if prop["module_id"] == 0:
+            server = prop.get("server", "")
+            prop["module_id"] = self.module_id_map.get(server, 0)
+        
     def __repr__(self):
         return f"{self.name} {self.version}"
+

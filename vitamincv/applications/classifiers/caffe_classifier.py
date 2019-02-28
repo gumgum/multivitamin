@@ -7,7 +7,6 @@ import importlib
 import inspect
 import numbers
 
-from vitamincv.exceptions import ParseError
 from vitamincv.module import ImagesModule
 from vitamincv.data.response.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
 from vitamincv.module.utils import min_conf_filter_predictions
@@ -99,7 +98,7 @@ class CaffeClassifier(ImagesModule):
         except Exception as err:
             log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
-            raise ParseError(err)
+            raise ValueError(err)
 
         self.labels = {idx: label for idx, label in enumerate(self.labels)}
         # Set min conf for all labels to 0, but exclude logos in LOGOEXCLDUE
