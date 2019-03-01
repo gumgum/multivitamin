@@ -26,6 +26,7 @@ if importlib.util.find_spec("av"):
     print("PyAV not installed. Will not install PIMS")
     reqs.append("pims")
 
+
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
 
