@@ -113,7 +113,7 @@ class AvroAPI():
         if len(region_id_query)>0:
             region_id=region_id_query
         else:
-            region_id=create_region_id(detection["t"], detection["contour"])
+            region_id=create_region_id()
 
         region=self.get_region_from_region_id(region_id)
         if region:#If the region already exists

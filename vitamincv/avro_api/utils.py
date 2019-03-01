@@ -6,6 +6,7 @@ import json
 import datetime
 import tqdm
 import cv2
+import random
 
 from vitamincv.avro_api import config
 from vitamincv.avro_api.cv_schema_factory import *
@@ -241,27 +242,13 @@ def crop_image_from_bbox_contour(image, contour):
     (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour)
     return image[y0:y1, x0:x1]
 
-def create_region_id(tstamp, contour):
+def create_region_id():
     """Create a region_id
 
-    Args:
-        tstamp (float): timestamp
-        contour (dict[float]): points of contour
-
     Returns:
-        str: region_id
+        str: random 16 digit number
     """
-    tstamp = round_float_to_str(tstamp)
-    contour = round_all_pts_in_contour_to_str(contour)
-    assert(len(contour)==4)
-    xmin = contour[0].get("x")
-    xmax = contour[1].get("x")
-    ymin = contour[0].get("y")
-    ymax = contour[2].get("y")
-    
-    return "{}_({},{})({},{})({},{})({},{})".format(
-        tstamp, xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
-    )
+    return str(int(random.random() * 1e16))
 
 # def jaccard_distance_between_contours(contourA, contourB, w, h):
 #     pass
