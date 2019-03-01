@@ -56,7 +56,9 @@ class ThreadManager:
         self._timeout = timeout
         self.workers = []
         for _ in range(n):
-            self.workers.append(ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout))
+            self.workers.append(
+                ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+            )
             self.workers[-1].start()
 
     def _build_workers(self, func, n=1, on_kill=None, timeout=1, max_queue_size=-1):
@@ -64,7 +66,9 @@ class ThreadManager:
         self.workers = []
         self.queue = Queue(max_queue_size)
         for _ in range(n):
-            self.workers.append(ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout))
+            self.workers.append(
+                ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+            )
             self.workers[-1].start()
 
     def kill_workers(self):
@@ -159,7 +163,9 @@ class ProcessManager:
         self._timeout = timeout
         self.workers = []
         for _ in range(n):
-            self.workers.append(ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout))
+            self.workers.append(
+                ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+            )
             self.workers[-1].start()
 
     def _build_workers(self, func, n=1, on_kill=None, timeout=1, max_queue_size=-1):
@@ -167,7 +173,9 @@ class ProcessManager:
         self.workers = []
         self.queue = mQueue(max_queue_size)
         for _ in range(n):
-            self.workers.append(ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout))
+            self.workers.append(
+                ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+            )
             self.workers[-1].start()
 
     def kill_workers(self):
@@ -196,14 +204,24 @@ def WorkerManager(
     if parallelization == "thread":
         assert callable(func)
         return ThreadManager(
-            func, n=n, on_kill=on_kill, on_start=on_start, timeout=timeout, max_queue_size=max_queue_size
+            func,
+            n=n,
+            on_kill=on_kill,
+            on_start=on_start,
+            timeout=timeout,
+            max_queue_size=max_queue_size,
         )
     if parallelization == "redis":
         return RedisManager(n=n, on_kill=on_kill, q_name=q_name)
     if parallelization == "process":
         assert callable(func)
         return ProcessManager(
-            func, n=n, on_kill=on_kill, on_start=on_start, timeout=timeout, max_queue_size=max_queue_size
+            func,
+            n=n,
+            on_kill=on_kill,
+            on_start=on_start,
+            timeout=timeout,
+            max_queue_size=max_queue_size,
         )
 
 

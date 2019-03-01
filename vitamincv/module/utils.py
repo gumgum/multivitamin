@@ -9,11 +9,11 @@ def load_idmap(idmap_filepath):
     Each row corresponds to an int_id, label_str pairing, tab-separated    
     
     Args:
-    idmap_filepath (str): path to idmap
+        idmap_filepath (str): path to idmap
     
     Raises:
-    FileNotFoundError: if idmap does not exist
-    ValueError: Problems parsing 
+        FileNotFoundError: if idmap does not exist
+        ValueError: Problems parsing 
     """
     idmap = {}
     if not os.path.exists(idmap_filepath):
@@ -71,7 +71,7 @@ def pandas_bool_exp_match_on_props(bool_exp, props):
     """Evaluates the boolean expression on a list of properties
     
         Note: list of properties must be a pandas.DataFrame
-
+        See: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
     Args:
         bool_exp (str): boolean expression
         props (pd.DataFrame): DataFrame containing list of dicts (properties)
@@ -90,7 +90,10 @@ def convert_list_of_query_dicts_to_bool_exp(query):
     """Convert a list of query dicts to a boolean expression to be used in pandas.DataFrame.query
 
         E.g.
-            [{"property_type":"object", "value":"face"}, {"value":"car"}]
+            [
+                {"property_type":"object", "value":"face"}, 
+                {"value":"car"}
+            ]
             is converted to
             '(property_type == "object") & (value == "face") | (value == "car")'
     

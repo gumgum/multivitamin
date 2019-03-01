@@ -55,7 +55,7 @@ class FrameDrawer:
             log.warning(out + " already exists.")
         if doc_fn is not None and schema_response is not None:
             raise ValueError("Both doc_fn and schema_response should not be set")
-        
+
         dictionary = None
         if doc_fn:
             aio = AvroIO()
@@ -69,7 +69,7 @@ class FrameDrawer:
             sr = SchemaResponse(dictionary=dictionary)
             self.response = schema_response_to_response(sr)
         elif response is not None:
-            assert(isinstance(response, Response))
+            assert isinstance(response, Response)
             self.response = response
 
         self.dump = dump
@@ -94,12 +94,12 @@ class FrameDrawer:
                 os.makedirs(dump_folder)
 
         tstamps = self.schema_response.timestamps
-        assert(len(tstamps) > 1)
+        assert len(tstamps) > 1
         sample_rate = tstamps[1] - tstamps[0]
-        
-        log.info(f'tstamps: {tstamps}')
 
-        frames_iterator=[]
+        log.info(f"tstamps: {tstamps}")
+
+        frames_iterator = []
         try:
             frames_iterator = self.med_ret.get_frames_iterator(sample_rate=sample_rate)
         except:
@@ -115,9 +115,9 @@ class FrameDrawer:
                 continue
             if tstamp not in tstamps:
                 continue
-            
+
             log.info(f"drawing frame for tstamp: {tstamp}")
-            #we get image_ann for that time_stamps
+            # we get image_ann for that time_stamps
             image_ann = self.response.frame_anns.get(tstamp)
             log.info(json.dumps(image_ann, indent=2))
             for region in image_ann["regions"]:
@@ -126,7 +126,15 @@ class FrameDrawer:
                 img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                 prop_strs = get_props_from_region(region)
                 for i, prop in enumerate(prop_strs):
-                    img = cv2.putText(img, prop, (p0[0] + 3, p1[1] - 3 + i * 25), face, scale, rand_color, thickness)
+                    img = cv2.putText(
+                        img,
+                        prop,
+                        (p0[0] + 3, p1[1] - 3 + i * 25),
+                        face,
+                        scale,
+                        rand_color,
+                        thickness,
+                    )
             if dump_flag:
                 outfn = "{}/{}.jpg".format(dump_folder, tstamp)
                 cv2.imwrite(outfn, img)

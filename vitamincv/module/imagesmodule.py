@@ -17,7 +17,13 @@ BATCH_SIZE = 2
 
 class ImagesModule(Module):
     def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None, batch_size=BATCH_SIZE
+        self,
+        server_name,
+        version,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None,
+        batch_size=BATCH_SIZE,
     ):
         super().__init__(
             server_name=server_name,
@@ -40,21 +46,26 @@ class ImagesModule(Module):
         super().process(response)
 
         try:
+            log.info(f"Loading media from url: {self.response.request.url}")
             self.media = MediaRetriever(self.response.request.url)
             self.frames_iterator = self.media.get_frames_iterator(self.response.request.sample_rate)
         except Exception as e:
+            log.error(e)
+            log.error(traceback.print_exc())
             self.code = Codes.ERROR_LOADING_MEDIA
             return self.update_and_return_response()
 
-        self._update_w_h()
-        
+        self._update_w_h_in_response()
+
         if self.prev_pois and not self.response.has_frame_anns():
             log.info("NO_PREV_REGIONS_OF_INTEREST")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
             return self.update_and_return_response()
 
         num_problematic_frames = 0
-        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(self.preprocess_input()):
+        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(
+            self.preprocess_input()
+        ):
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
             except ValueError as e:
@@ -118,9 +129,8 @@ class ImagesModule(Module):
                 if all_tstamp_regions is not None:
                     for tregion in all_tstamp_regions:
                         if pandas_bool_exp_match_on_props(
-                                self.prev_pois_bool_exp, 
-                                pd.DataFrame(tregion.get("props"))
-                            ):
+                            self.prev_pois_bool_exp, pd.DataFrame(tregion.get("props"))
+                        ):
                             regions.append(tregion)
                             self.prev_regions_of_interest_count += 1
 
@@ -135,7 +145,7 @@ class ImagesModule(Module):
         """Abstract method to be implemented by child module"""
         pass
 
-    def _update_w_h(self):
+    def _update_w_h_in_response(self):
         (width, height) = self.media.get_w_h()
         log.debug(f"Setting in response w: {width} h: {height}")
         self.response.width = width

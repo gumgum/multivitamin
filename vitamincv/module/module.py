@@ -40,24 +40,27 @@ class Module(ABC):
     @abstractmethod
     def process(self, response):
         assert isinstance(response, Response)
+        self.code = Codes.SUCCESS
         self.response = response
         self.request = response.request
 
     def update_and_return_response(self):
         """Update footprints, moduleID, propertyIDs
         """
+        log.info(f"Updating and returning response with code: {self.code.name}")
         num_footprints = len(self.response.footprints)
         time = get_current_time()
+        log.info("Appending footprints")
         self.response.append_footprint(
             create_footprint(
-                code=self.code.name, 
+                code=self.code.name,
                 server=self.name,
                 date=time,
-                ver=self.version, 
-                id="{}{}".format(time, num_footprints+1),
-                tstamps=self.response.timestamps
-                )
+                ver=self.version,
+                id="{}{}".format(time, num_footprints + 1),
+                tstamps=self.response.timestamps,
             )
+        )
         self.response.url_original = self.response.url
         self._update_ids()
         return self.response
@@ -80,6 +83,7 @@ class Module(ABC):
     def _update_property_id(self, prop):
         """Internal method for updating property id in a property
         """
+        log.debug("Updating property ids")
         if self.prop_id_map is None:
             return
         if prop["property_id"] == 0:
@@ -89,12 +93,12 @@ class Module(ABC):
     def _update_module_id(self, prop):
         """Internal method for updating module id in a property
         """
+        log.debug("Updating module ids")
         if self.module_id_map is None:
             return
         if prop["module_id"] == 0:
             server = prop.get("server", "")
             prop["module_id"] = self.module_id_map.get(server, 0)
-        
+
     def __repr__(self):
         return f"{self.name} {self.version}"
-

@@ -24,5 +24,7 @@ class PropertiesModule(Module):
     @abstractmethod
     def process_properties(self):
         """Abstract method to be implemented to the child PropertiesModule
+
+        Should populate response with self.response.append_track()
         """
         pass

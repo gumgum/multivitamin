@@ -12,6 +12,7 @@ from enum import Enum
 import math
 
 import importlib.util
+
 if importlib.util.find_spec("pims") and importlib.util.find_spec("av"):
     import pims
 else:
@@ -20,13 +21,16 @@ else:
 FRAME_EPS = 0.001
 DECIMAL_SIGFIG = 3
 
-class Limitation(Enum):
-    MEMORY="memory"
-    CPU="cpu"
 
-class FileRetriever():
-    '''A generic object for retrieving files
-    '''
+class Limitation(Enum):
+    MEMORY = "memory"
+    CPU = "cpu"
+
+
+class FileRetriever:
+    """A generic object for retrieving files
+    """
+
     def __init__(self, url=None):
         self._url = None
         self._is_local = None
@@ -75,7 +79,7 @@ class FileRetriever():
 
     @property
     def filepath(self):
-        return self.url.replace("file://","") if self.is_local else None
+        return self.url.replace("file://", "") if self.is_local else None
 
     @property
     def content_type(self):
@@ -102,7 +106,7 @@ class FileRetriever():
         return os.path.basename(self.url)
 
     def download(self, filepath=None, return_filelike=False):
-        '''Download file to filepath
+        """Download file to filepath
 
         Args:
             filepath (str | optional): Filepath to write file to.
@@ -113,7 +117,7 @@ class FileRetriever():
         Returns:
             filelike_obj: A BytesIO object containing the file bytes
                             (only if return_filelike is True)
-        '''
+        """
         if self.is_remote:
             response = requests.get(self.url)
             filelike_obj = BytesIO(response.content)
@@ -134,6 +138,7 @@ class FileRetriever():
             filelike_obj.seek(0)
             return filelike_obj
 
+
 class MediaRetriever(FileRetriever):
     def __init__(self, url=None, limitation="memory"):
         super(MediaRetriever, self).__init__(url=url)
@@ -151,7 +156,11 @@ class MediaRetriever(FileRetriever):
         self._cap = None
         self._image = None
         if not self.is_image and not self.is_video:
-            raise ValueError("Unsupported Content-Type: {}\n Expected one of these options:\n {}, {}".format(self.content_type, "image/*", "video/*"))
+            raise ValueError(
+                "Unsupported Content-Type: {}\n Expected one of these options:\n {}, {}".format(
+                    self.content_type, "image/*", "video/*"
+                )
+            )
 
     @property
     def is_video(self):
@@ -222,21 +231,21 @@ class MediaRetriever(FileRetriever):
     def length(self):
         if self.is_image:
             return 0
-        return float(self.total_frames)/self.fps
+        return float(self.total_frames) / self.fps
 
     @property
     def shape(self):
-        '''Gets height by width by channels for frames
-        '''
+        """Gets height by width by channels for frames
+        """
         if self.is_image:
             return self.image.shape
 
         if isinstance(self.video_capture, cv2.VideoCapture):
             if not self.video_capture.isOpened():
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            width  = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            channels = 3 # This shouldn't be hard coded
+            channels = 3  # This shouldn't be hard coded
             return (height, width, channels)
         if isinstance(self.video_capture, pims.Video):
             return self.video_capture.frame_shape
@@ -253,12 +262,12 @@ class MediaRetriever(FileRetriever):
         image = np.array(Image.open(filelike_obj))
         if image.shape[2] > 3:
             log.warning("Image has >3 channels. Cropping to 3.")
-            image = image[:,:,:3]
-        self._image = image[:,:,::-1].copy()
+            image = image[:, :, :3]
+        self._image = image[:, :, ::-1].copy()
         return self._image
 
     def tstamp_to_frame_index(self, tstamp):
-        return round(tstamp*self.fps)
+        return round(tstamp * self.fps)
 
     def get_frame(self, tstamp=0.0):
         """Return frame if image, or get frame with timestamp in seconds (w/ demicals)
@@ -266,13 +275,13 @@ class MediaRetriever(FileRetriever):
         Note: iterating using get_frames_iterator is significantly faster
         """
         if not self.url:
-            raise ValueError("URL not set. Please use med_ret.set_url(\"...\")")
+            raise ValueError('URL not set. Please use med_ret.set_url("...")')
 
         if self.is_image:
             return self.image
         elif self.is_video:
             if isinstance(self.video_capture, cv2.VideoCapture):
-                self.video_capture.set(cv2.CAP_PROP_POS_MSEC, tstamp*1000)
+                self.video_capture.set(cv2.CAP_PROP_POS_MSEC, tstamp * 1000)
                 ret, frame = self.video_capture.read()
             if isinstance(self.video_capture, pims.Video):
                 frame_idx = self.tstamp_to_frame_index(tstamp)
@@ -307,8 +316,8 @@ class MediaRetriever(FileRetriever):
             ValueError: If URL is not set
         """
         if not self.url:
-            raise ValueError("URL not set. Please use med_ret.set_url(\"...\")")
-        self.period = 1.0/sample_rate
+            raise ValueError('URL not set. Please use med_ret.set_url("...")')
+        self.period = 1.0 / sample_rate
         if self.is_image:
             return [(self.image, 0.00)]
         elif self.is_video:
@@ -326,7 +335,8 @@ class MediaRetriever(FileRetriever):
     def get_w_h(self):
         return self.shape[0:2][::-1]
 
-class FramesIterator():
+
+class FramesIterator:
     """Frames iterator object for videos
 
     Usage:
@@ -336,6 +346,7 @@ class FramesIterator():
     Note: Do not use multiple times/attempt to restart from the start of the video. This feature is incomplete.
     TODO: check to see if start_tstamp & end_tstamp checks cause significant slowing
     """
+
     def __init__(self, video_cap, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
         """Frames iterator constructor
 
@@ -354,7 +365,7 @@ class FramesIterator():
         if isinstance(self.cap, pims.Video):
             fps = self.cap.frame_rate
 
-        self.period = max(1.0/sample_rate, 1.0/fps)
+        self.period = max(1.0 / sample_rate, 1.0 / fps)
         log.info("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
@@ -362,7 +373,7 @@ class FramesIterator():
         self.first_frame = True
 
         if isinstance(self.cap, cv2.VideoCapture) and start_tstamp != 0.0:
-            self.cap.set(cv2.CAP_PROP_POS_MSEC, start_tstamp*1000)
+            self.cap.set(cv2.CAP_PROP_POS_MSEC, start_tstamp * 1000)
 
         log.info("Setting start_tstamp of iterator to {}".format(start_tstamp))
 
@@ -370,17 +381,17 @@ class FramesIterator():
         self.cur_tstamp = self.start_tstamp
         self.first_frame = True
         if isinstance(self.cap, cv2.VideoCapture) and self.start_tstamp != 0.0:
-            self.cap.set(cv2.CAP_PROP_POS_MSEC, self.start_tstamp*1000)
+            self.cap.set(cv2.CAP_PROP_POS_MSEC, self.start_tstamp * 1000)
         return self
 
     def _round_tstamp(self, tstamp):
-        tstamp = math.floor(tstamp*100000.0)/100000.0
+        tstamp = math.floor(tstamp * 100000.0) / 100000.0
         return round(tstamp, DECIMAL_SIGFIG)
 
     def __next__(self):
         ret = True
         frame = None
-        while(ret and self.cur_tstamp <= self.end_tstamp):
+        while ret and self.cur_tstamp <= self.end_tstamp:
             if isinstance(self.cap, cv2.VideoCapture):
                 tstamp = self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
                 ret = self.cap.grab()
@@ -391,11 +402,11 @@ class FramesIterator():
                     return frame, self._round_tstamp(tstamp)
             if isinstance(self.cap, pims.Video):
                 try:
-                    frame_idx = round(self.cur_tstamp*self.cap.frame_rate)
+                    frame_idx = round(self.cur_tstamp * self.cap.frame_rate)
                     frame = self.cap[frame_idx]
                     frame = np.array(frame)[:, :, ::-1]
                     self.cur_tstamp += self.period
-                    tstamp = frame_idx/self.cap.frame_rate
+                    tstamp = frame_idx / self.cap.frame_rate
                     return frame, self._round_tstamp(tstamp)
                 except ValueError:
                     ret = False

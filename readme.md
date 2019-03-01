@@ -16,6 +16,10 @@ At GumGum, we needed a way to serve CV & ML models in the cloud while being agno
 
 Create a class that inherits from Module, ImagesModule, or PropertiesModule. Implement a process_images or process_properties or process method.
 
+ImagesModule: a child of Module. ...
+
+PropertiesModule: a child of Module. ...
+
 Self.request has everything from request
 Self.response
 

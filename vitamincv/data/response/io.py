@@ -12,7 +12,11 @@ import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter, BinaryDecoder, BinaryEncoder
 from confluent_kafka.avro.cached_schema_registry_client import CachedSchemaRegistryClient
-from confluent_kafka.avro.serializer.message_serializer import MessageSerializer, ContextStringIO, MAGIC_BYTE
+from confluent_kafka.avro.serializer.message_serializer import (
+    MessageSerializer,
+    ContextStringIO,
+    MAGIC_BYTE,
+)
 from confluent_kafka.avro.serializer import SerializerError
 
 from vitamincv.data.response import config
@@ -20,7 +24,7 @@ from vitamincv.data.response import Response
 
 
 class AvroIO:
-    def __init__(self, use_schema_registry=True, use_base64=True):
+    def __init__(self, use_schema_registry=True):
         """Public interface for Avro IO functionality
         
         Args:
@@ -28,11 +32,10 @@ class AvroIO:
             use_base64 (bool): encoding binary to base64
         """
         self.impl = None
-        self.use_base64 = use_base64
+        self.use_base64 = False
+        log.info(f"use_schema_registry: {use_schema_registry}")
         if use_schema_registry:
             self.impl = _AvroIORegistry()
-            log.warning("Setting use_base64=False because use_schema_registry=True")
-            self.use_base64 = False
         else:
             self.impl = _AvroIOLocal()
 
@@ -52,7 +55,7 @@ class AvroIO:
         """
         return str(self.impl.schema).replace("\\", "")
 
-    def decode_file(self, file_path):
+    def decode_binary_file(self, file_path):
         """Decode an Avro Binary using the schema
 
         Args:
@@ -69,8 +72,7 @@ class AvroIO:
 
     def decode(self, bytes, use_base64=False, binary_flag=True):
         """Decode an Avro Binary using the CV schema from bytes"""
-        self.use_base64 = use_base64
-        if self.use_base64:
+        if use_base64:
             bytes = base64.b64decode(bytes)
         if binary_flag:
             return self.impl.decode(bytes)
@@ -156,7 +158,9 @@ class AvroIO:
 class _AvroIOLocal:
     def __init__(self):
         """Private implementation class for Avro IO of local files"""
-        local_schema_file = pkg_resources.resource_filename("vitamincv.data.response", "schema.avsc")
+        local_schema_file = pkg_resources.resource_filename(
+            "vitamincv.data.response", "schema.avsc"
+        )
         log.debug("Using local schema file {}".format(local_schema_file))
         if not os.path.exists(local_schema_file):
             raise FileNotFoundError("Schema file not found")

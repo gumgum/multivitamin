@@ -33,10 +33,14 @@ if importlib.util.find_spec("caffe"):
     import caffe
 elif CAFFE_PYTHON:
     raise ImportError(
-        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(CAFFE_PYTHON)
+        "Cannot find SSD py-caffe in '{}'. Make sure py-caffe is properly compiled there.".format(
+            CAFFE_PYTHON
+        )
     )
 else:
-    raise ImportError("Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON.")
+    raise ImportError(
+        "Install py-caffe, set PYTHONPATH to point to py-caffe, or set enviroment variable CAFFE_PYTHON."
+    )
 
 from caffe.proto import caffe_pb2
 
@@ -68,7 +72,11 @@ class CaffeClassifier(ImagesModule):
     ):
 
         super().__init__(
-            server_name, version, prop_type=prop_type, prop_id_map=prop_id_map, module_id_map=module_id_map
+            server_name,
+            version,
+            prop_type=prop_type,
+            prop_id_map=prop_id_map,
+            module_id_map=module_id_map,
         )
 
         self.confidence_min = confidence_min
@@ -110,7 +118,9 @@ class CaffeClassifier(ImagesModule):
             self.min_conf_filter[label] = min_conf
 
         self.net = caffe.Net(
-            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
+            os.path.join(net_data_dir, "deploy.prototxt"),
+            os.path.join(net_data_dir, "model.caffemodel"),
+            caffe.TEST,
         )
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
         self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})

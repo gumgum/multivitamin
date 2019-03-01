@@ -33,10 +33,14 @@ class SQSAPI(CommAPI):
     def pull(self, n=1):
         super().pull(n)
         log.debug("Polling request from queue {}...".format(self.queue_url))
-        response = self.sqs.receive_message(QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC)
+        response = self.sqs.receive_message(
+            QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
+        )
         while "Messages" not in response:
             log.info("Polling request from queue {}...".format(self.queue_url))
-            response = self.sqs.receive_message(QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC)
+            response = self.sqs.receive_message(
+                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
+            )
         log.info("response: " + str(response))
         requests = []
         for m in response["Messages"]:

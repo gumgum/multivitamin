@@ -63,7 +63,9 @@ class Response:
 
     def sort_image_anns_by_timestamp(self):
         tmp = self._dictionary["media_annotation"]["frames_annotation"]
-        self._dictionary["media_annotation"]["frames_annotation"] = sorted(tmp, key=lambda k: k["t"])
+        self._dictionary["media_annotation"]["frames_annotation"] = sorted(
+            tmp, key=lambda k: k["t"]
+        )
 
     def sort_tracks_summary_by_timestamp(self):
         tmp = self._dictionary["media_annotation"]["tracks_summary"]
@@ -123,7 +125,7 @@ class Response:
 
     @width.setter
     def width(self, w):
-        assert(isinstance(w, int))
+        assert isinstance(w, int)
         self._dictionary["media_annotation"]["w"] = w
 
     @property
@@ -132,7 +134,7 @@ class Response:
 
     @height.setter
     def height(self, h):
-        assert(isinstance(h, int))
+        assert isinstance(h, int)
         self._dictionary["media_annotation"]["h"] = h
 
     @property

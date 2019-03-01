@@ -25,18 +25,18 @@ class Request:
     @property
     def url(self):
         return _standardize_url(self.request.get("url"))
-    
+
     @property
     def sample_rate(self):
         return self.request.get("sample_rate", DEFAULT_SAMPLE_RATE)
-    
+
     @property
     def bin_encoding(self):
         be = self.request.get("bin_encoding", True)
         if isinstance(be, str):
             be = be.lower() == "true"
         return be
-    
+
     @property
     def bin_decoding(self):
         de = self.request.get("bin_decoding", True)
@@ -44,9 +44,6 @@ class Request:
             de = de.lower() == "true"
         return de
 
-        self._load_params(self.request)
-        self.url = _standardize_url(self.request.get("url"))
-    
     @property
     def base64_encoding(self):
         be = self.request.get("base64_encoding", True)
@@ -57,15 +54,15 @@ class Request:
     @property
     def prev_response(self):
         return self.request.get("prev_response")
-    
+
     @property
     def prev_response_url(self):
         return self.request.get("prev_response_url")
-    
+
     @property
     def dst_url(self):
         return self.request.get("dst_url")
-    
+
     @property
     def flags(self):
         return self.request.get("flags")

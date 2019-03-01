@@ -28,7 +28,6 @@ CAFFE_S3_NET_DATA_FOLDER = "models/caffe/SportsNHLLogoClassifier-v1.2/"
 SSD_S3_NET_DATA_FOLDER = "models/caffe/ssd/SportsNHLPlacementDetector-v1.2/"
 
 def load():
-
     ssd = None
     ssd_server_name = "TestSSDClassifier"
     ssd_version = "0.0.0"

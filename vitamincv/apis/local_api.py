@@ -6,6 +6,7 @@ from pathlib import Path
 from queue import Queue
 
 from vitamincv.data.request import Request
+from vitamincv.data.response import SchemaResponse
 from vitamincv.apis.comm_api import CommAPI
 from vitamincv.data.response.utils import get_current_date
 
@@ -73,24 +74,30 @@ class LocalAPI(CommAPI):
         if not isinstance(responses, list):
             responses = [responses]
 
+        for response in responses:
+            assert(isinstance(response, SchemaResponse))
+
         log.debug(f"Pushing {len(responses)} items to folder: {self.pushing_folder}")
         outfns = []
         for res in responses:
-            json_fn = self.get_json_fn(res)
+            fn = self.get_fn(res)
 
-            if not os.path.exists(os.path.dirname(json_fn)):
-                os.makedirs(os.path.dirname(json_fn))
-            log.info(f"Writing {json_fn}")
-            with open(json_fn, "w") as wf:
-                wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
-            outfns.append(json_fn)
+            if not os.path.exists(os.path.dirname(fn)):
+                os.makedirs(os.path.dirname(fn))
+            log.info(f"Writing {fn}")
+            with open(fn, "w") as wf:
+                if res.request.bin_encoding is True:
+                    wf.write(res.data)
+                else:
+                    wf.write(json.dumps(res.data, indent=INDENTATION))
+            outfns.append(fn)
         return outfns
 
-    def get_json_fn(self, response):
-        """Create a fn from url string from avro_api
+    def get_fn(self, response):
+        """Create a fn from url string 
 
         Args:
-            aapi (avro_api): avro_api of response
+            response (SchemaResponse): response
         
         Returns:
             str: unique identifier
@@ -98,6 +105,9 @@ class LocalAPI(CommAPI):
         if self.default_file:
             return os.path.join(self.pushing_folder, DEFAULT_FILE)
 
+        extension = "json"
+        if response.request.bin_encoding is True:
+            extension = "avro"
         media_url = response.url
         media_name = os.path.basename(media_url)
-        return os.path.join(self.pushing_folder, f"{get_current_date}", f"{media_name}.json")
+        return os.path.join(self.pushing_folder, f"{get_current_date()}", f"{media_name}.{extension}")

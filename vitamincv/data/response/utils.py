@@ -19,7 +19,9 @@ def write_json(json_str, file_path, indent=None):
         elif type(json_str) is str:
             wf.write(json_str)
         else:
-            raise ValueError("json_str input is not a str or dict. Of type: {}".format(type(json_str)))
+            raise ValueError(
+                "json_str input is not a str or dict. Of type: {}".format(type(json_str))
+            )
 
 
 def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
@@ -186,7 +188,9 @@ def get_current_date():
         current_date (str)
     """
     now = datetime.datetime.now()
-    date = "{:4}{:2}{:2}".format(str(now.year).zfill(4), str(now.month).zfill(2), str(now.day).zfill(2))
+    date = "{:4}{:2}{:2}".format(
+        str(now.year).zfill(4), str(now.month).zfill(2), str(now.day).zfill(2)
+    )
     return date
 
 

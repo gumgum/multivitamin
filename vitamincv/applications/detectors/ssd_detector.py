@@ -54,10 +54,21 @@ CONFIDENCE_MIN = 0.3
 
 class SSDDetector(ImagesModule):
     def __init__(
-        self, server_name, version, net_data_dir, prop_type=None, prop_id_map=None, module_id_map=None, **gpukwargs
+        self,
+        server_name,
+        version,
+        net_data_dir,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None,
+        **gpukwargs,
     ):
         super().__init__(
-            server_name, version, prop_type=prop_type, prop_id_map=prop_id_map, module_id_map=module_id_map
+            server_name,
+            version,
+            prop_type=prop_type,
+            prop_id_map=prop_id_map,
+            module_id_map=module_id_map,
         )
 
         if not self.prop_type:
@@ -75,7 +86,9 @@ class SSDDetector(ImagesModule):
         log.info(str(len(self.labelmap.keys())) + " labels parsed.")
 
         self.net = caffe.Net(
-            os.path.join(net_data_dir, "deploy.prototxt"), os.path.join(net_data_dir, "model.caffemodel"), caffe.TEST
+            os.path.join(net_data_dir, "deploy.prototxt"),
+            os.path.join(net_data_dir, "model.caffemodel"),
+            caffe.TEST,
         )
         self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
 
@@ -121,7 +134,9 @@ class SSDDetector(ImagesModule):
                         )
                     )
                     # regions.append(create_region(contour=contour, props=props))
-                    self.response.append_region(t=tstamp, region=create_region(contour=contour, props=props))
+                    self.response.append_region(
+                        t=tstamp, region=create_region(contour=contour, props=props)
+                    )
                 except:
                     log.error(traceback.format_exc())
             # self.response.append_regions(t=tstamp, regions=regions)

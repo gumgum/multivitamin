@@ -17,7 +17,9 @@ class VertexAPI(SQSAPI):
         """
         # log.setLevel("DEBUG")
         super().__init__(queue_name)
-        auth_header = credstash.getSecret("vertex-api-auth-header", table="VA-CredStash-ImageScience-Vertex")
+        auth_header = credstash.getSecret(
+            "vertex-api-auth-header", table="VA-CredStash-ImageScience-Vertex"
+        )
         auth_header = auth_header.split(":")
         self.auth_header = {auth_header[0]: auth_header[1].strip()}
 

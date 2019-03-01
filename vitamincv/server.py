@@ -110,7 +110,7 @@ class Server(Flask):
         """
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
-        log.info(f"request: {request}")
+        log.info(f"Processing: {request}")
 
         schema_response = request_to_schema_response(request)
         response = schema_response_to_response(schema_response)
