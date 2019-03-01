@@ -1,13 +1,14 @@
 import os
-import sys
-import argparse
-import cv2
 from colour import Color
 import random
 import json
-import glog as log
+import traceback
 
-from vitamincv.data.response import SchemaResponse, schema_response_to_response
+import glog as log
+import cv2
+
+from vitamincv.data.response import SchemaResponse
+from vitamincv.data.io import AvroIO
 from vitamincv.data.io.utils import read_json
 from vitamincv.data.utils import p0p1_from_bbox_contour
 from vitamincv.media import MediaRetriever
@@ -40,7 +41,7 @@ def get_props_from_region(region):
 
 
 class FrameDrawer:
-    def __init__(self, doc_fn=None, response=None, decode=False, dump=False, out="./tmp"):
+    def __init__(self, doc_fn=None, schema_response=None, decode=False, dump=False, out="./tmp"):
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -51,8 +52,9 @@ class FrameDrawer:
         """
         try:
             os.makedirs(out)
-        except:
+        except Exception as e:
             log.warning(out + " already exists.")
+            log.warning(e)
         if doc_fn is not None and schema_response is not None:
             raise ValueError("Both doc_fn and schema_response should not be set")
 
@@ -68,9 +70,9 @@ class FrameDrawer:
                 os.makedirs(out)
             sr = SchemaResponse(dictionary=dictionary)
             self.response = sr.response
-        elif response is not None:
-            assert isinstance(response, Response)
-            self.response = response
+        elif schema_response is not None:
+            assert isinstance(schema_response, SchemaResponse)
+            self.response = schema_response.response
 
         self.dump = dump
         self.out = out
@@ -102,7 +104,8 @@ class FrameDrawer:
         frames_iterator = []
         try:
             frames_iterator = self.med_ret.get_frames_iterator(sample_rate=sample_rate)
-        except:
+        except Exception as e:
+            log.error(e)
             log.error(traceback.format_exc())
             exit(1)
 
