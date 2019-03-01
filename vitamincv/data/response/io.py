@@ -159,7 +159,7 @@ class _AvroIOLocal:
     def __init__(self):
         """Private implementation class for Avro IO of local files"""
         local_schema_file = pkg_resources.resource_filename(
-            "vitamincv.data.response", "schema.avsc"
+            "vitamincv.data.response", config.SCHEMA_FILE
         )
         log.debug("Using local schema file {}".format(local_schema_file))
         if not os.path.exists(local_schema_file):

@@ -1,15 +1,4 @@
-import os
-import sys
 import glog as log
-import pprint
-import tempfile
-import json
-import pprint
-import pkg_resources
-import numpy as np
-import traceback
-from collections import defaultdict
-from datetime import datetime
 
 from vitamincv.data.response.data import create_response
 
@@ -18,17 +7,17 @@ class Response:
     def __init__(self, dictionary=None, request=None):
         """Wrapper with utilities around a single response document"""
         log.info("Constructing response")
-        self.dictionary = dictionary
+        self.dict = dictionary
         self.request = request
         self.tstamp_map = None
         self.url = request.url
 
     @property
-    def dictionary(self):
+    def dict(self):
         return self._dictionary
 
-    @dictionary.setter
-    def dictionary(self, dictionary):
+    @dict.setter
+    def dict(self, dictionary):
         if dictionary is None:
             log.info("Response.dictionary is none, creating empty response")
             self._dictionary = create_response()
@@ -41,18 +30,23 @@ class Response:
         return self._dictionary.get("media_annotation").get("frames_annotation")
 
     def append_region(self, t, region):
+        assert(isinstance(region, dict))
         self._dictionary.get("media_annotation").get("frames_annotation")[t].append(region)
 
     def append_regions(self, t, regions):
+        for region in regions:
+            assert(isinstance(region, dict))
         self._dictionary.get("media_annotation").get("frames_annotation")[t].extend(regions)
 
     def has_frame_anns(self):
-        return len(self.dictionary.get("media_annotation").get("frames_annotation")) > 0
+        return len(self.frame_anns) > 0
 
     def append_footprint(self, footprint):
+        assert(isinstance(footprint, dict))
         self._dictionary["media_annotation"]["codes"].append(footprint)
 
     def append_video_ann(self, track):
+        assert(isinstance(track, dict))
         self._dictionary["media_annotation"]["tracks_summary"].append(track)
 
     def append_annotation_tasks(self, annotation_tasks):

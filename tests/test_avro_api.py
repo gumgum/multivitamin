@@ -16,14 +16,20 @@ import glog as log
 avro_str = "avro.json"
 avro_bin = "avro.bin"
 
-image_ann = create_image_ann(t=5.0, regions=[create_region(props=[create_prop(server="test_dummy", value="exists")])])
+image_ann = create_image_ann(
+    t=5.0, regions=[create_region(props=[create_prop(server="test_dummy", value="exists")])]
+)
 
 annotation_task_1 = create_annotation_task(
     id="task_dummy_1",
     tstamps=[0],
     labels=[
         create_eligible_prop(
-            server="LeagueClassifier", property_type="league", value="NBA", confidence_min=0.9, father_properties=[]
+            server="LeagueClassifier",
+            property_type="league",
+            value="NBA",
+            confidence_min=0.9,
+            father_properties=[],
         )
     ],
     tags=["dummy_1"],
@@ -35,7 +41,9 @@ def test_get_detections_from_frame_anns():
     log.info("Downloading json.")
     tmp_filepath = "/tmp/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json"
     s3_client.download_file(
-        "cvapis-data", "jsons/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json", tmp_filepath
+        "cvapis-data",
+        "jsons/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json",
+        tmp_filepath,
     )
     log.info("JSON downloaded.")
     x = AvroAPI(AvroIO.read_json(tmp_filepath))
@@ -214,7 +222,16 @@ def test_append_trackssummary_from_csv():
                 iplacement = titles.index(cois[1])
                 it1 = titles.index(cois[2])
                 it2 = titles.index(cois[3])
-                log.info("indexes: " + str(isponsor) + ", " + str(iplacement) + ", " + str(it1) + ", " + str(it2))
+                log.info(
+                    "indexes: "
+                    + str(isponsor)
+                    + ", "
+                    + str(iplacement)
+                    + ", "
+                    + str(it1)
+                    + ", "
+                    + str(it2)
+                )
             else:
                 placements.append(row[iplacement])
                 sponsors.append(row[isponsor])
@@ -242,9 +259,13 @@ def test_append_trackssummary_from_csv():
 
     for t1, t2, placement, sponsor in zip(t1s, t2s, placements, sponsors):
         # we create the placecement property
-        p1 = create_prop(confidence=1, ver="1.0", server="HAM", property_type="placement", value=placement)
+        p1 = create_prop(
+            confidence=1, ver="1.0", server="HAM", property_type="placement", value=placement
+        )
         # we create the sponsor property
-        p2 = create_prop(confidence=1, ver="1.0", server="HAM", property_type="sponsor", value=sponsor)
+        p2 = create_prop(
+            confidence=1, ver="1.0", server="HAM", property_type="sponsor", value=sponsor
+        )
         ps = [p1, p2]
         # We create the track
         track = create_video_ann(t1=t1, t2=t2, props=ps)

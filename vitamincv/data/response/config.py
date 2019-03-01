@@ -1,6 +1,7 @@
-""" Configuration parameters for our CV avro schema
+""" Configuration parameters
 """
-CV_SCHEMA = "schema.avsc"
+
+SCHEMA_FILE = "schema.avsc"
 REGISTRY_URL = (
     "http://internal-va-schema-registry-dsci-alb-1581931279.us-east-1.elb.amazonaws.com:8081"
 )

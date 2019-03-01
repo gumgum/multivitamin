@@ -21,7 +21,9 @@ def test_classifier():
     s3_client = boto3.client("s3")
     log.info("Downloading model.")
     tmp_filepath = "/tmp/net_data.zip"
-    s3_client.download_file("cvapis-data", "classifiers/nhllogoclassifier/net_data.zip", tmp_filepath)
+    s3_client.download_file(
+        "cvapis-data", "classifiers/nhllogoclassifier/net_data.zip", tmp_filepath
+    )
     log.info("Model downloaded.")
     with open(tmp_filepath, "rb") as f:
         log.info("Unzipping it.")
@@ -30,7 +32,9 @@ def test_classifier():
             print("    Extracting file", name)
             z.extract(name, "/tmp/")
     log.info("Unzipped.")
-    caffe_classifier = CaffeClassifier(server_name="CaffeClassifier", version="1.0", net_data_dir="/tmp/net_data/")
+    caffe_classifier = CaffeClassifier(
+        server_name="CaffeClassifier", version="1.0", net_data_dir="/tmp/net_data/"
+    )
     p = {}
     p["company"] = "gumgum"
     # p['property_type']='placement'

@@ -1,5 +1,5 @@
 import warnings
-from vitamincv.module_api.GPUUtilities import GPUUtility, CupyUtility
+from vitamincv.utils.GPUUtilities import GPUUtility, CupyUtility
 
 
 def test_init():
@@ -45,4 +45,6 @@ def test_cupy_numpy_conversion():
 
     cupy_utility = CupyUtility()
     if not cupy_utility.xp.__name__ == "cupy":
-        warnings.warn(RuntimeWarning("Warning! No GPU with available load or memory. Verify first!"))
+        warnings.warn(
+            RuntimeWarning("Warning! No GPU with available load or memory. Verify first!")
+        )

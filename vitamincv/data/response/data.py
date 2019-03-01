@@ -55,14 +55,11 @@ def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
         ub_y (float): upperbound on y if check == True
 
     Returns:
-        dict: x,y 
+        dict: x, y
     """
-    if not isinstance(x, float):
-        log.warning("x should be a float")
-        x = float(x)
-    if not isinstance(y, float):
-        log.warning("y should be a float")
-        y = float(y)
+    assert(isinstance(x, float))
+    assert(isinstance(x, float))
+
     lowerbound = 0.0
     if bound:
         x = min(max(lowerbound, x), ub_x)
@@ -72,15 +69,18 @@ def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
 
 
 def create_video_ann(t1=0.0, t2=0.0, region_ids=None, props=None):
+    assert(isinstance(t1, float))
+    assert(isinstance(t2, float))
+
     if not region_ids:
         region_ids = []
     if not props:
         props = []
-
-    return {"t1": t1, "t2": t2, "regions": [], "region_ids": region_ids, "props": props}  # OBSOLETE
+    return {"t1": t1, "t2": t2, "regions": [], "region_ids": region_ids, "props": props}
 
 
 def create_image_ann(t=0.0, regions=None):
+    assert(isinstance(t, float))
     if not regions:
         regions = []
     return {"t": t, "regions": regions}
@@ -123,6 +123,16 @@ def create_prop(
     value_verbose="",
     property_id=0,
 ):
+    assert(isinstance(confidence, float))
+    assert(isinstance(confidence_min, float))
+    assert(isinstance(fraction, float))
+    assert(isinstance(ver, str))
+    assert(isinstance(value, str))
+    assert(isinstance(value_verbose, str))
+    assert(isinstance(property_type, str))
+    assert(isinstance(server, str))
+    assert(isinstance(module_id, int))
+    assert(isinstance(property_id, int))
     if not relationships:
         relationships = []
     return {
@@ -155,7 +165,8 @@ def create_media_ann(
     tracks_summary=None,
     annotation_tasks=None,
 ):
-
+    assert(isinstance(w, int))
+    assert(isinstance(h, int))
     if not codes:
         codes = []
     if not frames_annotation:

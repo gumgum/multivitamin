@@ -113,6 +113,6 @@ class Server(Flask):
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(response)
-            log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
+            log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
 
         return SchemaResponse(response=response)

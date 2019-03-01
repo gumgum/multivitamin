@@ -1,10 +1,5 @@
-"""Utils methods' testing
-
-Usage:
-pytest test_request_api.py
-"""
-
 import json
+import pytest
 import glog as log
 from vitamincv.data.request import Request
 
@@ -18,12 +13,17 @@ r3 = "faulty_message"
 
 def test_r1():
     req = Request(request_dict=json.loads(r1))
-    assert(req.url == "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/A_blank_black_picture.jpg/1536px-A_blank_black_picture.jpg")
+    assert (
+        req.url
+        == "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/A_blank_black_picture.jpg/1536px-A_blank_black_picture.jpg"
+    )
+
 
 def test_r2():
     # test standardize_url
     pass
 
+
 def test_r3():
     with pytest.raises(ValueError):
-        req = Request(request_dict=json.loads(r3))
+        Request(request_dict=json.loads(r3))

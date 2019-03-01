@@ -22,7 +22,7 @@ class SchemaResponse:
 
             There are 2 cases where SchemaResponse should be used:
 
-            1) constructed from a request with a previous response
+            1) constructed from a request with a previous (schema) response
             2) converting a Response to SchemaResponse for sending data to client
 
         Args:
@@ -73,8 +73,13 @@ class SchemaResponse:
     def bytes(self):
         log.info("Returning schema response as binary")
         log.info(f"base64 encoding: {self._request.base64_encoding}")
-        io = AvroIO(self._use_schema_registry)
-        return io.encode(self._dictionary, self._request.base64_encoding)
+        try:
+            io = AvroIO(self._use_schema_registry)
+            return io.encode(self._dictionary, self._request.base64_encoding)
+        except Exception:
+            log.error("Error serializing response")
+            # what to do here?
+            raise Exception("Error serializing response")
 
     @property
     def data(self):
@@ -87,10 +92,8 @@ class SchemaResponse:
             log.info("Returning schema response as dictionary")
             return self._dictionary
 
-        log.info("Returning schema response as binary")
-        log.info(f"base64 encoding: {self._request.base64_encoding}")
-        io = AvroIO(self._use_schema_registry)
-        return io.encode(self._dictionary, self._request.base64_encoding)
+        # else: return serialized bytes
+        return self.bytes
 
     @dict.setter
     def dict(self, d):
@@ -197,11 +200,9 @@ class SchemaResponse:
         assert isinstance(self._response, Response)
 
         #TODO: check and remove unncessary deep copies
-        self._dictionary = copy.deepcopy(self._response.dictionary)
+        self._dictionary = copy.deepcopy(self._response.dict)
         log.info("Converting frame_anns dict to frame_anns list")
-        frame_anns = copy.deepcopy(
-            self._response.dictionary.get("media_annotation").get("frames_annotation")
-            )
+        frame_anns = copy.deepcopy(self._response.frame_anns)
         assert isinstance(frame_anns, dict)
         frame_anns_list = [
             {"t": tstamp, "regions": regions} for tstamp, regions in frame_anns.items()
