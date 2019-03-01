@@ -47,7 +47,10 @@ class FrameDrawer():
         self.w, self.h = self.med_ret.get_w_h()
 
 
-    def process(self, dump_folder='./tmp/', dump_video=False):
+    def process(self, dump_folder='./tmp/', dump_video=False, dump_images=False):
+        if dump_video==False  and dump_images==False:
+            log.warning("You may want to dump something.")
+            return
         try:
             os.makedirs(dump_folder)
         except:
@@ -114,12 +117,13 @@ class FrameDrawer():
             img = cv2.putText(img, str(tstamp), (20, 20), face, scale, [255,255,255], thickness)
             if dump_video:
                 #we add the frame
+                log.debug("Adding frame")
                 vid.write(img)
-            else:
+            elif dump_images:
                 #we dump the frame
                 outfn = "{}/{}.jpg".format(dump_folder, tstamp)
+                log.debug("Writing to file: {}".format(outfn))
                 cv2.imwrite(outfn, img)
-                log.info("Writing to file: {}".format(outfn))
         
         if  dump_video:            
             vid.release()                      
