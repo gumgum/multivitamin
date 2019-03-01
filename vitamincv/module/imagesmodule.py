@@ -31,9 +31,10 @@ class ImagesModule(Module):
 
     def process(self, response):
         """Process the message, calls process_images(batch, tstamps, contours=None)
+           which is implemented by the child module
 
         Returns:
-            str code
+            Response: response object
         """
         log.info("Processing message")
         super().process(response)

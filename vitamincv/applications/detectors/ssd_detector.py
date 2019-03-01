@@ -42,7 +42,7 @@ else:
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
 
-from vitamincv.module.GPUUtilities import GPUUtility
+from vitamincv.utils.GPUUtilities import GPUUtility
 from vitamincv.module import ImagesModule
 from vitamincv.data.response.utils import crop_image_from_bbox_contour
 from vitamincv.data.response.data import *

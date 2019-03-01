@@ -1,5 +1,5 @@
 from vitamincv.module_api.cvmodule import CVModule
-from vitamincv.comm_apis.work_handler import WorkerManager
+from vitamincv.utils.work_handler import WorkerManager
 from vitamincv.media_api.media import MediaRetriever
 from vitamincv.avro_api.utils import get_current_time
 from vitamincv.avro_api.cv_schema_factory import *

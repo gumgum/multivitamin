@@ -10,7 +10,7 @@ import numbers
 from vitamincv.module import ImagesModule
 from vitamincv.data.response.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
 from vitamincv.module.utils import min_conf_filter_predictions
-from vitamincv.module.GPUUtilities import GPUUtility
+from vitamincv.utils.GPUUtilities import GPUUtility
 from vitamincv.data.response.data import *
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
