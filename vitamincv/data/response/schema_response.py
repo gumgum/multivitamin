@@ -64,9 +64,33 @@ class SchemaResponse:
     @property
     def dict(self):
         log.info("Returning schema response as dictionary")
-        if self._request.bin_encoding is True:
-            log.warning("self._request.bin_encoding is True but returning dictionary")
+        if self._request is not None:
+            if self._request.bin_encoding is True:
+                log.warning("self._request.bin_encoding is True but returning dictionary")
         return self._dictionary
+
+    @property
+    def bytes(self):
+        log.info("Returning schema response as binary")
+        log.info(f"base64 encoding: {self._request.base64_encoding}")
+        io = AvroIO(self._use_schema_registry)
+        return io.encode(self._dictionary, self._request.base64_encoding)
+
+    @property
+    def data(self):
+        """Convenience method to return either dict or bytes depending on request
+        """
+        if self._request is None:
+            return self._dictionary
+
+        if self._request.bin_encoding is False:
+            log.info("Returning schema response as dictionary")
+            return self._dictionary
+
+        log.info("Returning schema response as binary")
+        log.info(f"base64 encoding: {self._request.base64_encoding}")
+        io = AvroIO(self._use_schema_registry)
+        return io.encode(self._dictionary, self._request.base64_encoding)
 
     @dict.setter
     def dict(self, d):
@@ -89,13 +113,6 @@ class SchemaResponse:
         self._dictionary = d
 
     @property
-    def bytes(self):
-        log.info("Returning schema response as binary")
-        log.info(f"base64 encoding: {self.request.base64_encoding}")
-        io = AvroIO(self._use_schema_registry)
-        return io.encode(self._dictionary, self.request.base64_encoding)
-    
-    @property
     def response(self):
         """ response.getter
         
@@ -110,6 +127,7 @@ class SchemaResponse:
         log.info("Non empty prev_response")
         log.info("Converting frame_anns list to frame_anns dict")
 
+        #TODO: check and remove unncessary deep copies
         frame_anns = copy.deepcopy(
             self._dictionary.get("media_annotation").get("frames_annotation")
         )
@@ -173,11 +191,12 @@ class SchemaResponse:
             log.info("No prev_response")
 
     def _response2dict(self):
-        """TODO: see if deepcopies are necessary
+        """Convert Response to schema response dict
         """
         log.info("Converting response to schema_response")
         assert isinstance(self._response, Response)
 
+        #TODO: check and remove unncessary deep copies
         self._dictionary = copy.deepcopy(self._response.dictionary)
         log.info("Converting frame_anns dict to frame_anns list")
         frame_anns = copy.deepcopy(

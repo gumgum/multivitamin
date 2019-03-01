@@ -34,7 +34,9 @@ class VertexAPI(SQSAPI):
             assert(isinstance(res, SchemaResponse))
             if dst_url:
                 log.info(f"Pushing to {dst_url}")
-                ret = sender.post(dst_url, headers=self.auth_header, data=res.data)
+                data = res.data
+                log.info(f"data is of type {type(data)}")
+                ret = sender.post(dst_url, headers=self.auth_header, data=data)
                 log.info(f"requests.post(...) response: {ret}")
             else:
                 log.info("No dst_url in request. Not pushing response.")

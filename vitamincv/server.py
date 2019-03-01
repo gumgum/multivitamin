@@ -9,7 +9,6 @@ from flask import Flask, jsonify
 from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
 from vitamincv.data.request import Request
-from vitamincv.data.response import Response
 from vitamincv.data.response import SchemaResponse
 
 
