@@ -10,12 +10,8 @@ from vitamincv.apis.comm_api import CommAPI
 from vitamincv.module import Module
 from vitamincv.data.request import Request
 from vitamincv.data.response import Response
-from vitamincv.data.response import (
-    request_to_schema_response,
-    schema_response_to_response,
-    response_to_schema_response,
-    SchemaResponse,
-)
+from vitamincv.data.response import SchemaResponse
+
 
 HEALTHPORT = os.environ.get("HEALTHPORT", 5000)
 
@@ -112,12 +108,12 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"Processing: {request}")
 
-        schema_response = request_to_schema_response(request)
-        response = schema_response_to_response(schema_response)
+        schema_response = SchemaResponse(request=request)
+        response = schema_response.response
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(response)
             log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
-        return response_to_schema_response(response)
+        return SchemaResponse(response=response)

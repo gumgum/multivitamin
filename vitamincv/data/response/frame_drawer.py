@@ -67,7 +67,7 @@ class FrameDrawer:
             if not os.path.exists(out):
                 os.makedirs(out)
             sr = SchemaResponse(dictionary=dictionary)
-            self.response = schema_response_to_response(sr)
+            self.response = sr.response
         elif response is not None:
             assert isinstance(response, Response)
             self.response = response
