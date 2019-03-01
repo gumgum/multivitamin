@@ -85,11 +85,11 @@ class Server(Flask):
                 log.info("Pulling request")
                 requests = self.input_comm.pull()
                 for request in requests:
-                    response = self._process_request(request)
+                    schema_response = self._process_request(request)
                     log.info("Pushing reponse to output_comms")
                     for output_comm in self.output_comms:
                         try:
-                            ret = output_comm.push(response)
+                            ret = output_comm.push(schema_response)
                         except Exception as e:
                             log.error(e)
                             log.error(traceback.format_exc())
@@ -120,4 +120,4 @@ class Server(Flask):
             response = module.process(response)
             log.debug(f"response.dictionary: {json.dumps(response.dictionary, indent=2)}")
 
-        return response_to_schema_response(response).data
+        return response_to_schema_response(response)

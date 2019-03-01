@@ -155,6 +155,7 @@ class MediaRetriever(FileRetriever):
         FileRetriever.url.fset(self, value)
         self._cap = None
         self._image = None
+        # FIX: content_type is called a dozen times for a single URL
         if not self.is_image and not self.is_video:
             raise ValueError(
                 "Unsupported Content-Type: {}\n Expected one of these options:\n {}, {}".format(

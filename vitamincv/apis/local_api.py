@@ -85,10 +85,11 @@ class LocalAPI(CommAPI):
             if not os.path.exists(os.path.dirname(fn)):
                 os.makedirs(os.path.dirname(fn))
             log.info(f"Writing {fn}")
-            with open(fn, "w") as wf:
-                if res.request.bin_encoding is True:
+            if res.request.bin_encoding is True:
+                with open(fn, "wb") as wf:
                     wf.write(res.data)
-                else:
+            else:
+                with open(fn, "w") as wf:
                     wf.write(json.dumps(res.data, indent=INDENTATION))
             outfns.append(fn)
         return outfns

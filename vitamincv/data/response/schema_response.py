@@ -15,7 +15,7 @@ from vitamincv.data.response.io import AvroIO
 
 class SchemaResponse:
     def __init__(self, dictionary=None, request=None):
-        self._dictionary = dictionary
+        self.dictionary = dictionary
         self.request = request
 
     @property
@@ -23,11 +23,22 @@ class SchemaResponse:
         return self._dictionary
 
     @dictionary.setter
-    def dictionary(self, dct):
-        io = AvroIO(use_base64=self.request.base64_encoding)
-        if not io.is_valid_avro_doc(dct):
-            raise ValueError("dict is incompatible with avro schema")
-        self._dictionary = dct
+    def dictionary(self, d):
+        """ Dictionary setter for SchemaResponse
+
+            Checks against schema registry
+
+            Args:
+                d (dict): dictionary
+        """
+        if d is not None:
+            assert(isinstance(d, dict))
+            io = AvroIO()
+            if not io.is_valid_avro_doc(d):
+                raise ValueError("dict is incompatible with avro schema")
+            else:
+                log.info("dict is COMPATIBLE with avro schema")
+        self._dictionary = d
 
     @property
     def data(self):
@@ -64,7 +75,7 @@ def request_to_schema_response(request):
             b) base64 binary string
             c) dict
     """
-    log.info("Constructing SchemaResponse from Response")
+    log.info("Constructing SchemaResponse from Request")
     assert isinstance(request, Request)
 
     schema_response_dict = None
@@ -94,7 +105,7 @@ def request_to_schema_response(request):
 
 
 def schema_response_to_response(schema_response):
-    """
+    """TODO: see if deepcopies are necessary
     """
     log.info("Converting schema_response to response")
     assert isinstance(schema_response, SchemaResponse)
@@ -105,6 +116,7 @@ def schema_response_to_response(schema_response):
 
     log.info("Non empty prev_response")
     log.info("Converting frame_anns list to frame_anns dict")
+
 
     frame_anns = copy.deepcopy(
         schema_response.dictionary.get("media_annotation").get("frames_annotation")
@@ -117,13 +129,15 @@ def schema_response_to_response(schema_response):
 
 
 def response_to_schema_response(response):
-    """
+    """TODO: see if deepcopies are necessary
     """
     log.info("Converting response to schema_response")
-    log.info("Converting frame_anns dict to frame_anns list")
+    assert isinstance(response, Response)
 
-    frame_anns = response.dictionary.get("media_annotation").get("frames_annotation")
+    schema_response_dict = copy.deepcopy(response.dictionary)
+    log.info("Converting frame_anns dict to frame_anns list")
+    frame_anns = copy.deepcopy(response.dictionary.get("media_annotation").get("frames_annotation"))
     assert isinstance(frame_anns, dict)
     frame_anns_list = [{"t": tstamp, "regions": regions} for tstamp, regions in frame_anns.items()]
-    response.dictionary["media_annotation"]["frames_annotation"] = frame_anns_list
-    return SchemaResponse(dictionary=response, request=response.request)
+    schema_response_dict["media_annotation"]["frames_annotation"] = frame_anns_list
+    return SchemaResponse(dictionary=schema_response_dict, request=response.request)
