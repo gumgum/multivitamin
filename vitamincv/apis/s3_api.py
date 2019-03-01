@@ -13,7 +13,7 @@ from vitamincv.data.response import Response
 INDENTATION = 2
 
 
-class DumpResponse(CommAPI):
+class S3API(CommAPI):
     def __init__(self, pushing_folder=None, s3_bucket=None, s3_key=None):
         """DumpResponse is a CommAPI object that converts responses to csv and then either pushes 
         to s3_bucket/s3_key or pushing_folder
@@ -38,7 +38,7 @@ class DumpResponse(CommAPI):
             raise ValueError("pushing_folder and s3 key not defined, we cannot set where to dump.")
 
     def pull(self, n=1):
-        raise ValueError("Response2s3 cannot be used as a pulling CommAPI, only pushing")
+        raise NotImplementedError("S3API.pull() not yet implemented")
 
     def push(self, responses):
         """Push a list of Response objects to be written to pushing_folder
