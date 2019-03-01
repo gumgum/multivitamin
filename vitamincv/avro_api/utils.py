@@ -246,7 +246,7 @@ def create_region_id():
     """Create a region_id
 
     Returns:
-        str: current time in milliseconds since Unix epoch + random 6 digit number
+        str: random 16 digit number
     """
     return str(int(random.random() * 1e16))
 
