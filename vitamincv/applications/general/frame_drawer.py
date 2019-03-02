@@ -7,7 +7,7 @@ import random
 import json
 import glog as log
 import traceback
-
+from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour
 from vitamincv.media_api.media import MediaRetriever
@@ -28,8 +28,9 @@ def get_props_from_region(region):
         prop_strs.append(out)
     return prop_strs
 
-class FrameDrawer():
-    def __init__(self, avro_api=None,med_ret=None):
+class FrameDrawer(CVModule):
+    def __init__(self, avro_api=None,med_ret=None,module_id_map=None,pushing_folder='./tmp', s3_bucket=None, s3_key=None):
+        super().__init__(server_name='FrameDrawer', version='1.0.0', module_id_map=module_id_map)
         """Given an avro document, draw all frame_annotations
         
         Args:
@@ -45,25 +46,31 @@ class FrameDrawer():
         else:
             self.med_ret = MediaRetriever(self.avro_api.get_url())            
         self.w, self.h = self.med_ret.get_w_h()
+        media_id = os.path.basename(self.avro_api.get_url()).rsplit(".", 1)[0]
+        self.media_id = "".join([e for e in media_id if e.isalnum() or e in ["/", "."]])
+        
 
+        if s3_bucket and not s3_key:
+            raise ValueError("s3 bucket defined but s3 key not defined")
+        if s3_key and not s3_bucket:
+            raise ValueError("s3 key defined but s3 bucket not defined")
+        if not pushing_folder and not s3_key:
+            raise ValueError("pushing_folder and s3 key not defined, we cannot set where to dump.")
+        self.pushing_folder = pushing_folder
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
 
-    def process(self, dump_folder='./tmp/', dump_video=False, dump_images=False):
+    def process(self, dump_video=False, dump_images=False):
         if dump_video==False  and dump_images==False:
             log.warning("You may want to dump something.")
             return
-        try:
-            os.makedirs(dump_folder)
-        except:
-            log.warning(dump_folder + " already exists.")
-
-
+                       
+        dump_folder= self.pushing_folder + '/' + self.media_id +'/'
         if dump_folder:
             if not os.path.exists(dump_folder):
-                os.makedirs(dump_folder)
-                       
-    
+                os.makedirs(dump_folder)        
         if dump_video:
-            filename =dump_folder + '/video.mp4'            
+            filename = dump_folder + '/video.mp4'            
             fps =1
             frameSize=self.med_ret.shape
             frameSize=(self.w,self.h)            
@@ -127,4 +134,17 @@ class FrameDrawer():
         
         if  dump_video:            
             vid.release()                      
-               
+        if self.s3_bucket:
+            self.upload_files(dump_folder)
+    def upload_files(self,path):
+        log.info("Uploading files")
+        session = boto3.Session()
+        s3 = session.resource('s3')
+        bucket = s3.Bucket(self.s3_bucket)
+        for subdir, dirs, files in os.walk(path):
+            for file in files:
+                full_path = os.path.join(subdir, file)
+                with open(full_path, 'rb') as data:
+                    key=self.s3_key + '/' +self.media_id      
+                    log.info('Pushing ' + full_path + ' to ' + key)              
+                    bucket.put_object(Key=key, Body=data)

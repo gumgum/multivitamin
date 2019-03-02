@@ -14,15 +14,15 @@ def test_FrameDrawer():
     S3 = boto3.resource('s3')
     file = S3.Object(S3_BUCKET, S3_KEY_1)
     AVRO_JSON = json.loads(file.get()['Body'].read().decode('utf-8'))
-    output_folder='./frame_drawer_output/'+JSON_NAME_1    
+    output_folder='./frame_drawer_output/'  
     avro_api=AvroAPI(doc=AVRO_JSON )
-    fd = FrameDrawer(avro_api=avro_api)    
-    fd.process(dump_folder=output_folder,dump_video=True)
+    fd = FrameDrawer(avro_api=avro_api,pushing_folder=output_folder)    
+    fd.process(dump_video=True)
 def test_FrameDrawer_B():
     S3 = boto3.resource('s3')
     file = S3.Object(S3_BUCKET, S3_KEY_1)
     AVRO_JSON = json.loads(file.get()['Body'].read().decode('utf-8'))
-    output_folder='./frame_drawer_output/'+JSON_NAME_1    
+    output_folder='./frame_drawer_output/'
     avro_api=AvroAPI(doc=AVRO_JSON )
-    fd = FrameDrawer(avro_api=avro_api)    
-    fd.process(dump_folder=output_folder,dump_images=True)
+    fd = FrameDrawer(avro_api=avro_api,pushing_folder=output_folder)    
+    fd.process(dump_images=True)
