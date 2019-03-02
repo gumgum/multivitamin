@@ -4,15 +4,17 @@
 
 ![](https://i.imgur.com/EEpn6iv.png)
 
-Multivitamin is python framework for serving computer vision (CV) and machine learning (ML) models in the cloud. It handles the infrastructure around a microservice and enforces an interface for processing media.
+Multivitamin is python framework for serving computer vision (CV) and machine learning (ML) models in the cloud. It handles the infrastructure for a single microservice and enforces an interface for processing media.
 
 ### Motivation
 
-At GumGum, we needed a way to serve CV & ML models in the cloud while being agnostic to the specific framework used for prediction, be it PyTorch, Caffe/2, TensorFlow, MxNet, or just plain python. 
+At GumGum, we needed a way to serve CV & ML models in the cloud while being agnostic to the specific framework used for prediction, be it PyTorch, Caffe/2, TensorFlow, MxNet, or just plain python.
 
-## Usage
+## User Guide
 
-(TODO:)
+Multivitamin enforces an interface via inheritance for defining a module. A module is defined as a class which does some processing on a request message. There are 3 module-related classes: Module, ImagesModule, and PropertiesModule. ImagesModule and PropertiesModule are children of Module.
+
+
 
 Create a class that inherits from Module, ImagesModule, or PropertiesModule. Implement a process_images or process_properties or process method.
 
@@ -33,7 +35,7 @@ User: must create a Server object with (in_api, out_api, modules_list)
 python 3.6+
 ```
 
-## What's in Multivitamin?
+## What's in Multivitamin? 
 
 ![](https://i.imgur.com/ACSbj0M.png)
 

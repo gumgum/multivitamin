@@ -2,10 +2,8 @@ import os
 import pytest
 import json
 import csv
-import cv2
 import boto3
 
-import context
 from vitamincv.avro_api.avro_api import AvroAPI
 from vitamincv.avro_api.avro_io import AvroIO
 from vitamincv.avro_api.cv_schema_factory import *
