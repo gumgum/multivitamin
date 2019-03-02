@@ -5,7 +5,10 @@ import importlib.util
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-VERSION = "1.3.0"
+from vitamincv import __version__
+
+
+VERSION = __version__
 
 reqs = None
 with open("requirements.txt") as rf:

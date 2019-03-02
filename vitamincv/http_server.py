@@ -10,8 +10,11 @@ from vitamincv.data.request import Request
 from vitamincv.data.response import SchemaResponse
 
 
+PORT = os.environ.get("PORT", 8888)
+
+
 class HTTPServer(Flask):
-    def __init__(self, modules, port=8888):
+    def __init__(self, modules, port=PORT):
         """Serves as the public interface for CV services through VitaminCV
 
         It's role is to start the healthcheck endpoint and initiate the services

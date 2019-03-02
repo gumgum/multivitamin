@@ -14,16 +14,18 @@ class SchemaResponse:
                  dictionary=None,
                  use_schema_registry=True
                  ):
-        """ SchemaResponse is a wrapper around Response that adapts Response
-            to our schema and provides methods for serialization/deserialization
+        """ SchemaResponse is an adapter for Response,
+            adapting Response to our schema 
+            
+            Also provides methods for serialization/deserialization
         
-            This wrapper is intended to maintain the contract of the schema. 
+            This adapter is intended to maintain the contract of the schema
             All CommAPIs interact w/ SchemaResponse (not Response)
 
-            There are 2 cases where SchemaResponse should be used:
+            There are 2 cases where SchemaResponse should be constructed:
 
-            1) constructed from a request with a previous (schema) response
-            2) converting a Response to SchemaResponse for sending data to client
+                1) constructed from a request with a previous (schema) response
+                2) converting a Response to SchemaResponse for sending data to client
 
         Args:
             response (Response): previous response

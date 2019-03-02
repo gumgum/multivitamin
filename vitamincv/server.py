@@ -12,7 +12,7 @@ from vitamincv.data.request import Request
 from vitamincv.data.response import SchemaResponse
 
 
-HEALTHPORT = os.environ.get("HEALTHPORT", 5000)
+HEALTHPORT = os.environ.get("PORT", 5000)
 
 
 class Server(Flask):

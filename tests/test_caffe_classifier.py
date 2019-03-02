@@ -56,7 +56,9 @@ messages = [
     {
         "url": "https://s3.amazonaws.com/vitamin-cv-test-data/data/media/videos/generic-short/kitti-clip.mp4"
     },
-    {"url": "https://s3.amazonaws.com/vitamin-cv-test-data/data/media/images/nhl_image.jpg"},
+    {
+        "url": "https://s3.amazonaws.com/vitamin-cv-test-data/data/media/images/nhl_image.jpg"
+    },
 ]
 
 
