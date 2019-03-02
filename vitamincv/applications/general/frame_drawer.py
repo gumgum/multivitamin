@@ -7,6 +7,7 @@ import random
 import json
 import glog as log
 import traceback
+import boto3
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour
@@ -145,6 +146,8 @@ class FrameDrawer(CVModule):
             for file in files:
                 full_path = os.path.join(subdir, file)
                 with open(full_path, 'rb') as data:
-                    key=self.s3_key + '/' +self.media_id      
-                    log.info('Pushing ' + full_path + ' to ' + key)              
-                    bucket.put_object(Key=key, Body=data)
+                    rel_path=os.path.basename(full_path)
+                    key=self.s3_key + '/' +self.media_id + '/' + rel_path     
+                    log.info('Pushing ' + full_path + ' to ' + key)
+                    content_type=content_type_video                
+                    bucket.put_object(Key=key, Body=data,ContentType='video/mp4')#image/jpeg
