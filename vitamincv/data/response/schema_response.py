@@ -118,10 +118,18 @@ class SchemaResponse:
         self._dictionary = d
 
     @property
+    def request(self):
+        return self._request
+
+    @property
+    def url(self):
+        if self._dictionary is None:
+            return None
+        return self._dictionary["media_annotation"]["url"]
+
+    @property
     def response(self):
-        """ response.getter
-        
-            Convert schema_response._dictionary to a Response object
+        """ Convert schema_response._dictionary to Response and return
         """
         log.info("Converting schema_response._dictionary to a Response")
         assert(self._request is not None)
@@ -140,15 +148,6 @@ class SchemaResponse:
         response_dict["media_annotation"]["frames_annotation"] = frame_anns_dict
         return Response(dictionary=response_dict, request=self._request)
 
-    @property
-    def request(self):
-        return self._request
-
-    @property
-    def url(self):
-        if self._dictionary is None:
-            return None
-        return self._dictionary["media_annotation"]["url"]
 
     def _request2dict(self):
         """Convert prev response (from request) into a schema response dict

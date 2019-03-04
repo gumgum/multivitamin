@@ -16,7 +16,7 @@ HEALTHPORT = os.environ.get("PORT", 5000)
 
 
 class Server(Flask):
-    def __init__(self, modules, input_comm, output_comms=None):
+    def __init__(self, modules, input_comm, output_comms=None, use_schema_registry=True):
         """Serves as the public interface for CV services through VitaminCV
 
         It's role is to start the healthcheck endpoint and initiate the services
@@ -51,6 +51,7 @@ class Server(Flask):
         self.output_comms = output_comms
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
         self.modules = modules
+        self.use_schema_registry = False
 
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
@@ -107,7 +108,10 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"Processing: {request}")
 
-        schema_response = SchemaResponse(request=request)
+        schema_response = SchemaResponse(
+            request=request, 
+            use_schema_registry=self.use_schema_registry
+            )
         response = schema_response.response
 
         for module in self.modules:
@@ -115,4 +119,4 @@ class Server(Flask):
             response = module.process(response)
             log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
 
-        return SchemaResponse(response=response)
+        return SchemaResponse(response=response, use_schema_registry=self.use_schema_registry)

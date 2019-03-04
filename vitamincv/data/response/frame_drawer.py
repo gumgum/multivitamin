@@ -72,7 +72,7 @@ class FrameDrawer:
             self.response = sr.response
         elif schema_response is not None:
             assert isinstance(schema_response, SchemaResponse)
-            self.response = schema_response.response
+            self.response = schema_response.to_response()
 
         self.dump = dump
         self.out = out

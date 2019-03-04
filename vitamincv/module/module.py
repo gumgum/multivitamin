@@ -28,7 +28,12 @@ class Module(ABC):
         self.prev_regions_of_interest_count = 0
 
     def set_prev_props_of_interest(self, pois):
-        """docs"""
+        """
+        """
+        assert(isinstance(pois, list))
+        for poi in pois:
+            assert(isinstance(poi, dict))
+
         self.prev_pois = pois
         self.prev_pois_bool_exp = convert_list_of_query_dicts_to_bool_exp(pois)
         log.info(f"Setting previous properties of interest: {json.dumps(pois, indent=2)}")
