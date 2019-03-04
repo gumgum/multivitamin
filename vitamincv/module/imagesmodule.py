@@ -7,7 +7,7 @@ import pandas as pd
 import glog as log
 
 from vitamincv.module import Module, Codes
-from vitamincv.module.utils import pandas_bool_exp_match_on_props
+from vitamincv.module.utils import pandas_bool_exp_match_on_props, batch_generator
 from vitamincv.media import MediaRetriever
 
 
@@ -63,8 +63,9 @@ class ImagesModule(Module):
             return self.update_and_return_response()
 
         num_problematic_frames = 0
-        for image_batch, tstamp_batch, prev_region_batch in self.batch_generator(
-            self.preprocess_input()
+        for image_batch, tstamp_batch, prev_region_batch in batch_generator(
+            self.preprocess_input(),
+            self.batch_size,
         ):
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
@@ -81,25 +82,6 @@ class ImagesModule(Module):
             log.info("NO_PREV_REGIONS_OF_INTEREST")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
         return self.update_and_return_response()
-
-    def batch_generator(self, iterator):
-        """Take an iterator, convert it to a chunking generator
-
-        Args:
-            iterator: Any iterable object where each element is a list or a tuple of length N
-
-        Yields:
-            list: A list of N batches of size `self.batch_size`. The last
-                    batch may be smaller than the others
-        """
-        batch = []
-        for iteration in iterator:
-            batch.append(iteration)
-            if len(batch) >= self.batch_size:
-                yield zip(*batch)
-                batch = []
-        if len(batch) > 0:
-            yield zip(*batch)
 
     def preprocess_input(self):
         """Parses request for data
@@ -118,6 +100,7 @@ class ImagesModule(Module):
                 log.warning("Invalid tstamp")
                 continue
 
+            # if i % 10 == 0:
             log.info(f"tstamp: {tstamp}")
 
             regions = []
@@ -125,13 +108,11 @@ class ImagesModule(Module):
                 log.debug("Processing with previous response")
                 log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
 
-                all_tstamp_regions = self.response.frame_anns.get(tstamp)
-                if all_tstamp_regions is not None:
-                    for tregion in all_tstamp_regions:
-                        if pandas_bool_exp_match_on_props(
-                            self.prev_pois_bool_exp, pd.DataFrame(tregion.get("props"))
-                        ):
-                            regions.append(tregion)
+                regions_at_tstamp = self.response.frame_anns.get(tstamp)
+                if regions_at_tstamp is not None:
+                    for i_region in regions_at_tstamp:
+                        if self._props_matches_prev_pois(i_region.get("props")):
+                            regions.append(i_region)
                             self.prev_regions_of_interest_count += 1
 
             if len(regions) == 0:
@@ -150,3 +131,14 @@ class ImagesModule(Module):
         log.debug(f"Setting in response w: {width} h: {height}")
         self.response.width = width
         self.response.height = height
+
+    def _props_matches_prev_pois(self, props):
+        """ Boolean to check if a region's props matches the defined
+            previous properties of interest
+        
+        Args:
+            props (list): list of properties for a region
+        Returns:
+            bool: if props match prev_pois query
+        """
+        return pandas_bool_exp_match_on_props(self.prev_pois_bool_exp, pd.DataFrame(props))

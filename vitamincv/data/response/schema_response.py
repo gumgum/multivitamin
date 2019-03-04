@@ -132,13 +132,11 @@ class SchemaResponse:
         log.info("Non empty prev_response")
         log.info("Converting frame_anns list to frame_anns dict")
 
-        #TODO: check and remove unncessary deep copies
-        frame_anns = copy.deepcopy(
-            self._dictionary.get("media_annotation").get("frames_annotation")
-        )
+        response_dict = copy.deepcopy(self._dictionary)
+        frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")
         assert isinstance(frame_anns, list)
         frame_anns_dict = {image_ann["t"]: image_ann["regions"] for image_ann in frame_anns}
-        response_dict = copy.deepcopy(self._dictionary)
+
         response_dict["media_annotation"]["frames_annotation"] = frame_anns_dict
         return Response(dictionary=response_dict, request=self._request)
 
@@ -201,10 +199,9 @@ class SchemaResponse:
         log.info("Converting response to schema_response")
         assert isinstance(self._response, Response)
 
-        #TODO: check and remove unncessary deep copies
         self._dictionary = copy.deepcopy(self._response.dict)
         log.info("Converting frame_anns dict to frame_anns list")
-        frame_anns = copy.deepcopy(self._response.frame_anns)
+        frame_anns = self._response.frame_anns
         assert isinstance(frame_anns, dict)
         frame_anns_list = [
             {"t": tstamp, "regions": regions} for tstamp, regions in frame_anns.items()

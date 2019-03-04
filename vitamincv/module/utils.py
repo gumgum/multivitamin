@@ -94,7 +94,9 @@ def convert_list_of_query_dicts_to_bool_exp(query):
                 {"property_type":"object", "value":"face"}, 
                 {"value":"car"}
             ]
+            
             is converted to
+            
             '(property_type == "object") & (value == "face") | (value == "car")'
     
     Args:
@@ -116,3 +118,23 @@ def convert_list_of_query_dicts_to_bool_exp(query):
             bool_exp += " | "
     log.debug(f"query: {query} transformed into boolean expression: {bool_exp}")
     return bool_exp
+
+
+def batch_generator(iterator, batch_size):
+    """Take an iterator, convert it to a batching generator
+
+    Args:
+        iterator: Any iterable object where each element is a list or a tuple of length N
+
+    Yields:
+        list: A list of N batches of size `self.batch_size`. The last
+                batch may be smaller than the others
+    """
+    batch = []
+    for iteration in iterator:
+        batch.append(iteration)
+        if len(batch) >= batch_size:
+            yield zip(*batch)
+            batch = []
+    if len(batch) > 0:
+        yield zip(*batch)
