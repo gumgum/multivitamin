@@ -25,5 +25,5 @@ def test_FrameDrawer_B():
     AVRO_JSON = json.loads(file.get()['Body'].read().decode('utf-8'))
     output_folder='./frame_drawer_output/'
     avro_api=AvroAPI(doc=AVRO_JSON )
-    fd = FrameDrawer(avro_api=avro_api,pushing_folder=output_folder)    
+    fd = FrameDrawer(avro_api=avro_api,s3_bucket='vitamincv-data',s3_key='frame_drawer')    
     fd.process(dump_images=True)

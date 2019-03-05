@@ -8,6 +8,7 @@ import json
 import glog as log
 import traceback
 import boto3
+import shutil
 from vitamincv.module_api.cvmodule import CVModule
 from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
 from vitamincv.avro_api.utils import p0p1_from_bbox_contour
@@ -29,8 +30,9 @@ def get_props_from_region(region):
         prop_strs.append(out)
     return prop_strs
 
+DEFAULT_DUMP_FOLDER='/tmp'
 class FrameDrawer(CVModule):
-    def __init__(self, avro_api=None,med_ret=None,module_id_map=None,pushing_folder='./tmp', s3_bucket=None, s3_key=None):
+    def __init__(self, avro_api=None,med_ret=None,module_id_map=None,pushing_folder=DEFAULT_DUMP_FOLDER, s3_bucket=None, s3_key=None):
         super().__init__(server_name='FrameDrawer', version='1.0.0', module_id_map=module_id_map)
         """Given an avro document, draw all frame_annotations
         
@@ -60,8 +62,11 @@ class FrameDrawer(CVModule):
         self.pushing_folder = pushing_folder
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
-
+        self.content_type_map={}
+        
     def process(self, dump_video=False, dump_images=False):
+        self.dump_video=dump_video
+        self.dump_images=dump_images
         if dump_video==False  and dump_images==False:
             log.warning("You may want to dump something.")
             return
@@ -84,7 +89,7 @@ class FrameDrawer(CVModule):
             log.info("frameSize: " + str(frameSize))
             log.info("type(frameSize): " + str(type(frameSize)))
             vid=cv2.VideoWriter(filename, fourcc, fps,frameSize)
-            
+            self.content_type_map[os.path.basename(filename)]='video/mp4'
         face = cv2.FONT_HERSHEY_SIMPLEX
         scale = 0.65
         thickness = 2
@@ -127,27 +132,71 @@ class FrameDrawer(CVModule):
                 #we add the frame
                 log.debug("Adding frame")
                 vid.write(img)
-            elif dump_images:
+            if dump_images:
                 #we dump the frame
                 outfn = "{}/{}.jpg".format(dump_folder, tstamp)
                 log.debug("Writing to file: {}".format(outfn))
                 cv2.imwrite(outfn, img)
+                self.content_type_map[os.path.basename(outfn)]='image/jpeg'
         
         if  dump_video:            
-            vid.release()                      
+            vid.release()
         if self.s3_bucket:
             self.upload_files(dump_folder)
+        if self.pushing_folder==DEFAULT_DUMP_FOLDER:
+            log.info('Removing files in '+dump_folder)
+            shutil.rmtree(dump_folder)
     def upload_files(self,path):
         log.info("Uploading files")
         session = boto3.Session()
         s3 = session.resource('s3')
         bucket = s3.Bucket(self.s3_bucket)
+        key_root=self.s3_key + '/' +self.media_id + '/'
+        #https://<bucket-name>.s3.amazonaws.com/<key>
+        self.dumping_folder_url='https://'+self.s3_bucket+'.s3.amazonaws.com/'+ key_root
+
+
         for subdir, dirs, files in os.walk(path):
             for file in files:
                 full_path = os.path.join(subdir, file)
                 with open(full_path, 'rb') as data:
                     rel_path=os.path.basename(full_path)
-                    key=self.s3_key + '/' +self.media_id + '/' + rel_path     
+                    key=key_root+ rel_path
                     log.info('Pushing ' + full_path + ' to ' + key)
-                    content_type=content_type_video                
-                    bucket.put_object(Key=key, Body=data,ContentType='video/mp4')#image/jpeg
+                    try:
+                        content_type=self.content_type_map[os.path.basename(full_path)]
+                    except:
+                        content_type=None #file is not intended to be uploaded, it was not generated in this execution.
+                    if content_type:
+                        bucket.put_object(Key=key, Body=data,ContentType=content_type,ACL='public-read')
+                        
+
+    def update_response(self):
+        date = get_current_time()
+        n_footprints=len(self.avro_api.get_footprints())
+        footprint_id=date+str(n_footprints+1)
+        fp=create_footprint(code=self.code, ver=self.version, company="gumgum", labels=None, server_track="",
+                     server=self.name, date=date, annotator="",
+                     tstamps=None, id=footprint_id)
+        self.avro_api.append_footprint(fp)
+
+        if self.code != "SUCCESS":
+            log.error('The processing was not succesful')
+            return
+        self.avro_api.set_url(self.request_api.get_url())
+        self.avro_api.set_url_original(self.request_api.get_url())
+        self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
+        url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=self.contents_file_key)
+        module_id=0
+        if self.module_id_map:
+            module_id=self.module_id_map.get(self.name, 0)
+        p=[]
+        if self.dump_images:
+            p1 = create_prop(server=self.name, ver=self.version, value=self.dumping_folder_url, property_type="dumped_images", footprint_id=fp["id"], property_id=1,  module_id=module_id)
+            p.append(p1)
+        if self.dump_video:
+            dumped_video_url= self.dumping_folder_url+ '/video.mp4'            
+            p2 = create_prop(server=self.name, ver=self.version, value=dumped_video_url, property_type="dumped_video", footprint_id=fp["id"], property_id=2,  module_id=module_id)
+            p.append(p2)
+        track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=p)
+        self.avro_api.append_track_to_tracks_summary(track)
