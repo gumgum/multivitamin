@@ -3,15 +3,13 @@ import copy
 import glog as log
 
 from vitamincv.data.request import Request
-from vitamincv.data.response import Response
+from vitamincv.data.response import ModuleResponse
 from vitamincv.data.response.io import AvroIO
 
 
 class SchemaResponse:
     def __init__(self, 
-                 response=None, 
-                 request=None, 
-                 dictionary=None,
+                 input, 
                  use_schema_registry=True
                  ):
         """ SchemaResponse is an adapter for Response,
@@ -28,40 +26,26 @@ class SchemaResponse:
                 2) converting a Response to SchemaResponse for sending data to client
 
         Args:
-            response (Response): previous response
+            input (Response): previous response
             request (Request): incoming request
             dictionary (dict): schema response dictionary
             use_schema_registry (bool): whether to use schema registry when serializing to bytes
         """
-        if response is not None and request is not None:
-            raise ValueError(
-                "Construct SchemaResponse with EITHER response or request, not both"
-                )
-        if response is None and request is None and dictionary is None:
-            raise ValueError(
-                "Construct SchemaResponse with at least one of response, dict, or request"
-            )
-
-        self._response = response
-        self._request = request
         self._use_schema_registry = use_schema_registry
         self._dictionary = None
+        self._request = None
 
-        # constructing from a request with previous response
-        if request is not None:
-            assert(isinstance(request, Request))
-            self._request2dict()
-
-        # constructing from a Response
-        if response is not None:
-            assert(isinstance(response, Response))
-            self._response2dict()
-            self._request = response.request
-
-        # constructing from a dictionary
-        if dictionary is not None:
-            assert(isinstance(dictionary, dict))
-            self.dict = dictionary
+        if isinstance(input, ModuleResponse):
+            log.info("Constructing from ModuleResponse")
+            self._init_from_module_response(input)
+        elif isinstance(input, Request):
+            log.info("Constructing from Request")
+            self._init_from_request(input)
+        elif isinstance(input, dict):
+            log.info("Constructing from SchemaResponse dictionary")
+            self.dict = input
+        else:
+            raise ValueError(f"Input must be ModuleResponse, Request, or dict. Found {type(input)}")
 
     @property
     def dict(self):
@@ -127,30 +111,29 @@ class SchemaResponse:
             return None
         return self._dictionary["media_annotation"]["url"]
 
-    @property
-    def response(self):
-        """ Convert schema_response._dictionary to Response and return
+    def to_module_response(self):
+        """ Convert schema_response._dictionary to ModuleResponse and return
         """
-        log.info("Converting schema_response._dictionary to a Response")
+        log.info("Converting schema_response._dictionary to a ModuleResponse")
         assert(self._request is not None)
         if self._dictionary is None:
             log.info("No prev_response")
-            return Response(request=self._request)
+            return ModuleResponse(request=self._request)
     
         log.info("Non empty prev_response")
         log.info("Converting frame_anns list to frame_anns dict")
 
         response_dict = copy.deepcopy(self._dictionary)
         frame_anns = self._dictionary.get("media_annotation").get("frames_annotation")
-        assert isinstance(frame_anns, list)
+        assert(isinstance(frame_anns, list))
         frame_anns_dict = {image_ann["t"]: image_ann["regions"] for image_ann in frame_anns}
 
         response_dict["media_annotation"]["frames_annotation"] = frame_anns_dict
-        return Response(dictionary=response_dict, request=self._request)
+        return ModuleResponse(dictionary=response_dict, request=self._request)
 
-
-    def _request2dict(self):
-        """Convert prev response (from request) into a schema response dict
+    def _init_from_request(self, request):
+        """Construct from a request. Request object has a field for "prev_response"
+        If not None, convert prev_response into a SchemaResponse
         
         prev_responses can come in the following forms
 
@@ -165,42 +148,44 @@ class SchemaResponse:
                 a) binary
                 b) base64 binary string
                 c) dict
+        
+        Args:
+            request (Request): request obj
         """
+        self._request = request
         log.info("Constructing SchemaResponse from Request")
-        if self._request.prev_response:
+        if request.prev_response:
             log.info("Loading from prev_response")
-            if self._request.bin_encoding is True:
+            if request.bin_encoding is True:
                 log.info("bin_encoding is True")
                 io = AvroIO()
-                if isinstance(self._request.prev_response, str):
+                if isinstance(request.prev_response, str):
                     log.info("prev_response is base64 encoded binary")
-                    bytes = io.decode(
-                        self._request.prev_response, use_base64=True, binary_flag=True
-                        )
+                    bytes = io.decode(request.prev_response, use_base64=True, binary_flag=True)
                 else:
                     log.info("prev_response is in binary")
-                    bytes = io.decode(
-                        self._request.prev_response, use_base64=False, binary_flag=True
-                        )
+                    bytes = io.decode(request.prev_response, use_base64=False, binary_flag=True)
                 self.dict = io.decode(bytes)
             else:
                 log.info("prev_response is a dict")
-                self.dict = self._request.prev_response
+                self.dict = request.prev_response
         elif self._request.prev_response_url:
             log.info("Loading from prev_response_url")
             raise NotImplementedError()
         else:
             log.info("No prev_response")
 
-    def _response2dict(self):
-        """Convert Response to schema response dict
-        """
-        log.info("Converting response to schema_response")
-        assert isinstance(self._response, Response)
+    def _init_from_module_response(self, module_response):
+        """Construct from a ModuleResponse
 
-        self._dictionary = copy.deepcopy(self._response.dict)
+        Args:
+            module_response (ModuleResponse): prev module response
+        """
+        self._request = module_response.request
+        log.info("Converting module_response to schema_response")
+        self._dictionary = copy.deepcopy(module_response.dict)
         log.info("Converting frame_anns dict to frame_anns list")
-        frame_anns = self._response.frame_anns
+        frame_anns = module_response.frame_anns
         assert isinstance(frame_anns, dict)
         frame_anns_list = [
             {"t": tstamp, "regions": regions} for tstamp, regions in frame_anns.items()

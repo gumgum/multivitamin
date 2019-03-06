@@ -3,7 +3,7 @@ import glog as log
 from vitamincv.data.response.data import create_response
 
 
-class Response:
+class ModuleResponse:
     def __init__(self, dictionary=None, request=None):
         """Wrapper with utilities around a single response document"""
         log.info("Constructing response")

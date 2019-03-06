@@ -46,21 +46,26 @@ class HTTPServer(Flask):
             """Entry point for starting an HTTP server
             """
             log.info("Pulling request")
-            message = request.get_json(force=True)
-            req = Request(request_dict=message)
-            schema_response = SchemaResponse(request=req)
-            response = schema_response.response
+            try:
+                message = request.get_json(force=True)
+                req = Request(request_dict=message)
+                schema_response = SchemaResponse(req)
+                response = schema_response.to_module_response()
 
-            for module in self.modules:
-                log.info(f"Processing request for module: {module}")
-                response = module.process(response)
-                log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
+                for module in self.modules:
+                    log.info(f"Processing request for module: {module}")
+                    response = module.process(response)
+                    log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
 
-            sr = SchemaResponse(response=response)
-            if req.bin_encoding:
-                return sr.bytes
-            else:
-                return jsonify(sr.dict)
+                sr = SchemaResponse(response)
+                if req.bin_encoding:
+                    return sr.bytes
+                else:
+                    return jsonify(sr.dict)
+            except Exception as e:
+                log.error(e)
+                log.error(traceback.print_exc())
+                log.error(f"Error processing request {message}")
 
         @self.route("/health", methods=["GET"])
         def health_check():

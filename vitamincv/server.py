@@ -69,9 +69,14 @@ class Server(Flask):
             Note: this starts a healthcheck endpoint in a separate thread
         """
         log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
-        threading.Thread(
-            target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True
-        ).start()
+        try:
+            threading.Thread(
+                target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True
+            ).start()
+        except Exception as e:
+            log.error(e)
+            log.error(traceback.print_exc())
+            log.error("Error setting up healthcheck endpoint")
         log.info("Starting server...")
         self._start()
 
@@ -108,15 +113,12 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"Processing: {request}")
 
-        schema_response = SchemaResponse(
-            request=request, 
-            use_schema_registry=self.use_schema_registry
-            )
-        response = schema_response.response
+        schema_response = SchemaResponse(request, self.use_schema_registry)
+        response = schema_response.to_module_response()
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(response)
             log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
 
-        return SchemaResponse(response=response, use_schema_registry=self.use_schema_registry)
+        return SchemaResponse(response, self.use_schema_registry)

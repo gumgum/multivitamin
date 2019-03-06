@@ -1,4 +1,3 @@
-import subprocess
 import os
 import sys
 import importlib.util
@@ -49,7 +48,7 @@ setup(
     description="Common CV APIs",
     url="https://bitbucket.org/gumgum/vitamincv/",
     author="GumGum Computer Vision",
-    packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*", "vitamincv/data/*"]),
+    packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]),
     install_requires=reqs,
     include_package_data=True,
     zip_safe=False,

@@ -3,7 +3,7 @@ import json
 
 import glog as log
 
-from vitamincv.data.response import Response
+from vitamincv.data.response import ModuleResponse
 from vitamincv.data.response.data import create_footprint
 from vitamincv.data.response.utils import get_current_time
 from vitamincv.module.codes import Codes
@@ -44,7 +44,7 @@ class Module(ABC):
 
     @abstractmethod
     def process(self, response):
-        assert isinstance(response, Response)
+        assert isinstance(response, ModuleResponse)
         self.code = Codes.SUCCESS
         self.response = response
         self.request = response.request
