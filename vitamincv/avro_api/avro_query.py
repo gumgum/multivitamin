@@ -39,7 +39,7 @@ class AvroQuerier():
         log.debug("Processing list")
         self._process_list(self.data, self.query_map)
 
-        
+
         for args in self.numeric_fields:
             array = self.query_map
             update = {}
@@ -131,7 +131,7 @@ class AvroQuerier():
     def process_qblock(self, query):
         operation = query.get_operation(query.operation_code)
         idxs = None
-        
+
         for q in query.query:
             if type(q) is AvroQueryBlock:
                 _idxs = self.process_qblock(q)
@@ -163,7 +163,7 @@ class AvroQuerier():
                 continue
             if val is None:
                 continue
-            
+
             if type(val) is str:
                 #log.debug('type(val) is str')
                 _idxs = self.string_query(key, val)
@@ -172,7 +172,7 @@ class AvroQuerier():
             elif isinstance(val, numbers.Number) and "min_" in key:
                 maximum = getattr(query, key.replace("min_", "max_"))
                 skip.add(key.replace("min_", "max_"))
-                
+
                 if maximum is None:
                     maximum = self.xp.inf
 
@@ -182,7 +182,7 @@ class AvroQuerier():
             elif isinstance(val, numbers.Number) and "max_" in key:
                 minimum = getattr(query, key.replace("max_", "min_"))
                 skip.add(key.replace("max_", "min_"))
-                
+
                 if minimum is None:
                     minimum = -1*self.xp.inf
 
@@ -210,7 +210,7 @@ class AvroQuerier():
         #log.debug('_result: ' + str(_result))
         for arg in args:
             log.debug('arg: ' + str(arg))
-            _result = _result[arg]
+            _result = _result.get(arg, set())
         return _result
 
     def numeric_range_query(self, minimum=None, maximum=None, *args):
@@ -388,17 +388,17 @@ class AvroQuery():
         """ Dynamically creates functions to setup queries
 
             Args:
-                key (str): Field in detection/segment 
+                key (str): Field in detection/segment
                 val (str/Number/list): The default value for the key in the detection/segment
 
             Creates:
-                Callable methods "match_"+key that allows explicit matching 
+                Callable methods "match_"+key that allows explicit matching
                         between keys and values in the set of detections
 
                 If val is a number, also create methods "set_min_"+key and "set_max_"+key to
                         enable range queries
 
-            Example: 
+            Example:
                 # If detection has field "t" and it is a number, and field "server" that's a string the following is possible...
 
                 Q = AvroQuery()
@@ -444,7 +444,7 @@ class AvroQuery():
         def _max_range_template(value):
             setattr(self, "max_"+attr, value)
 
-        setattr(self, "min_"+attr, None) 
+        setattr(self, "min_"+attr, None)
         setattr(self, "max_"+attr, None)
         setattr(self, "set_min_"+attr, _min_range_template)
         setattr(self, "set_max_"+attr, _max_range_template)
