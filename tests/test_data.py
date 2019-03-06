@@ -1,10 +1,24 @@
+from dataclasses import dataclass, field
+from typing import List
+from typeguard import typechecked
+
+
+class Dictable():
+    @property
+    def dict(self):
+        return self.__dict__
+    
+    def __repr__(self):
+        return self.__dict__
+    
+    def __str__(self):
+        return str(self.__dict__)
+
 import random
 
 from dataclasses import dataclass, field
 from typing import List, Any
 from typeguard import typechecked
-
-from vitamincv.data.response.data_impl import Dictable
 
 
 # Functions for creating default fields
@@ -170,3 +184,9 @@ class ModuleResponseDict(Dictable):
     media_annotation: MediaAnn = field(default_factory=MediaAnn())
     version: str = ""
     date: str = "20000101000000"
+
+
+x = ['x']
+p = Property(x, module="module", confidence=0.0)
+print(p)
+print(p.dict)

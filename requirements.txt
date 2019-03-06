@@ -54,3 +54,5 @@ zipfile2==0.0.12
 credstash==1.15.0
 sphinx-nameko-theme
 tqdm
+dataclasses
+typeguard

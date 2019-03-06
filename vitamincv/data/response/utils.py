@@ -1,3 +1,4 @@
+import random
 import datetime
 import glog as log
 import json
@@ -5,6 +6,24 @@ import json
 from vitamincv.data.response import config
 from vitamincv.data.response.data import *
 
+
+def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
+    """Helper function to create bounding box contour from 4 extrema points"""
+    return [
+        Point(xmin, ymin, bound=bound),
+        create_point(xmax, ymin, bound=bound),
+        create_point(xmax, ymax, bound=bound),
+        create_point(xmin, ymax, bound=bound),
+    ]
+
+
+def create_region_id():
+    """Create a region_id
+
+    Returns:
+        str: 16 digit random number
+    """
+    return str(int(random.random() * 1e16))
 
 def read_json(file_path):
     """Convenience method for reading jsons"""

@@ -1,6 +1,6 @@
 import glog as log
 
-from vitamincv.data.response.data import create_response
+from vitamincv.data.response.data import ModuleResponseDict
 
 
 class ModuleResponse:
@@ -20,7 +20,7 @@ class ModuleResponse:
     def dict(self, dictionary):
         if dictionary is None:
             log.info("Response.dictionary is none, creating empty response")
-            self._dictionary = create_response()
+            self._dictionary = ModuleResponseDict().dict
         else:
             log.info("Response.dictionary is NOT none, creating from previous response")
             self._dictionary = dictionary
