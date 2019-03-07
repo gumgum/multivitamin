@@ -33,8 +33,8 @@ LAYER_NAME = "prob"
 N_TOP = 1
 CONFIDENCE_MIN=0.1
 class CaffeClassifier(CVModule):
-    def __init__(self, server_name, version, net_data_dir,prop_type=None,prop_id_map=None,module_id_map=None):
-        super().__init__(server_name, version, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
+    def __init__(self, server_name, version, net_data_dir,confidence_min=0.1,prop_type=None,prop_id_map=None,module_id_map=None):
+        super().__init__(server_name, version, confidence_min=confidence_min, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
         if not self.prop_type:
             self.prop_type="label"      
         log.info("Constructing CaffeClassifier")
@@ -46,7 +46,7 @@ class CaffeClassifier(CVModule):
         labels_file=os.path.join(net_data_dir, "labels.txt")
         try:
             with open(labels_file) as f:
-                self.labels = f.read().strip().splitlines()
+                self.labels = f.read().splitlines()
         except:
             log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
@@ -120,13 +120,7 @@ class CaffeClassifier(CVModule):
                 self.net.blobs['data'].data[...] = im
             
                 probs = self.net.forward()[LAYER_NAME]
-                log.debug('probs: ' + str(probs))           
-                log.debug('probs.shape: ' + str(probs.shape))
-                target_shape=(1,len(self.labels))
-                if (probs.shape==target_shape)==False:
-                    log.debug('Changing shape ' + str(probs.shape) + '->'+ str(target_shape))
-                    probs=np.reshape(probs,target_shape)
-                    
+                log.debug('probs: ' + str(probs))
                 for p in probs:
                     log.debug('p: ' + str(p))
                     p_indexes = np.argsort(p)
@@ -151,7 +145,7 @@ class CaffeClassifier(CVModule):
                         label=self.labels[index]                            
                         confidence=p[index]
                         
-                        if confidence<CONFIDENCE_MIN:
+                        if confidence<self.confidence_min:
                             label='Unknown'
                         det = create_detection(
                             server=self.name,
@@ -161,10 +155,15 @@ class CaffeClassifier(CVModule):
                             contour=contour_prev,
                             property_type=self.prop_type,
                             confidence=confidence,
+                            confidence_min=self.confidence_min,
                             t=tstamp
                         )
                         log.debug("det: " + str(det))                        
                         self.detections.append(det)
                         
-            except:
-                log.error(traceback.format_exc())
+            except Exception as e:
+                log.error(e)
+
+                    
+
+
