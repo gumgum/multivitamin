@@ -171,7 +171,10 @@ class FrameDrawer(CVModule):
         if  self.dump_video:            
             vid.release()
         if self.s3_bucket:
-            self.upload_files(dump_folder)
+            try:
+                self.upload_files(dump_folder)
+            except:
+                log.error(traceback.format_exc())
         if self.pushing_folder==DEFAULT_DUMP_FOLDER:
             log.info('Removing files in '+dump_folder)
             shutil.rmtree(dump_folder)
@@ -197,7 +200,7 @@ class FrameDrawer(CVModule):
                     except:
                         content_type=None #file is not intended to be uploaded, it was not generated in this execution.
                     if content_type:
-                        bucket.put_object(Key=key, Body=data,ContentType=content_type,ACL='public-read')
+                        bucket.put_object(Key=key, Body=data,ContentType=content_type)
                         
 
     def update_response(self):
