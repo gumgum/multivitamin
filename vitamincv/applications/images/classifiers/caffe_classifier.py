@@ -191,7 +191,8 @@ class CaffeClassifier(ImagesModule):
                         else:
                             props.append(prop)
                 if prev_region is None:
-                    self.response.append_region(t=tstamp, region=create_region(props=props))
+                    # self.module_response.append_region(t=tstamp, region=create_region(props=props))
+                    self.module_response.append_region(t=tstamp, region=Region(props=props))
             except Exception as e:
                 log.error(traceback.print_exc())
                 log.error(e)

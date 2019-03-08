@@ -1,13 +1,41 @@
 import glog as log
 
-from vitamincv.data.response.data import ModuleResponseDict
+from vitamincv.data.response.data import MediaAnn
+
+#converts MediaAnn object to a dictionary (_dictionary)
+
+"""
+# contains a MediaAnn object
+# contains a _dictionary
+# converts MediaAnn to _dictionary
+"""
 
 
-class ModuleResponse:
-    def __init__(self, dictionary=None, request=None):
+class ModuleResponse():
+    """Response object that Modules populate and return
+
+    Contains:
+        - vitamincv.data.response.MediaAnn
+        - dict
+    
+    input can be either MediaAnn or dictionary
+    if dictionary, assumed to be matching this schema
+
+    Internal methods
+        - 
+    """
+    def __init__(self, input=None, request=None):
         """Wrapper with utilities around a single response document"""
         log.info("Constructing response")
-        self.dict = dictionary
+        if input is None:
+            self._init_empty_dict()
+        elif isinstance(input, dict):
+            self._init_from_dict(input)
+        elif isinstance(input, MediaAnn):
+            self._init_from_media_ann(input)
+        else:
+            raise TypeError(f"Unsupported input type: {type(input)}")
+            
         self.request = request
         self.tstamp_map = None
         self.url = request.url

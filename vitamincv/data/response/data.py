@@ -36,11 +36,37 @@ def make_whole_image_contour():
 
 @typechecked
 @dataclass
+class PropPair(Dictable):
+    property_type: str = ""
+    value: str = ""
+
+
+@typechecked
+@dataclass
+class EligibleProp(Dictable):
+    server: str = ""
+    property_type: str = ""
+    value: str = ""
+    confidence_min: float = 0.0
+    father_properties: List[PropPair] = field(default_factory=list)
+
+
+@typechecked
+@dataclass
+class AnnotationTask(Dictable):
+    id: str = ""
+    tstamps: List[float] = field(default_factory=list)
+    labels: List[str] = field(default_factory=list)
+    tags: List[EligibleProp] = field(default_factory=list)
+
+
+@typechecked
+@dataclass
 class Footprint(Dictable):
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
-    labels: List[str] = field(default_factory=list)
+    labels: List[EligibleProp] = field(default_factory=list)
     server_track: str = ""
     server: str = ""
     date: str = "20000101000000"
@@ -85,17 +111,6 @@ class Property(Dictable):
     value_verbose: str = ""
     property_id: int = 0
 
-
-@typechecked
-@dataclass
-class VideoAnn(Dictable):
-    t1: float = 0.0
-    t2: float = 0.0
-    props: List[Property] = field(default_factory=list)
-    regions: List[dict] = field(default_factory=list)
-    region_ids: List[str] = field(default_factory=list)
-
-
 @typechecked
 @dataclass
 class Region(Dictable):
@@ -108,35 +123,19 @@ class Region(Dictable):
 
 @typechecked
 @dataclass
+class VideoAnn(Dictable):
+    t1: float = 0.0
+    t2: float = 0.0
+    props: List[Property] = field(default_factory=list)
+    regions: List[Region] = field(default_factory=list)
+    region_ids: List[str] = field(default_factory=list)
+
+
+@typechecked
+@dataclass
 class ImageAnn(Dictable):
     t: float = 0.0
     regions: List[Region] = field(default_factory=list)
-
-
-@typechecked
-@dataclass
-class PropPair(Dictable):
-    property_type: str = ""
-    value: str = ""
-
-
-@typechecked
-@dataclass
-class EligibleProp(Dictable):
-    server: str = ""
-    property_type: str = ""
-    value: str = ""
-    confidence_min: float = 0.0
-    father_properties: List[PropPair] = field(default_factory=list)
-
-
-@typechecked
-@dataclass
-class AnnotationTask(Dictable):
-    id: str = ""
-    tstamps: List[float] = field(default_factory=list)
-    labels: List[str] = field(default_factory=list)
-    tags: List[EligibleProp] = field(default_factory=list)
 
 
 @typechecked
@@ -152,21 +151,3 @@ class MediaAnn(Dictable):
     media_summary: List[VideoAnn] = field(default_factory=list)
     tracks_summary: List[VideoAnn] = field(default_factory=list)
     annotation_tasks: List[AnnotationTask] = field(default_factory=list)
-
-
-@typechecked
-@dataclass
-class ModuleResponseDict(Dictable):
-    point_aux: Any = None
-    footprint_aux: Any = None
-    proppair_aux: Any = None
-    annotation_task_aux: Any = None
-    image_annotation_aux: Any = None
-    video_annotation_aux: Any = None
-    property_aux: Any = None
-    relationship_aux: Any = None
-    eligibleprop_aux: Any = None
-    region_aux: Any = None
-    media_annotation: MediaAnn = field(default_factory=MediaAnn())
-    version: str = ""
-    date: str = "20000101000000"
