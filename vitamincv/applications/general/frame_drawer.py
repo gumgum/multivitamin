@@ -153,7 +153,7 @@ class FrameDrawer(CVModule):
                 p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
                 anchor_point=[p0[0]+3,p1[1]-3]
                 if abs(p1[1]-self.h)<30:
-                    anchor_point=[p0[0]+3,p1[1]/2-3]
+                    anchor_point=[p0[0]+3,int(p1[1]/2)-3]
                 img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                 prop_strs = get_props_from_region(region)
                 
