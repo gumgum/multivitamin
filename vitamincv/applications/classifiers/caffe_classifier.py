@@ -33,8 +33,8 @@ LAYER_NAME = "prob"
 N_TOP = 1
 CONFIDENCE_MIN=0.1
 class CaffeClassifier(CVModule):
-    def __init__(self, server_name, version, net_data_dir,prop_type=None,prop_id_map=None,module_id_map=None):
-        super().__init__(server_name, version, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
+    def __init__(self, server_name, version, net_data_dir,confidence_min=0.1,prop_type=None,prop_id_map=None,module_id_map=None):
+        super().__init__(server_name, version, confidence_min=confidence_min, prop_type=prop_type,prop_id_map=prop_id_map,module_id_map=module_id_map)
         if not self.prop_type:
             self.prop_type="label"      
         log.info("Constructing CaffeClassifier")
@@ -145,7 +145,7 @@ class CaffeClassifier(CVModule):
                         label=self.labels[index]                            
                         confidence=p[index]
                         
-                        if confidence<CONFIDENCE_MIN:
+                        if confidence<self.confidence_min:
                             label='Unknown'
                         det = create_detection(
                             server=self.name,
@@ -155,6 +155,7 @@ class CaffeClassifier(CVModule):
                             contour=contour_prev,
                             property_type=self.prop_type,
                             confidence=confidence,
+                            confidence_min=self.confidence_min,
                             t=tstamp
                         )
                         log.debug("det: " + str(det))                        

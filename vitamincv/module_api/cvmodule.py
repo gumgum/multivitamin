@@ -14,7 +14,7 @@ MAX_PROBLEMATIC_FRAMES=10
 
 class CVModule(ABC):
     @abstractmethod
-    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None,process_properties_flag=False):
+    def __init__(self, server_name, version, confidence_min=0.1, prop_type=None, prop_id_map=None, module_id_map=None,process_properties_flag=False):
         """Abstract base class for CVModules
         
         Args:
@@ -29,6 +29,7 @@ class CVModule(ABC):
         self.prop_type=prop_type
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
+        self.confidence_min = confidence_min
         
  
         #To be overwritten, if needed, by the child
