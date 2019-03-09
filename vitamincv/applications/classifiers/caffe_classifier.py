@@ -167,8 +167,8 @@ class CaffeClassifier(CVModule):
                         log.debug("det: " + str(det))                        
                         self.detections.append(det)
                         
-            except Exception as e:
-                log.error(e)
+            except:
+                log.error(traceback.format_exc())
 
                     
 
