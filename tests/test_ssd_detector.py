@@ -6,10 +6,10 @@ import numpy as np
 import boto3
 import cv2
 
-from vitamincv.applications.detectors.ssd_detector import SSDDetector
-from vitamincv.data.request import Request
-from vitamincv.data.response import Response
-from vitamincv.data.response.io import load_response_from_request
+from multivitamin.applications.detectors.ssd_detector import SSDDetector
+from multivitamin.data.request import Request
+from multivitamin.data.response import Response
+from multivitamin.data.response.io import load_response_from_request
 from utils import generate_fileobj_from_s3_folder
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"
@@ -74,8 +74,8 @@ from io import BytesIO
 
 from utils import generate_fileobj_from_s3_folder
 
-from vitamincv.applications.detectors import SSDDetector
-from vitamincv.module_api.utils import load_idmap
+from multivitamin.applications.detectors import SSDDetector
+from multivitamin.module_api.utils import load_idmap
 
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"

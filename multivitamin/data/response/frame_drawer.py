@@ -7,11 +7,11 @@ import traceback
 import glog as log
 import cv2
 
-from vitamincv.data.response import SchemaResponse
-from vitamincv.data.io import AvroIO
-from vitamincv.data.io.utils import read_json
-from vitamincv.data.utils import p0p1_from_bbox_contour
-from vitamincv.media import MediaRetriever
+from multivitamin.data.response import SchemaResponse
+from multivitamin.data.io import AvroIO
+from multivitamin.data.io.utils import read_json
+from multivitamin.data.utils import p0p1_from_bbox_contour
+from multivitamin.media import MediaRetriever
 
 COLORS = [
     "darkorchid",

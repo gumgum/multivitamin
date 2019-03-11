@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import glog as log
 
-from vitamincv.module import Module
+from multivitamin.module import Module
 
 
 class PropertiesModule(Module):

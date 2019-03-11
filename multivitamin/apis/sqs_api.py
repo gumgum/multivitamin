@@ -2,9 +2,9 @@ import glog as log
 import boto3
 import json
 
-from vitamincv.data.request import Request
-from vitamincv.apis.comm_api import CommAPI
-from vitamincv.apis import config
+from multivitamin.data.request import Request
+from multivitamin.apis.comm_api import CommAPI
+from multivitamin.apis import config
 
 boto3.client("iam")  # required to expose iam roles to boto3?
 

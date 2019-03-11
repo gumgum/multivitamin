@@ -7,12 +7,12 @@ import numpy as np
 import boto3
 import cv2
 
-from vitamincv.applications.classifiers import CaffeClassifier
-from vitamincv.data.request import Request
-from vitamincv.data.response import Response
+from multivitamin.applications.classifiers import CaffeClassifier
+from multivitamin.data.request import Request
+from multivitamin.data.response import Response
 from utils import generate_fileobj_from_s3_folder
 
-# from vitamincv.module_api.utils import load_idmap
+# from multivitamin.module_api.utils import load_idmap
 
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"

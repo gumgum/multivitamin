@@ -3,8 +3,8 @@ import sys
 import glog as log
 import boto3
 import json
-from vitamincv.avro_api.frame_drawer import FrameDrawer
-from vitamincv.avro_api.avro_api import AvroIO, AvroAPI
+from multivitamin.avro_api.frame_drawer import FrameDrawer
+from multivitamin.avro_api.avro_api import AvroIO, AvroAPI
 
 S3_BUCKET = "cv-applications-responses-staging"
 # JSON_NAME="Replay%20Video%20Capture_2018-11-16_11.52.51-2816an1tb0v"

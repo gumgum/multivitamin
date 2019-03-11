@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import List
 from typeguard import typechecked
 
-from vitamincv.data.response.data_impl import DictLike
+from multivitamin.data.response.data_impl import DictLike
 
 
 # Functions for creating default fields

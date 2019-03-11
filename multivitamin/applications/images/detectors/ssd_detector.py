@@ -42,11 +42,11 @@ else:
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
 
-from vitamincv.utils.GPUUtilities import GPUUtility
-from vitamincv.module import ImagesModule
-from vitamincv.data.response.utils import crop_image_from_bbox_contour
-from vitamincv.data.response.data import *
-from vitamincv.applications.utils import load_idmap, load_label_prototxt
+from multivitamin.utils.GPUUtilities import GPUUtility
+from multivitamin.module import ImagesModule
+from multivitamin.data.response.utils import crop_image_from_bbox_contour
+from multivitamin.data.response.data import *
+from multivitamin.applications.utils import load_idmap, load_label_prototxt
 
 LAYER_NAME = "detection_out"
 CONFIDENCE_MIN = 0.3

@@ -1,4 +1,4 @@
-from vitamincv.media_api.media import MediaRetriever
+from multivitamin.media import MediaRetriever
 
 from tabulate import tabulate
 from datetime import datetime

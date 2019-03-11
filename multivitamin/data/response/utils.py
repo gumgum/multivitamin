@@ -3,8 +3,8 @@ import datetime
 import glog as log
 import json
 
-from vitamincv.data.response import config
-from vitamincv.data.response.data import *
+from multivitamin.data.response import config
+from multivitamin.data.response.data import *
 
 
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):

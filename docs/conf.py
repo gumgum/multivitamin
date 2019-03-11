@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "VitaminCV"
+project = "Multivitamin"
 copyright = "2019, GumGum Computer Vision"
 author = "GumGum Computer Vision"
 
@@ -105,7 +105,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "VitaminCVdoc"
+htmlhelp_basename = "multivitamindoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -128,14 +128,14 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [(master_doc, "VitaminCV.tex", "VitaminCV Documentation", "GumGum Computer Vision", "manual")]
+latex_documents = [(master_doc, "multivitamin.tex", "multivitamin Documentation", "GumGum Computer Vision", "manual")]
 
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "vitamincv", "VitaminCV Documentation", [author], 1)]
+man_pages = [(master_doc, "multivitamin", "multivitamin Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -146,10 +146,10 @@ man_pages = [(master_doc, "vitamincv", "VitaminCV Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "VitaminCV",
-        "VitaminCV Documentation",
+        "multivitamin",
+        "multivitamin Documentation",
         author,
-        "VitaminCV",
+        "multivitamin",
         "One line description of project.",
         "Miscellaneous",
     )

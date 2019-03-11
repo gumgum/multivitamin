@@ -10,8 +10,8 @@ import boto3
 import glog as log
 
 from io import BytesIO
-from vitamincv.http_server import HTTPServer
-from vitamincv.applications.classifiers import CaffeClassifier
+from multivitamin.http_server import HTTPServer
+from multivitamin.applications.classifiers import CaffeClassifier
 
 
 def load_fileobj(s3_bucket_name, key):

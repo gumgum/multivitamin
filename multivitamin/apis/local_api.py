@@ -5,10 +5,10 @@ import json
 from pathlib import Path
 from queue import Queue
 
-from vitamincv.data.request import Request
-from vitamincv.data.response import SchemaResponse
-from vitamincv.apis.comm_api import CommAPI
-from vitamincv.data.response.utils import get_current_date
+from multivitamin.data.request import Request
+from multivitamin.data.response import SchemaResponse
+from multivitamin.apis.comm_api import CommAPI
+from multivitamin.data.response.utils import get_current_date
 
 FILEEXT = ".json"
 DEFAULT_FILE = "response" + FILEEXT

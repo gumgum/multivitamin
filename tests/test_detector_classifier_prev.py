@@ -16,11 +16,11 @@ import requests
 import boto3
 import zipfile
 
-from vitamincv.applications.detectors import SSDDetector
-from vitamincv.applications.classifiers import CaffeClassifier
-from vitamincv.data.request import Request
-from vitamincv.data.response import Response
-from vitamincv.data.response.io import load_response_from_request
+from multivitamin.applications.detectors import SSDDetector
+from multivitamin.applications.classifiers import CaffeClassifier
+from multivitamin.data.request import Request
+from multivitamin.data.response import Response
+from multivitamin.data.response.io import load_response_from_request
 from utils import generate_fileobj_from_s3_folder
 
 S3_BUCKET_NAME = "vitamin-cv-test-data"

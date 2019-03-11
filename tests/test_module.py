@@ -1,5 +1,5 @@
 
-from vitamincv.module import Module
+from multivitamin.module import Module
 
 
 def test_prev_props_of_interest():

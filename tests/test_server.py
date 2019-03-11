@@ -12,10 +12,10 @@ sys.path.append(os.path.abspath("../examples/ssd-caffe/"))
 sys.path.append(os.path.abspath("../examples/"))
 from dummy_detector import DummyDetector
 from ssd_detector import SSDDetector
-from vitamincv.module_api.server import Server
-from vitamincv.comm_apis.sqs_api import SQSAPI
-from vitamincv.comm_apis.vertex_api import VertexAPI
-from vitamincv.comm_apis.local_api import LocalAPI
+from multivitamin.module_api.server import Server
+from multivitamin.comm_apis.sqs_api import SQSAPI
+from multivitamin.comm_apis.vertex_api import VertexAPI
+from multivitamin.comm_apis.local_api import LocalAPI
 
 PORT = os.environ.get("PORT", 5000)
 

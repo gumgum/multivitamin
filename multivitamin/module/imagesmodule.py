@@ -6,9 +6,9 @@ from collections.abc import Iterable
 import pandas as pd
 import glog as log
 
-from vitamincv.module import Module, Codes
-from vitamincv.module.utils import pandas_bool_exp_match_on_props, batch_generator
-from vitamincv.media import MediaRetriever
+from multivitamin.module import Module, Codes
+from multivitamin.module.utils import pandas_bool_exp_match_on_props, batch_generator
+from multivitamin.media import MediaRetriever
 
 
 MAX_PROBLEMATIC_FRAMES = 10

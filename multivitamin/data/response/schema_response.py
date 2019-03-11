@@ -2,9 +2,9 @@ import copy
 
 import glog as log
 
-from vitamincv.data.request import Request
-from vitamincv.data.response import ModuleResponse
-from vitamincv.data.response.io import AvroIO
+from multivitamin.data.request import Request
+from multivitamin.data.response import ModuleResponse
+from multivitamin.data.response.io import AvroIO
 
 
 class SchemaResponse:

@@ -1,55 +1,17 @@
 import glog as log
 
-from vitamincv.data.response.data import ModuleResponseInternal
-from collections import MutableMapping
-#converts MediaAnn object to a dictionary (_dictionary)
-
-"""
-# contains a MediaAnn object
-# contains a _dictionary
-# converts MediaAnn to _dictionary
-"""
+from multivitamin.data.response.data import create_response
 
 
-class ModuleResponse():
-    """Response object that Modules populate and return
-
-    Contains:
-        - vitamincv.data.response.ModuleResponseInternal
-    
-    input can be either MediaAnn or dictionary
-    if dictionary, assumed to be matching this schema
-
-    Internal methods
-        - 
-    """
-    def __init__(self, input=None, request=None):
+class ModuleResponse:
+    def __init__(self, dictionary=None, request=None):
         """Wrapper with utilities around a single response document"""
         log.info("Constructing response")
-        if input is None:
-            self._init_empty_dict()
-        elif isinstance(input, dict):
-            self._init_from_dict(input)
-        elif isinstance(input, ModuleResponseInternal):
-            self._init_from_module_response(input)
-        else:
-            raise TypeError(f"Unsupported input type: {type(input)}")
-            
+        self.dict = dictionary
         self.request = request
         self.tstamp_map = None
         self.url = request.url
 
-    def _init_empty_dict():
-        log.info("Loading empty ModuleResponse")
-        self._internal_data = ModuleResponseInternal() 
-    
-    def _init_from_dict(self, input):
-        log.info("Loading ModuleResponse from dict")
-        self._internal_data = ModuleResponseInternal()
-    
-    def _init_from_media_ann(self, input):
-        pass
-        
     @property
     def dict(self):
         return self._dictionary
@@ -58,7 +20,7 @@ class ModuleResponse():
     def dict(self, dictionary):
         if dictionary is None:
             log.info("Response.dictionary is none, creating empty response")
-            self._dictionary = ModuleResponseDict().dict
+            self._dictionary = create_response()
         else:
             log.info("Response.dictionary is NOT none, creating from previous response")
             self._dictionary = dictionary

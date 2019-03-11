@@ -4,7 +4,7 @@ import argparse
 
 import glog as log
 
-from vitamincv.data.response.frame_drawer import FrameDrawer
+from multivitamin.data.response.frame_drawer import FrameDrawer
 
 
 if __name__ == "__main__":

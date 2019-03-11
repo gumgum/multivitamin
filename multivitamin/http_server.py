@@ -5,9 +5,9 @@ import traceback
 import glog as log
 from flask import Flask, request, jsonify
 
-from vitamincv.module import Module
-from vitamincv.data.request import Request
-from vitamincv.data.response import SchemaResponse
+from multivitamin.module import Module
+from multivitamin.data.request import Request
+from multivitamin.data.response import SchemaResponse
 
 
 PORT = os.environ.get("PORT", 8888)
@@ -15,7 +15,7 @@ PORT = os.environ.get("PORT", 8888)
 
 class HTTPServer(Flask):
     def __init__(self, modules, port=PORT):
-        """Serves as the public interface for CV services through VitaminCV
+        """Serves as the public interface for CV services through multivitamin
 
         It's role is to start the healthcheck endpoint and initiate the services
 

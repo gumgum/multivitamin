@@ -6,10 +6,10 @@ import threading
 import glog as log
 from flask import Flask, jsonify
 
-from vitamincv.apis.comm_api import CommAPI
-from vitamincv.module import Module
-from vitamincv.data.request import Request
-from vitamincv.data.response import SchemaResponse
+from multivitamin.apis.comm_api import CommAPI
+from multivitamin.module import Module
+from multivitamin.data.request import Request
+from multivitamin.data.response import SchemaResponse
 
 
 HEALTHPORT = os.environ.get("PORT", 5000)
@@ -17,7 +17,7 @@ HEALTHPORT = os.environ.get("PORT", 5000)
 
 class Server(Flask):
     def __init__(self, modules, input_comm, output_comms=None, use_schema_registry=True):
-        """Serves as the public interface for CV services through VitaminCV
+        """Serves as the public interface for CV services through multivitamin
 
         It's role is to start the healthcheck endpoint and initiate the services
 

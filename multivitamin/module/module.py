@@ -3,11 +3,11 @@ import json
 
 import glog as log
 
-from vitamincv.data.response import ModuleResponse
-from vitamincv.data.response.data import create_footprint
-from vitamincv.data.response.utils import get_current_time
-from vitamincv.module.codes import Codes
-from vitamincv.module.utils import convert_list_of_query_dicts_to_bool_exp
+from multivitamin.data.response import ModuleResponse
+from multivitamin.data.response.data import create_footprint
+from multivitamin.data.response.utils import get_current_time
+from multivitamin.module.codes import Codes
+from multivitamin.module.utils import convert_list_of_query_dicts_to_bool_exp
 
 
 class Module(ABC):

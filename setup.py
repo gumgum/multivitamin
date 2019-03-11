@@ -4,7 +4,7 @@ import importlib.util
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-from vitamincv import __version__
+from multivitamin import __version__
 
 
 VERSION = __version__
@@ -43,10 +43,10 @@ class VerifyVersionCommand(install):
 
 
 setup(
-    name="vitamincv",
+    name="multivitamin",
     version=VERSION,
     description="Common CV APIs",
-    url="https://bitbucket.org/gumgum/vitamincv/",
+    url="https://bitbucket.org/gumgum/multivitamin/",
     author="GumGum Computer Vision",
     packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]),
     install_requires=reqs,

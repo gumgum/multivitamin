@@ -1,8 +1,8 @@
-from vitamincv.module_api.cvmodule import CVModule
-from vitamincv.utils.work_handler import WorkerManager
-from vitamincv.media_api.media import MediaRetriever
-from vitamincv.avro_api.utils import get_current_time
-from vitamincv.avro_api.cv_schema_factory import *
+from multivitamin.module_api.cvmodule import CVModule
+from multivitamin.utils.work_handler import WorkerManager
+from multivitamin.media_api.media import MediaRetriever
+from multivitamin.avro_api.utils import get_current_time
+from multivitamin.avro_api.cv_schema_factory import *
 
 from PIL import Image
 from io import BytesIO

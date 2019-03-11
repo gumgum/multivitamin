@@ -1,5 +1,5 @@
 import warnings
-from vitamincv.utils.GPUUtilities import GPUUtility, CupyUtility
+from multivitamin.utils.GPUUtilities import GPUUtility, CupyUtility
 
 
 def test_init():

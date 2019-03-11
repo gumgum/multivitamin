@@ -5,8 +5,8 @@ import tempfile
 import shutil
 import boto3
 
-from vitamincv.apis.comm_api import CommAPI
-from vitamincv.data.response import SchemaResponse
+from multivitamin.apis.comm_api import CommAPI
+from multivitamin.data.response import SchemaResponse
 
 
 INDENTATION = 2
