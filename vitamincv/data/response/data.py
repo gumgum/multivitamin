@@ -1,10 +1,10 @@
 import random
 
 from dataclasses import dataclass, field
-from typing import List, Any
+from typing import List
 from typeguard import typechecked
 
-from vitamincv.data.response.data_impl import Dictable
+from vitamincv.data.response.data_impl import DictLike
 
 
 # Functions for creating default fields
@@ -36,14 +36,14 @@ def make_whole_image_contour():
 
 @typechecked
 @dataclass
-class PropPair(Dictable):
+class PropPair(DictLike):
     property_type: str = ""
     value: str = ""
 
 
 @typechecked
 @dataclass
-class EligibleProp(Dictable):
+class EligibleProp(DictLike):
     server: str = ""
     property_type: str = ""
     value: str = ""
@@ -53,7 +53,7 @@ class EligibleProp(Dictable):
 
 @typechecked
 @dataclass
-class AnnotationTask(Dictable):
+class AnnotationTask(DictLike):
     id: str = ""
     tstamps: List[float] = field(default_factory=list)
     labels: List[str] = field(default_factory=list)
@@ -62,7 +62,7 @@ class AnnotationTask(Dictable):
 
 @typechecked
 @dataclass
-class Footprint(Dictable):
+class Footprint(DictLike):
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
@@ -77,7 +77,7 @@ class Footprint(Dictable):
 
 @typechecked
 @dataclass
-class Point(Dictable):
+class Point(DictLike):
     x: float = 0.0
     y: float = 0.0
     bound: bool = False
@@ -95,7 +95,7 @@ class Point(Dictable):
 
 @typechecked
 @dataclass
-class Property(Dictable):
+class Property(DictLike):
     relationships: List[str] = field(default_factory=list)
     confidence: float = 0.0
     confidence_min: float = 0.0
@@ -113,7 +113,7 @@ class Property(Dictable):
 
 @typechecked
 @dataclass
-class Region(Dictable):
+class Region(DictLike):
     contour: List[Point] = field(default_factory=make_whole_image_contour)
     props: List[Property] = field(default_factory=list)
     father_id: str = ""
@@ -123,7 +123,7 @@ class Region(Dictable):
 
 @typechecked
 @dataclass
-class VideoAnn(Dictable):
+class VideoAnn(DictLike):
     t1: float = 0.0
     t2: float = 0.0
     props: List[Property] = field(default_factory=list)
@@ -133,14 +133,14 @@ class VideoAnn(Dictable):
 
 @typechecked
 @dataclass
-class ImageAnn(Dictable):
+class ImageAnn(DictLike):
     t: float = 0.0
     regions: List[Region] = field(default_factory=list)
 
 
 @typechecked
 @dataclass
-class MediaAnn(Dictable):
+class MediaAnn(DictLike):
     codes: List[Footprint] = field(default_factory=list)
     url_original: str = ""
     url: str = ""
@@ -151,3 +151,24 @@ class MediaAnn(Dictable):
     media_summary: List[VideoAnn] = field(default_factory=list)
     tracks_summary: List[VideoAnn] = field(default_factory=list)
     annotation_tasks: List[AnnotationTask] = field(default_factory=list)
+
+
+@typechecked
+@dataclass
+class ModuleResponseInternal(DictLike):
+    point_aux = None
+    footprint_aux = None
+    proppair_aux = None
+    annotation_task_aux = None
+    image_annotation_aux = None
+    video_annotation_aux = None
+    property_aux = None
+    relationship_aux = None
+    eligibleprop_aux = None
+    region_aux = None
+    media_annotation = None
+    version : str = ""
+    date: str = "20000101000000"
+    media_annotation : MediaAnn = MediaAnn()
+    if not media_annotation:
+        media_annotation = create_media_ann()

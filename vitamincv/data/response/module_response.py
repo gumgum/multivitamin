@@ -1,7 +1,7 @@
 import glog as log
 
-from vitamincv.data.response.data import MediaAnn
-
+from vitamincv.data.response.data import ModuleResponseInternal
+from collections import MutableMapping
 #converts MediaAnn object to a dictionary (_dictionary)
 
 """
@@ -15,8 +15,7 @@ class ModuleResponse():
     """Response object that Modules populate and return
 
     Contains:
-        - vitamincv.data.response.MediaAnn
-        - dict
+        - vitamincv.data.response.ModuleResponseInternal
     
     input can be either MediaAnn or dictionary
     if dictionary, assumed to be matching this schema
@@ -31,8 +30,8 @@ class ModuleResponse():
             self._init_empty_dict()
         elif isinstance(input, dict):
             self._init_from_dict(input)
-        elif isinstance(input, MediaAnn):
-            self._init_from_media_ann(input)
+        elif isinstance(input, ModuleResponseInternal):
+            self._init_from_module_response(input)
         else:
             raise TypeError(f"Unsupported input type: {type(input)}")
             
@@ -40,6 +39,17 @@ class ModuleResponse():
         self.tstamp_map = None
         self.url = request.url
 
+    def _init_empty_dict():
+        log.info("Loading empty ModuleResponse")
+        self._internal_data = ModuleResponseInternal() 
+    
+    def _init_from_dict(self, input):
+        log.info("Loading ModuleResponse from dict")
+        self._internal_data = ModuleResponseInternal()
+    
+    def _init_from_media_ann(self, input):
+        pass
+        
     @property
     def dict(self):
         return self._dictionary
