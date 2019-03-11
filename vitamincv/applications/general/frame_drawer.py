@@ -151,10 +151,15 @@ class FrameDrawer(CVModule):
             for region in image_ann["regions"]:
                 rand_color = get_rand_bgr()
                 p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
+                anchor_point=[p0[0]+3,p1[1]-3]
+                if abs(p1[1]-self.h)<30:
+                    anchor_point=[p0[0]+3,int(p1[1]/2)-3]
                 img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                 prop_strs = get_props_from_region(region)
+                
+            
                 for i, prop in enumerate(prop_strs):
-                    img = cv2.putText(img, prop, (p0[0]+3, p1[1]-3+i*25), face, 1.0, rand_color, thickness)
+                    img = cv2.putText(img, prop, (anchor_point[0], anchor_point[1]+i*25), face, 1.0, rand_color, thickness)
             #Include the timestamp
             img = cv2.putText(img, str(tstamp), (20, 20), face, scale, [255,255,255], thickness)
             if self.dump_video:
@@ -171,7 +176,10 @@ class FrameDrawer(CVModule):
         if  self.dump_video:            
             vid.release()
         if self.s3_bucket:
-            self.upload_files(dump_folder)
+            try:
+                self.upload_files(dump_folder)
+            except:
+                log.error(traceback.format_exc())
         if self.pushing_folder==DEFAULT_DUMP_FOLDER:
             log.info('Removing files in '+dump_folder)
             shutil.rmtree(dump_folder)
@@ -197,7 +205,7 @@ class FrameDrawer(CVModule):
                     except:
                         content_type=None #file is not intended to be uploaded, it was not generated in this execution.
                     if content_type:
-                        bucket.put_object(Key=key, Body=data,ContentType=content_type,ACL='public-read')
+                        bucket.put_object(Key=key, Body=data,ContentType=content_type)
                         
 
     def update_response(self):

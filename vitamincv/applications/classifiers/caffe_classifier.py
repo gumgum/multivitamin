@@ -46,7 +46,7 @@ class CaffeClassifier(CVModule):
         labels_file=os.path.join(net_data_dir, "labels.txt")
         try:
             with open(labels_file) as f:
-                self.labels = f.read().splitlines()
+                self.labels = f.read().strip().splitlines()
         except:
             log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
@@ -120,11 +120,17 @@ class CaffeClassifier(CVModule):
                 self.net.blobs['data'].data[...] = im
             
                 probs = self.net.forward()[LAYER_NAME]
-                log.debug('probs: ' + str(probs))
+                log.debug('probs: ' + str(probs))           
+                log.debug('probs.shape: ' + str(probs.shape))
+                target_shape=(1,len(self.labels))
+                if (probs.shape==target_shape)==False:
+                    log.debug('Changing shape ' + str(probs.shape) + '->'+ str(target_shape))
+                    probs=np.reshape(probs,target_shape)
+
                 for p in probs:
                     log.debug('p: ' + str(p))
                     p_indexes = np.argsort(p)
-                    p_indexes = np.flip(p_indexes,0)
+                    p_indexes = np.flip(p_indexes,0)                    
                     while True:
                         if len(p_indexes)==1:
                             break
@@ -161,8 +167,8 @@ class CaffeClassifier(CVModule):
                         log.debug("det: " + str(det))                        
                         self.detections.append(det)
                         
-            except Exception as e:
-                log.error(e)
+            except:
+                log.error(traceback.format_exc())
 
                     
 
