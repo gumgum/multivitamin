@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 import time
-
+import traceback
 import glog as log
 import credstash
 import requests as sender
@@ -32,8 +32,11 @@ class VertexAPI(SQSAPI):
             dst_url=r.get_destination_url()#This will include the request id as a parameter of the url
             if dst_url:
                 log.info("Pushing to {}".format(dst_url))
-                ret = sender.post(dst_url, headers=self.auth_header, data=response)
-                log.info("requests.post(...) response: {}".format(ret))
+                try:
+                    ret = sender.post(dst_url, headers=self.auth_header, data=response)
+                    log.info("requests.post(...) response: {}".format(ret))
+                except:
+                    log.error(traceback.format_exc())
             else:
                 log.info("No dst_url in request. Not pushing response.")
             if delete_flag:
