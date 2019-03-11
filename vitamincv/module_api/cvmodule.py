@@ -130,7 +130,7 @@ class CVModule(ABC):
             self.code="ERROR_NO_IMAGES_LOADED"
             return self.code
         
-        #we go thru the frames
+        #we go thru the frames        
         for i, (frame, tstamp) in enumerate(frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
@@ -138,7 +138,7 @@ class CVModule(ABC):
             if tstamp is None:
                 log.warning("Invalid tstamp")
                 continue
-            log.info('tstamp: ' + str(tstamp))
+            log.debug('tstamp: ' + str(tstamp))
             if len(self.prev_pois)>0:#We are expected1 to focus on previous detections
                 dets=[]
                 if tstamp in self.detections_t_map:
