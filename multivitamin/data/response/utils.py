@@ -10,7 +10,7 @@ from multivitamin.data.response.data import *
 def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
     """Helper function to create bounding box contour from 4 extrema points"""
     return [
-        Point(xmin, ymin, bound=bound),
+        create_point(xmin, ymin, bound=bound),
         create_point(xmax, ymin, bound=bound),
         create_point(xmax, ymax, bound=bound),
         create_point(xmin, ymax, bound=bound),

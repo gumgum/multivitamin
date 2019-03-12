@@ -45,7 +45,11 @@ from caffe.proto import caffe_pb2 as cpb2
 from multivitamin.utils.GPUUtilities import GPUUtility
 from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import crop_image_from_bbox_contour
-from multivitamin.data.response.data import *
+from multivitamin.data.response.data import (
+    create_bbox_contour_from_points,
+    create_prop,
+    create_region,
+)
 from multivitamin.applications.utils import load_idmap, load_label_prototxt
 
 LAYER_NAME = "detection_out"
