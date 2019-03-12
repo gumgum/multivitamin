@@ -55,7 +55,7 @@ class FileRetriever():
         url_scheme = urllib.parse.urlparse(value).scheme
 
         self._url = value
-        if url_scheme == ["", "file"]:
+        if url_scheme in ["", "file"]:
             self._is_local = True
         else:
             self._is_local = False
@@ -75,8 +75,8 @@ class FileRetriever():
 
     def _does_local_file_exist(self):
         if os.path.isfile(self.filepath):
-            return False
-        return True
+            return True
+        return False
 
     def _does_remote_file_exist(self):
         try:
@@ -251,7 +251,7 @@ class MediaRetriever(FileRetriever):
 
         if isinstance(self.video_capture, cv2.VideoCapture):
             return self.video_capture.get(cv2.CAP_PROP_FPS)
-        if isinstance(self.video_capture, pims.Video):
+        if "pims" in sys.modules and isinstance(self.video_capture, pims.Video):
             return self.video_capture.frame_rate
 
     @property
@@ -265,7 +265,7 @@ class MediaRetriever(FileRetriever):
 
         if isinstance(self.video_capture, cv2.VideoCapture):
             return self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
-        if isinstance(self.video_capture, pims.Video):
+        if "pims" in sys.modules and isinstance(self.video_capture, pims.Video):
             return len(self.video_capture)
 
     @property
@@ -292,7 +292,7 @@ class MediaRetriever(FileRetriever):
                 f = self.get_frame()
                 self._shape = f.shape
 
-            if isinstance(self.video_capture, pims.Video):
+            if "pims" in sys.modules and isinstance(self.video_capture, pims.Video):
                 self._shape = self.video_capture.frame_shape
 
         if self._shape is None:
@@ -430,7 +430,7 @@ class FramesIterator():
         if isinstance(self.cap, cv2.VideoCapture):
             fps = self.cap.get(cv2.CAP_PROP_FPS)
 
-        if isinstance(self.cap, pims.Video):
+        if "pims" in sys.modules and isinstance(self.cap, pims.Video):
             fps = self.cap.frame_rate
 
         self.period = max(1.0 / sample_rate, 1.0 / fps)
@@ -470,7 +470,7 @@ class FramesIterator():
                     self.cur_tstamp = tstamp
                     self.first_frame = False
                     return frame, self._round_tstamp(tstamp)
-            if isinstance(self.cap, pims.Video):
+            if "pims" in sys.modules and isinstance(self.cap, pims.Video):
                 try:
                     frame_idx = round(self.cur_tstamp * self.cap.frame_rate)
                     frame = self.cap[frame_idx]
