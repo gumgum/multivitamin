@@ -7,7 +7,7 @@ import pandas as pd
 import glog as log
 
 from multivitamin.module import Module, Codes
-from multivitamin.module.utils import pandas_bool_exp_match_on_props, batch_generator
+from multivitamin.module.utils import pandas_query_matches_props, batch_generator
 from multivitamin.media import MediaRetriever
 
 
@@ -100,8 +100,7 @@ class ImagesModule(Module):
                 log.warning("Invalid tstamp")
                 continue
 
-            # if i % 10 == 0:
-            log.info(f"tstamp: {tstamp}")
+            log.debug(f"tstamp: {tstamp}")
 
             regions = []
             if self.prev_pois:
@@ -111,7 +110,7 @@ class ImagesModule(Module):
                 regions_at_tstamp = self.response.frame_anns.get(tstamp)
                 if regions_at_tstamp is not None:
                     for i_region in regions_at_tstamp:
-                        if self._props_matches_prev_pois(i_region.get("props")):
+                        if self._region_contains_props(i_region):
                             regions.append(i_region)
                             self.prev_regions_of_interest_count += 1
 
@@ -132,7 +131,7 @@ class ImagesModule(Module):
         self.response.width = width
         self.response.height = height
 
-    def _props_matches_prev_pois(self, props):
+    def _region_contains_props(self, region):
         """ Boolean to check if a region's props matches the defined
             previous properties of interest
         
@@ -141,4 +140,7 @@ class ImagesModule(Module):
         Returns:
             bool: if props match prev_pois query
         """
-        return pandas_bool_exp_match_on_props(self.prev_pois_bool_exp, pd.DataFrame(props))
+        props = region.get("props")
+        if props is None:
+            return False
+        return pandas_query_matches_props(self.prev_pois_bool_exp, pd.DataFrame(props))

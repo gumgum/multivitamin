@@ -7,7 +7,7 @@ from multivitamin.data.response import ModuleResponse
 from multivitamin.data.response.data import create_footprint
 from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
-from multivitamin.module.utils import convert_list_of_query_dicts_to_bool_exp
+from multivitamin.module.utils import convert_props_to_pandas_query
 
 
 class Module(ABC):
@@ -35,7 +35,7 @@ class Module(ABC):
             assert(isinstance(poi, dict))
 
         self.prev_pois = pois
-        self.prev_pois_bool_exp = convert_list_of_query_dicts_to_bool_exp(pois)
+        self.prev_pois_bool_exp = convert_props_to_pandas_query(pois)
         log.info(f"Setting previous properties of interest: {json.dumps(pois, indent=2)}")
         log.info(f"bool exp: {self.prev_pois_bool_exp}")
 

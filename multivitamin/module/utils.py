@@ -67,7 +67,7 @@ def min_conf_filter_predictions(filter_dict, preds, confs, label_dict=None):
     return qualifying_preds
 
 
-def pandas_bool_exp_match_on_props(bool_exp, props):
+def pandas_query_matches_props(bool_exp, props):
     """Evaluates the boolean expression on a list of properties
     
         Note: list of properties must be a pandas.DataFrame
@@ -86,7 +86,7 @@ def pandas_bool_exp_match_on_props(bool_exp, props):
     return not queried_pois.empty
 
 
-def convert_list_of_query_dicts_to_bool_exp(query):
+def convert_props_to_pandas_query(query_props):
     """Convert a list of query dicts to a boolean expression to be used in pandas.DataFrame.query
 
         E.g.
@@ -105,18 +105,18 @@ def convert_list_of_query_dicts_to_bool_exp(query):
     Returns:
         str: boolean expression
     """
-    assert isinstance(query, list)
-    log.debug(query)
+    assert isinstance(query_props, list)
+    log.debug(query_props)
     bool_exp = ""
-    for i, q in enumerate(query):
+    for i, q in enumerate(query_props):
         assert isinstance(q, dict)
         for j, (k, v) in enumerate(q.items()):
             bool_exp += f'({k} == "{v}")'
             if j != len(q) - 1:
                 bool_exp += " & "
-        if i != len(query) - 1:
+        if i != len(query_props) - 1:
             bool_exp += " | "
-    log.debug(f"query: {query} transformed into boolean expression: {bool_exp}")
+    log.debug(f"query: {query_props} transformed into boolean expression: {bool_exp}")
     return bool_exp
 
 

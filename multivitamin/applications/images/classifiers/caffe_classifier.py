@@ -146,7 +146,13 @@ class CaffeClassifier(ImagesModule):
 
                 # TODO : clean this up
                 probs = self.net.forward()[self.layer_name]
-                # log.debug('probs: ' + str(probs))
+                log.debug('probs: ' + str(probs))
+                log.debug('probs.shape: ' + str(probs.shape))
+                target_shape = (1, len(self.labels))
+                if (probs.shape == target_shape) is False:
+                    log.debug('Changing shape ' + str(probs.shape) + '->' + str(target_shape))
+                    probs = np.reshape(probs, target_shape)
+
                 props = []
                 for p in probs:
                     # log.debug('p: ' + str(p))

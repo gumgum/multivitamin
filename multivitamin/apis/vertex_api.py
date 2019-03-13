@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-import time
+import traceback
 
 import glog as log
 import credstash
@@ -7,6 +6,7 @@ import requests as sender
 
 from multivitamin.apis.sqs_api import SQSAPI
 from multivitamin.data.response import SchemaResponse
+
 
 class VertexAPI(SQSAPI):
     def __init__(self, queue_name):
@@ -36,8 +36,12 @@ class VertexAPI(SQSAPI):
                 log.info(f"Pushing to {dst_url}")
                 data = res.data
                 log.info(f"data is of type {type(data)}")
-                ret = sender.post(dst_url, headers=self.auth_header, data=data)
-                log.info(f"requests.post(...) response: {ret}")
+                try:
+                    ret = sender.post(dst_url, headers=self.auth_header, data=data)
+                    log.info(f"requests.post(...) response: {ret}")
+                except Exception as e:
+                    log.error(e)
+                    log.error(traceback.print_exc())
             else:
                 log.info("No dst_url in request. Not pushing response.")
             if delete_flag:
