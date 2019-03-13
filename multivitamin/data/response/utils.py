@@ -4,26 +4,8 @@ import glog as log
 import json
 
 from multivitamin.data.response import config
-from multivitamin.data.response.data import *
+from multivitamin.data.response.data import create_point
 
-
-def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
-    """Helper function to create bounding box contour from 4 extrema points"""
-    return [
-        create_point(xmin, ymin, bound=bound),
-        create_point(xmax, ymin, bound=bound),
-        create_point(xmax, ymax, bound=bound),
-        create_point(xmin, ymax, bound=bound),
-    ]
-
-
-def create_region_id():
-    """Create a region_id
-
-    Returns:
-        str: 16 digit random number
-    """
-    return str(int(random.random() * 1e16))
 
 def read_json(file_path):
     """Convenience method for reading jsons"""
@@ -212,64 +194,8 @@ def get_current_date():
     )
     return date
 
-<<<<<<< HEAD:multivitamin/data/response/utils.py
-=======
-    # Convert number of pixel to max pixel index
-    w_max_px_ind = max(w-1, 1)
-    h_max_px_ind = max(h-1, 1)
-
-    x0 = contour[0]['x']
-    y0 = contour[0]['y']
-    x1 = contour[0]['x']
-    y1 = contour[0]['y']
-    for pt in contour:
-        x0 = min(x0, pt['x'])
-        y0 = min(y0, pt['y'])
-        x1 = max(x1, pt['x'])
-        y1 = max(y1, pt['y'])
-
-    x0 = dtype(x0 * w_max_px_ind)
-    y0 = dtype(y0 * h_max_px_ind)
-    x1 = dtype(x1 * w_max_px_ind)
-    y1 = dtype(y1 * h_max_px_ind)
-    return (x0, y0), (x1, y1)
-
-def crop_image_from_bbox_contour(image, contour):
-    """Crop an image given a bounding box contour
-    
-    Args:  
-        image (np.array): image
-        contour (dict[float]): points of a bounding box countour
-    
-    Returns:
-        np.array: image
-    """
-    if contour is None:
-        return image
-    (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour)
-    return image[y0:y1, x0:x1]
-
-def create_region_id(tstamp, contour):
-    """Create a region_id
-
-    Returns:
-        str: random 16 digit number
-    """
-    tstamp = round_float_to_str(tstamp)
-    contour = round_all_pts_in_contour_to_str(contour)
-    assert(len(contour)>=3)
-    xmin = contour[0].get("x")
-    xmax = contour[1].get("x")
-    ymin = contour[0].get("y")
-    ymax = contour[2].get("y")
-    
-    return "{}_({},{})({},{})({},{})({},{})".format(
-        tstamp, xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
-    )
-
 # def jaccard_distance_between_contours(contourA, contourB, w, h):
 #     pass
->>>>>>> origin/develop:vitamincv/avro_api/utils.py
 
 def intersection_between_bboxes(bbox0, bbox1):
     if type(bbox0) == type([]):

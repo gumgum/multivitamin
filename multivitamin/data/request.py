@@ -1,14 +1,9 @@
-import os
-import json
-
 import glog as log
-import urllib
-import boto3
 
 DEFAULT_SAMPLE_RATE = 1.0
 
 
-class Request:
+class Request():
     def __init__(self, request_dict, request_id=None):
         """Data object to encapsulate and cleanse request
 
@@ -35,6 +30,8 @@ class Request:
         be = self.request.get("bin_encoding", True)
         if isinstance(be, str):
             be = be.lower() == "true"
+        elif isinstance(be, int):
+            be = be == 1
         return be
 
     @property
@@ -42,13 +39,18 @@ class Request:
         de = self.request.get("bin_decoding", True)
         if isinstance(de, str):
             de = de.lower() == "true"
+        elif isinstance(de, int):
+            de = de == 1
         return de
+
 
     @property
     def base64_encoding(self):
         be = self.request.get("base64_encoding", True)
         if isinstance(be, str):
             be = be.lower() == "true"
+        elif isinstance(be, int):
+            be = be == 1
         return be
 
     @property
@@ -66,6 +68,15 @@ class Request:
     @property
     def flags(self):
         return self.request.get("flags")
+
+    @property
+    def kill_flag(self):
+        kf = self.request.get("kill_flag", False)
+        if isinstance(kf, str):
+            kf = kf.lower() == "true"
+        elif isinstance(kf, int):
+            kf = kf == 1
+        return kf
 
     def __repr__(self):
         return f"request: {self.request}; request_id: {self.request_id}"

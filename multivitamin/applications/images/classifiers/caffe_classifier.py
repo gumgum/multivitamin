@@ -101,7 +101,7 @@ class CaffeClassifier(ImagesModule):
         labels_file = os.path.join(net_data_dir, "labels.txt")
         try:
             with open(labels_file) as f:
-                self.labels = f.read().splitlines()
+                self.labels = f.read().strip().splitlines()
         except Exception as err:
             log.error("Unable to parse file: " + labels_file)
             log.error(traceback.format_exc())
@@ -150,7 +150,7 @@ class CaffeClassifier(ImagesModule):
                 log.debug('probs.shape: ' + str(probs.shape))
                 target_shape = (1, len(self.labels))
                 if (probs.shape == target_shape) is False:
-                    log.debug('Changing shape ' + str(probs.shape) + '->' + str(target_shape))
+                    log.info('Changing shape ' + str(probs.shape) + '->' + str(target_shape))
                     probs = np.reshape(probs, target_shape)
 
                 props = []

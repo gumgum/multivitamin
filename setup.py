@@ -45,9 +45,9 @@ class VerifyVersionCommand(install):
 setup(
     name="multivitamin",
     version=VERSION,
-    description="Common CV APIs",
+    description="Serving infrastructure for ML and CV models",
     url="https://bitbucket.org/gumgum/multivitamin/",
-    author="GumGum Computer Vision",
+    author="GumGum ML",
     packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]),
     install_requires=reqs,
     include_package_data=True,

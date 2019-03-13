@@ -1,5 +1,4 @@
 import traceback
-
 import glog as log
 import credstash
 import requests as sender
@@ -26,10 +25,18 @@ class VertexAPI(SQSAPI):
         return super().pull(n)
 
     def push(self, responses, dst_url=None, delete_flag=True):
+        """Pushes responses to a destination URL via the requests lib and deletes SQS message
+           based on request_id
+        
+        Args:
+            responses (List[Response]): list of Response objects
+            dst_url (str): url for POST endpoint
+            delete_flag (bool): bool to delete request_id from SQS
+        """
         if not isinstance(responses, list):
             responses = [responses]
 
-        log.debug("Pushing " + str(len(request_apis)) + " items")
+        log.debug(f"Pushing {len(responses)} items")
         for res in responses:
             assert(isinstance(res, SchemaResponse))
             if dst_url:
@@ -45,5 +52,5 @@ class VertexAPI(SQSAPI):
             else:
                 log.info("No dst_url in request. Not pushing response.")
             if delete_flag:
-                log.info(f"Deleting {r.request.request_id} from {self.queue_url)}")
-                super().delete_message(r.request.request_id)
+                log.info(f"Deleting {res.request.request_id} from {self.queue_url}")
+                super().delete_message(res.request.request_id)

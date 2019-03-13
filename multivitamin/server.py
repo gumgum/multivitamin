@@ -86,6 +86,9 @@ class Server(Flask):
                 log.info("Pulling request")
                 requests = self.input_comm.pull()
                 for request in requests:
+                    if request.kill_flag is True:
+                        log.info("Incoming request with kill_flag == True, killing server")
+                        return
                     schema_response = self._process_request(request)
                     log.info("Pushing reponse to output_comms")
                     for output_comm in self.output_comms:
