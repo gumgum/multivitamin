@@ -6,7 +6,7 @@ import threading
 import glog as log
 from flask import Flask, jsonify
 
-from multivitamin.apis.comm_api import CommAPI
+from multivitamin.apis import CommAPI
 from multivitamin.module import Module
 from multivitamin.data.request import Request
 from multivitamin.data.response import SchemaResponse
