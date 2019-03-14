@@ -45,9 +45,13 @@ class ModuleResponse:
         assert(isinstance(footprint, dict))
         self._dictionary["media_annotation"]["codes"].append(footprint)
 
-    def append_video_ann(self, track):
-        assert(isinstance(track, dict))
-        self._dictionary["media_annotation"]["tracks_summary"].append(track)
+    def append_track(self, video_ann):
+        assert(isinstance(video_ann, dict))
+        self._dictionary["media_annotation"]["tracks_summary"].append(video_ann)
+
+    def append_media_summary(self, video_ann):
+        assert(isinstance(video_ann, dict))
+        self._dictionary["media_annotation"]["media_summary"].append(video_ann)
 
     def append_annotation_tasks(self, annotation_tasks):
         self._dictionary["media_annotation"]["annotation_tasks"].extend(annotation_tasks)
@@ -91,7 +95,7 @@ class ModuleResponse:
         return (self.width, self.height)
 
     @property
-    def media_summaries(self):
+    def media_summary(self):
         """Get full media summary
 
         Returns:

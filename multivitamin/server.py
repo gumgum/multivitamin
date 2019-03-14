@@ -36,7 +36,7 @@ class Server(Flask):
             raise TypeError("No modules was provided.")
         for m in modules:
             if not isinstance(m, Module):
-                raise TypeError("Not all the modules are of type Module")
+                raise TypeError(f"Found type {type(m)}, expected type Module")
         if not input_comm:
             raise TypeError("No input_comm set")
         if not output_comms:

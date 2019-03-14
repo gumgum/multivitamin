@@ -14,6 +14,8 @@ def create_footprint(
     date="20000101000000",
     annotator="",
     tstamps=None,
+    num_images_processed=0,
+    request_source="",
     id="",
 ):
     if not labels:
@@ -30,6 +32,8 @@ def create_footprint(
         "date": date,
         "annotator": annotator,
         "tstamps": tstamps,
+        "num_images_processed": num_images_processed,
+        "request_source": request_source,
         "id": id,
     }
 

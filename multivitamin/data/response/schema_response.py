@@ -102,6 +102,10 @@ class SchemaResponse:
         self._dictionary = d
 
     @property
+    def tracks(self):
+        return self._dictionary["media_annotation"]["tracks_summary"]
+    
+    @property
     def request(self):
         return self._request
 

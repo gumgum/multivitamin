@@ -68,7 +68,9 @@
                     {"name": "annotator","type": "string", "doc": "String identifying the annotator if any."},
                     {"name": "tstamps", "type": { "type": "array", "items": "float"}, "doc": "Array of timestamps being processed"},
                     {"name": "labels",  "type": { "type": "array", "items": "eligibleprop"}, "doc": "Array of labels that can be detected/annotated."},
-                    {"name": "id", "type": "string", "doc": "id that maps to footprint_id in property's."}
+                    {"name": "id", "type": "string", "doc": "id that maps to footprint_id in property's."},
+                    {"name": "num_images_processed", "type": "int", "default": 0, "doc": "Number of images processed by this module."},
+                    {"name": "request_source", "type": "string", "default": "", "doc": "Where the request comes from, e.g. queue_name"}
                 ]
             }]
         },

@@ -10,12 +10,17 @@ class Request():
         Args:
             request_dict (dict): input request json 
             request_id (str): ID tied to request (esp from AWS SQS)
+        
+        TODO: make Request class DictLike
         """
         if not isinstance(request_dict, dict):
             raise ValueError(f"request_dict is type: {type(request_dict)}, should be of type dict")
 
         self.request = request_dict
         self.request_id = request_id
+
+    def get(self, key, default=None):
+        return self.request.get(key, default)
 
     @property
     def url(self):
