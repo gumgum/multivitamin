@@ -123,7 +123,9 @@ class FrameDrawer(CVModule):
         thickness = 2
                   
         #we get the image_annotation tstamps
+        tstamps=self.avro_api.get_timestamps()
         tstamps_dets=self.avro_api.get_timestamps_from_detections()
+        log.info('tstamps: ' + str(tstamps))
         log.info('tstamps_dets: ' + str(tstamps_dets))
         #we get the frame iterator
         frames_iterator=[]
@@ -141,25 +143,29 @@ class FrameDrawer(CVModule):
             if tstamp is None:
                 log.warning("Invalid tstamp")
                 continue
-	        #log.info('tstamp: ' + str(tstamp))
-            if tstamp not in tstamps_dets:
+            #log.info('tstamp: ' + str(tstamp))
+            if tstamp in tstamps_dets:
+                log.info("drawing frame for tstamp: " + str(tstamp))            
+                #we get image_ann for that time_stamps                
+                image_ann=self.avro_api.get_image_ann_from_t(tstamp)
+                #log.info(json.dumps(image_ann, indent=2))
+                for region in image_ann["regions"]:
+                    rand_color = get_rand_bgr()
+                    p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
+                    anchor_point=[p0[0]+3,p1[1]-3]
+                    if abs(p1[1]-self.h)<30:
+                        anchor_point=[p0[0]+3,int(p1[1]/2)-3]
+                    img = cv2.rectangle(img, p0, p1, rand_color, thickness)
+                    prop_strs = get_props_from_region(region)
+                    for i, prop in enumerate(prop_strs):
+                        img = cv2.putText(img, prop, (anchor_point[0], anchor_point[1]+i*25), face, 1.0, rand_color, thickness)
+            elif tstamp in tstamps:
+                log.debug("Making frame gray")
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                img= cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            else:
+                log.debug("No processed frame")
                 continue
-            log.info("drawing frame for tstamp: " + str(tstamp))            
-            #we get image_ann for that time_stamps
-            image_ann=self.avro_api.get_image_ann_from_t(tstamp)
-            log.debug(json.dumps(image_ann, indent=2))
-            for region in image_ann["regions"]:
-                rand_color = get_rand_bgr()
-                p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
-                anchor_point=[p0[0]+3,p1[1]-3]
-                if abs(p1[1]-self.h)<30:
-                    anchor_point=[p0[0]+3,int(p1[1]/2)-3]
-                img = cv2.rectangle(img, p0, p1, rand_color, thickness)
-                prop_strs = get_props_from_region(region)
-                
-            
-                for i, prop in enumerate(prop_strs):
-                    img = cv2.putText(img, prop, (anchor_point[0], anchor_point[1]+i*25), face, 1.0, rand_color, thickness)
             #Include the timestamp
             img = cv2.putText(img, str(tstamp), (20, 20), face, scale, [255,255,255], thickness)
             if self.dump_video:
