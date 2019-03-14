@@ -1,19 +1,24 @@
-from multivitamin.module_api.cvmodule import CVModule
-from multivitamin.utils.work_handler import WorkerManager
-from multivitamin.media_api.media import MediaRetriever
-from multivitamin.avro_api.utils import get_current_time
-from multivitamin.avro_api.cv_schema_factory import *
-
-from PIL import Image
-from io import BytesIO
-import numpy as np
-import boto3
-import json
-
 import os
+import json
+from io import BytesIO
+
+import boto3
+import glog as log
+import numpy as np
+from PIL import Image
+
+from multivitamin.module import PropertiesModule
+from multivitamin.utils.work_handler import WorkerManager
+from multivitamin.media import MediaRetriever
+from multivitamin.data.response.utils import get_current_time
+from multivitamin.data.response.data import (
+    create_footprint,
+    create_video_ann,
+    create_prop
+)
 
 
-class FrameExtractor(CVModule):
+class FrameExtractor(PropertiesModule):
     def __init__(
         self,
         server_name,
@@ -143,9 +148,7 @@ class FrameExtractor(CVModule):
         )
         return result
 
-    def process(self, message):
-        self.set_message(message)
-        self.code = "SUCCESS"
+    def process_properties(self):
         self.last_tstamp = 0.0
         log.info("Processing")
         # filelike = self.media_api.download(return_filelike=True)
@@ -155,7 +158,8 @@ class FrameExtractor(CVModule):
 
         # log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
-        self.video_url = self.request_api.request["url"]
+        self.video_url = self.response.request.url
+        self.med_ret = MediaRetriever(self.video_url)
         video_id = os.path.basename(self.video_url).rsplit(".", 1)[0]
         video_id = "".join([e for e in video_id if e.isalnum() or e in ["/", "."]])
         self.contents_file_key = self._rel_path_format.format(
@@ -180,7 +184,7 @@ class FrameExtractor(CVModule):
         contents = []
         log.info("Getting frames")
         for i, (frame, tstamp_secs) in enumerate(
-            self.media_api.get_frames_iterator(sample_rate=self._sample_rate)
+            self.med_ret.get_frames_iterator(sample_rate=self._sample_rate)
         ):
             tstamp = int(tstamp_secs * 1000)
             # self._upload_frame(frame, tstamp, video_hash)
@@ -207,42 +211,19 @@ class FrameExtractor(CVModule):
         if self._local_dir is not None:
             self._add_contents_to_local(contents)
 
-    def update_response(self):
-        date = get_current_time()
-        n_footprints = len(self.avro_api.get_footprints())
-        footprint_id = date + str(n_footprints + 1)
-        fp = create_footprint(
-            code=self.code,
-            ver=self.version,
-            company="gumgum",
-            labels=None,
-            server_track="",
-            server=self.name,
-            date=date,
-            annotator="",
-            tstamps=None,
-            id=footprint_id,
-        )
-        self.avro_api.append_footprint(fp)
-
-        if self.code != "SUCCESS":
-            log.error("The processing was not succesful")
-            return
-        self.avro_api.set_url(self.request_api.get_url())
-        self.avro_api.set_url_original(self.request_api.get_url())
-        self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
-        url = self._s3_url_format.format(bucket=self._s3_bucket, s3_key=self.contents_file_key)
-        module_id = 0
-        if self.module_id_map:
-            module_id = self.module_id_map.get(self.name, 0)
+        self.response.url_original = self.video_url
+        new_url = self._s3_url_format.format(
+            bucket=self._s3_bucket, 
+            s3_key=self.contents_file_key
+            )
+        self.response.url = new_url
         p = create_prop(
             server=self.name,
             ver=self.version,
-            value=url,
+            value=new_url,
             property_type="extraction",
-            footprint_id=fp["id"],
             property_id=1,
-            module_id=module_id,
         )
-        track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=[p])
-        self.avro_api.append_track_to_tracks_summary(track)
+        media_summary = create_video_ann(t1=0.0, t2=float(self.last_tstamp), props=[p])
+        self.response.append_media_summary(media_summary)
+
