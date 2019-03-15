@@ -7,7 +7,6 @@ import glog as log
 import numpy as np
 from PIL import Image
 
-<<<<<<< HEAD:multivitamin/applications/images/frame_extractor.py
 from multivitamin.module import PropertiesModule
 from multivitamin.utils.work_handler import WorkerManager
 from multivitamin.media import MediaRetriever
@@ -29,13 +28,9 @@ class FrameExtractor(PropertiesModule):
         local_dir=None,
         module_id_map=None,
     ):
-=======
-class FrameExtractor(CVModule):
-    def __init__(self, server_name, version, sample_rate=1.0, s3_bucket=None, local_dir=None, module_id_map=None,n_threads=100):
->>>>>>> origin/develop:vitamincv/applications/general/frame_extractor.py
         super().__init__(server_name, version, module_id_map=module_id_map)
         self._sample_rate = sample_rate
-        self.n_threads=n_threads
+
         self._local_dir = local_dir
         self._s3_bucket = s3_bucket
         self._list_file = "contents"
@@ -52,7 +47,6 @@ class FrameExtractor(CVModule):
         self._content_type = "image/jpeg"
         self._s3_upload_args = {"ContentType": self._content_type}
 
-<<<<<<< HEAD:multivitamin/applications/images/frame_extractor.py
         self._s3_write_manager = WorkerManager(
             func=self._upload_frame_helper,
             n=100,
@@ -67,8 +61,6 @@ class FrameExtractor(CVModule):
             parallelization="thread",
         )
 
-=======
->>>>>>> origin/develop:vitamincv/applications/general/frame_extractor.py
     @staticmethod
     def _mklocaldirs(directory):
         if not os.path.exists(directory):
@@ -165,20 +157,6 @@ class FrameExtractor(CVModule):
         return result
 
     def process_properties(self):
-        self._s3_write_manager = WorkerManager(
-                                        func=self._upload_frame_helper,
-                                        n=self.n_threads,
-                                        max_queue_size=100,
-                                        parallelization="thread"
-                                    )
-
-        self._local_write_manager = WorkerManager(
-                                        func=self._write_frame_helper,
-                                        n=self.n_threads,
-                                        max_queue_size=100,
-                                        parallelization="thread"
-                                    )
-
         self.last_tstamp = 0.0
         log.info("Processing")
         # filelike = self.media_api.download(return_filelike=True)
@@ -221,8 +199,6 @@ class FrameExtractor(CVModule):
             )
             media_summary = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
             self.response.append_media_summary(media_summary)
-            self._s3_write_manager.kill_workers_on_completion()
-            self._local_write_manager.kill_workers_on_completion()
             return
         except:
             pass
@@ -256,9 +232,6 @@ class FrameExtractor(CVModule):
             result = self._add_contents_to_s3(contents)
         if self._local_dir is not None:
             self._add_contents_to_local(contents)
-        
-        self._s3_write_manager.kill_workers_on_completion()
-        self._local_write_manager.kill_workers_on_completion()
 
         self.response.url_original = self.video_url
         new_url = self._s3_url_format.format(
