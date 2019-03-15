@@ -20,7 +20,6 @@ from confluent_kafka.avro.serializer.message_serializer import (
 from confluent_kafka.avro.serializer import SerializerError
 
 from multivitamin.data.response import config
-from multivitamin.data.response import ModuleResponse
 
 
 class AvroIO:

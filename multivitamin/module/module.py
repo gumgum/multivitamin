@@ -3,7 +3,7 @@ import json
 
 import glog as log
 
-from multivitamin.data.response import ModuleResponse
+from multivitamin.data import Response
 from multivitamin.data.response.data import create_footprint
 from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
@@ -44,7 +44,7 @@ class Module(ABC):
 
     @abstractmethod
     def process(self, response):
-        assert isinstance(response, ModuleResponse)
+        assert isinstance(response, Response)
         self.code = Codes.SUCCESS
         self.response = response
         self.request = response.request

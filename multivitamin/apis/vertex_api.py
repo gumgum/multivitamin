@@ -4,7 +4,7 @@ import credstash
 import requests as sender
 
 from multivitamin.apis.sqs_api import SQSAPI
-from multivitamin.data.response import SchemaResponse
+from multivitamin.data import Response
 
 
 class VertexAPI(SQSAPI):

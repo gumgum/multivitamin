@@ -2,7 +2,7 @@ import glog as log
 import boto3
 import json
 
-from multivitamin.data.request import Request
+from multivitamin.data import Request
 from multivitamin.apis.comm_api import CommAPI
 from multivitamin.apis import config
 

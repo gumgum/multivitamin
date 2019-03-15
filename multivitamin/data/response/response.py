@@ -95,6 +95,13 @@ class Response():
     def has_frame_anns(self):
         return len(self.frame_anns) > 0
 
+    def get_regions_from_tstamp(self, t):
+        assert(isinstance(t, float))
+        if not t in self._tstamp2frameannsidx:
+            return None
+        frame_anns_idx = self._tstamp2frameannsidx[t]
+        return self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx]["regions"]
+        
     @property
     def request(self):
         return self._request

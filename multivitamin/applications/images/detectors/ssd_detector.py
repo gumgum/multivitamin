@@ -47,8 +47,8 @@ from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import crop_image_from_bbox_contour
 from multivitamin.data.response.data import (
     create_bbox_contour_from_points,
-    create_prop,
-    create_region,
+    Region, 
+    Prop,
 )
 from multivitamin.applications.utils import load_idmap, load_label_prototxt
 
@@ -128,7 +128,7 @@ class SSDDetector(ImagesModule):
                     contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=True)
                     props = []
                     props.append(
-                        create_prop(
+                        Prop(
                             confidence=confidence,
                             confidence_min=CONFIDENCE_MIN,
                             ver=self.version,
@@ -139,8 +139,8 @@ class SSDDetector(ImagesModule):
                     )
                     # regions.append(create_region(contour=contour, props=props))
                     self.response.append_region(
-                        t=tstamp, region=create_region(contour=contour, props=props)
+                        t=tstamp, region=Region(contour=contour, props=props)
                     )
-                except:
+                except Exception:
                     log.error(traceback.format_exc())
-            # self.response.append_regions(t=tstamp, regions=regions)
+

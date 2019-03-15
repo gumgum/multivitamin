@@ -107,7 +107,7 @@ class ImagesModule(Module):
                 log.debug("Processing with previous response")
                 log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
 
-                regions_at_tstamp = self.response.frame_anns.get(tstamp)
+                regions_at_tstamp = self.response.get_regions_from_tstamp(tstamp)
                 if regions_at_tstamp is not None:
                     for i_region in regions_at_tstamp:
                         if self._region_contains_props(i_region):

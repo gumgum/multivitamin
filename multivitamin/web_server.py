@@ -6,14 +6,13 @@ import glog as log
 from flask import Flask, request, jsonify
 
 from multivitamin.module import Module
-from multivitamin.data.request import Request
-from multivitamin.data.response import SchemaResponse
+from multivitamin.data import Request, Response
 
 
 PORT = os.environ.get("PORT", 8888)
 
 
-class HTTPServer(Flask):
+class WebServer(Flask):
     def __init__(self, modules, port=PORT):
         """Serves as the public interface for CV services through multivitamin
 
@@ -49,7 +48,7 @@ class HTTPServer(Flask):
             try:
                 message = request.get_json(force=True)
                 req = Request(request_dict=message)
-                schema_response = SchemaResponse(req)
+                schema_response = Response(req)
                 response = schema_response.to_module_response()
 
                 for module in self.modules:
@@ -57,11 +56,10 @@ class HTTPServer(Flask):
                     response = module.process(response)
                     log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
 
-                sr = SchemaResponse(response)
                 if req.bin_encoding:
-                    return sr.bytes
+                    return response.bytes
                 else:
-                    return jsonify(sr.dict)
+                    return jsonify(response.dict)
             except Exception as e:
                 log.error(e)
                 log.error(traceback.print_exc())

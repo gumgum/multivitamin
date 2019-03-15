@@ -6,7 +6,7 @@ import shutil
 import boto3
 
 from multivitamin.apis.comm_api import CommAPI
-from multivitamin.data.response import SchemaResponse
+from multivitamin.data import Response
 
 
 INDENTATION = 2
@@ -28,16 +28,16 @@ class S3API(CommAPI):
         raise NotImplementedError("S3API.pull() not yet implemented")
 
     def push(self, responses):
-        """Push a list of SchemaResponse objects to be written to pushing_folder
+        """Push a list of Response objects to be written to pushing_folder
 
         Args:
-            responses (list[SchemaResponse]): list of requests to be pushed/written to disk
+            responses (list[Response]): list of requests to be pushed/written to disk
         """
         if not isinstance(responses, list):
             responses = [responses]
 
         for res in responses:
-            assert(isinstance(res, SchemaResponse))
+            assert(isinstance(res, Response))
             fn = self.get_fn(res)
             tmp_dir = tempfile.mkdtemp()
             outfn = os.path.join(tmp_dir, fn)

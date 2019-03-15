@@ -10,7 +10,7 @@ from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
 from multivitamin.module.utils import min_conf_filter_predictions
 from multivitamin.utils.GPUUtilities import GPUUtility
-from multivitamin.data.response.data import create_region, create_prop
+from multivitamin.data.response.data import Region, Prop
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -183,7 +183,7 @@ class CaffeClassifier(ImagesModule):
 
                         if confidence < CONFIDENCE_MIN:
                             label = "Unknown"
-                        prop = create_prop(
+                        prop = Prop(
                             server=self.name,
                             ver=self.version,
                             value=label,
@@ -196,8 +196,7 @@ class CaffeClassifier(ImagesModule):
                         else:
                             props.append(prop)
                 if prev_region is None:
-                    self.module_response.append_region(t=tstamp, region=create_region(props=props))
-                    # self.module_response.append_region(t=tstamp, region=Region(props=props))
+                    self.module_response.append_region(t=tstamp, region=Region(props=props))
             except Exception as e:
                 log.error(traceback.print_exc())
                 log.error(e)

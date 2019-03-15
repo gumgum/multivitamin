@@ -5,8 +5,7 @@ import json
 from pathlib import Path
 from queue import Queue
 
-from multivitamin.data.request import Request
-from multivitamin.data.response import SchemaResponse
+from multivitamin.data import Request, Response
 from multivitamin.apis.comm_api import CommAPI
 from multivitamin.data.response.utils import get_current_date
 
@@ -75,7 +74,7 @@ class LocalAPI(CommAPI):
             responses = [responses]
 
         for response in responses:
-            assert(isinstance(response, SchemaResponse))
+            assert(isinstance(response, Response))
 
         log.debug(f"Pushing {len(responses)} items to folder: {self.pushing_folder}")
         outfns = []
@@ -98,7 +97,7 @@ class LocalAPI(CommAPI):
         """Create a fn from url string 
 
         Args:
-            response (SchemaResponse): response
+            response (Response): response
         
         Returns:
             str: unique identifier

@@ -4,7 +4,7 @@ import glog as log
 import json
 
 from multivitamin.data.response import config
-from multivitamin.data.response.data import create_point
+from multivitamin.data.response.data import Point
 
 
 def read_json(file_path):
@@ -115,7 +115,7 @@ def round_all_pts_in_contour(contour):
     """
     rounded_contour = []
     for pt in contour:
-        rounded_contour.append(create_point(x=round_float(pt["x"]), y=round_float(pt["y"])))
+        rounded_contour.append(Point(x=round_float(pt["x"]), y=round_float(pt["y"])))
     return rounded_contour
 
 
