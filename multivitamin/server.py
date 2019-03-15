@@ -86,27 +86,31 @@ class Server(Flask):
     def _start(self):
         while True:
             try:
-                log.info("Pulling request")
+                log.info("Pulling requests")
                 requests = self.input_comm.pull()
                 for request in requests:
-                    if request.kill_flag is True:
-                        log.info(
-                            "Incoming request with kill_flag == True, killing server"
-                        )
-                        return
-                    response = self._process_request(request)
-                    log.info("Pushing reponse to output_comms")
-                    for output_comm in self.output_comms:
-                        try:
-                            ret = output_comm.push(response)
-                        except Exception as e:
-                            log.error(e)
-                            log.error(traceback.format_exc())
-                            log.error(f"Error pushing to output_comm: {output_comm}")
+                    try:
+                        if request.kill_flag is True:
+                            log.info(
+                                "Incoming request with kill_flag == True, killing server"
+                            )
+                            return
+                        response = self._process_request(request)
+                        log.info("Pushing reponse to output_comms")
+                        for output_comm in self.output_comms:
+                            try:
+                                ret = output_comm.push(response)
+                            except Exception as e:
+                                log.error(e)
+                                log.error(traceback.format_exc())
+                                log.error(f"Error pushing to output_comm: {output_comm}")
+                    except Exception:
+                        log.error(traceback.format_exc())
+                        log.error(f"Error processing request: {request}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())
-                log.error("Error processing request")
+                log.error("Error processing requests")
 
     def _process_request(self, request):
         """Send request_message through all the modules

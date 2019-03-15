@@ -33,7 +33,7 @@ class ImagesModule(Module):
             module_id_map=module_id_map,
         )
         self.batch_size = batch_size
-        log.info(f"Creating ImagesModule with batch_size: {batch_size}")
+        log.debug(f"Creating ImagesModule with batch_size: {batch_size}")
 
     def process(self, response):
         """Process the message, calls process_images(batch, tstamps, contours=None)
