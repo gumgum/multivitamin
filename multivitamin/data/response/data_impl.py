@@ -1,4 +1,5 @@
 from collections import MutableMapping
+import json
 
 
 class DictLike(MutableMapping):
@@ -25,3 +26,16 @@ class DictLike(MutableMapping):
         
     def __repr__(self):
         return f'{super().__repr__()}, ({self.__dict__})'
+    
+    def to_json(self, indent=2):
+        """Serialize to JSON string
+
+        Returns:
+            str: serialized JSON str
+        """
+        return json.dumps(
+            self,
+            default=lambda o: o.__dict__,
+            sort_keys=True,
+            indent=indent
+        )

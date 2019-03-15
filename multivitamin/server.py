@@ -8,8 +8,7 @@ from flask import Flask, jsonify
 
 from multivitamin.apis import CommAPI
 from multivitamin.module import Module
-from multivitamin.data.request import Request
-from multivitamin.data.response import SchemaResponse
+from multivitamin.data import Response, Request
 
 
 HEALTHPORT = os.environ.get("PORT", 5000)
@@ -89,11 +88,11 @@ class Server(Flask):
                     if request.kill_flag is True:
                         log.info("Incoming request with kill_flag == True, killing server")
                         return
-                    schema_response = self._process_request(request)
+                    response = self._process_request(request)
                     log.info("Pushing reponse to output_comms")
                     for output_comm in self.output_comms:
                         try:
-                            ret = output_comm.push(schema_response)
+                            ret = output_comm.push(response)
                         except Exception as e:
                             log.error(e)
                             log.error(traceback.format_exc())
@@ -116,12 +115,11 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"Processing: {request}")
 
-        schema_response = SchemaResponse(request, self.use_schema_registry)
-        module_response = schema_response.to_module_response()
+        response = Response(request, self.use_schema_registry)
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
-            module_response = module.process(module_response)
-            log.debug(f"response.dict: {json.dumps(module_response.dict, indent=2)}")
+            response = module.process(response)
+            log.debug(f"response.to_json(): {response.to_json(indent=2)}")
 
-        return SchemaResponse(module_response, self.use_schema_registry)
+        return response
