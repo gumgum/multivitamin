@@ -30,8 +30,7 @@ class CVModule(ABC):
         self.prop_id_map=prop_id_map
         self.module_id_map=module_id_map
         self.confidence_min = confidence_min
-        
- 
+        self.processed_timestamps=[]
         #To be overwritten, if needed, by the child
         self.process_properties_flag = process_properties_flag
         self.prev_pois = [] #this are the properties of interest that define the regions of interest, the ones that we'll want to analyze.
@@ -131,7 +130,9 @@ class CVModule(ABC):
             return self.code
         
         #we go thru the frames        
+        self.processed_timestamps = []
         for i, (frame, tstamp) in enumerate(frames_iterator):
+            self.processed_timestamps.append(tstamp)
             if frame is None:
                 log.warning("Invalid frame")
                 continue
@@ -202,10 +203,11 @@ class CVModule(ABC):
         log.info("Adding footprint.")
         date = get_current_time()
         n_footprints=len(self.avro_api.get_footprints())
-        footprint_id=date+str(n_footprints+1)
+        footprint_id=date+str(n_footprints+1)        
+        unique_tstamps=sorted(list(set(self.processed_timestamps)))        
         fp=create_footprint(code=self.code, ver=self.version, company="gumgum", labels=None, server_track="",
                      server=self.name, date=date, annotator="",
-                     tstamps=None, id=footprint_id)
+                     tstamps=unique_tstamps, id=footprint_id) 
         self.avro_api.append_footprint(fp)
         log.info('self.code: ' + str(self.code))
         if self.code!='SUCCESS':

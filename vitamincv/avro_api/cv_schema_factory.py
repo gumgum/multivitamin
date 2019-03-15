@@ -70,12 +70,12 @@ def create_segment(server="", property_type="label", value="", value_verbose="",
         "company": company
     }
 
-def create_bbox_contour_from_points(xmin, ymin, xmax, ymax):
+def create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=False):
     """Helper function to create bounding box contour from 4 extrema points"""
-    return [create_point(xmin, ymin),
-            create_point(xmax, ymin),
-            create_point(xmax, ymax),
-            create_point(xmin, ymax)
+    return [create_point(xmin, ymin, bound),
+            create_point(xmax, ymin, bound),
+            create_point(xmax, ymax, bound),
+            create_point(xmin, ymax, bound)
             ]
 
 def create_point(x=0.0, y=0.0, bound=False, ub_x=1.0, ub_y=1.0):
