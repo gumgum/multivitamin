@@ -100,9 +100,7 @@ class Response:
         if t not in self._tstamp2frameannsidx:
             return None
         frame_anns_idx = self._tstamp2frameannsidx[t]
-        return self._response_internal["media_annotation"]["frames_annotation"][
-            frame_anns_idx
-        ]["regions"]
+        return self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx]["regions"]
 
     @property
     def request(self):
@@ -184,9 +182,7 @@ class Response:
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, appending Region")
             frame_anns_idx = self._tstamp2frameannsidx[t]
-            self._response_internal["media_annotation"]["frames_annotation"][
-                frame_anns_idx
-            ]["regions"].append(region)
+            self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx]["regions"].append(region)
         else:
             log.debug(f"t: {t} NOT in frame_anns, appending ImageAnn")
             ia = ImageAnn(t=t, regions=[region])
@@ -202,9 +198,7 @@ class Response:
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, extending Regions")
             frame_anns_idx = self._tstamp2frameannsidx[t]
-            self._response_internal["media_annotation"]["frames_annotation"][
-                frame_anns_idx
-            ].extend(regions)
+            self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx].extend(regions)
         else:
             log.debug(f"t: {t} NOT in frame_anns, appending ImageAnn")
             ia = ImageAnn(t=t, regions=regions)

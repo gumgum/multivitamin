@@ -13,9 +13,8 @@ from colour import Color
 from multivitamin.module import PropertiesModule
 from multivitamin.data import Response
 from multivitamin.data.response.utils import p0p1_from_bbox_contour, get_current_time
-from multivitamin.data.response.data import Property
+from multivitamin.data.response.data import Property, VideoAnn
 from multivitamin.media import MediaRetriever
-from multivitamin.avro_api.utils import get_current_time
 
 
 COLORS = [
@@ -84,9 +83,8 @@ class FrameDrawer(PropertiesModule):
             
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
-        
-    # def process(self,message=None, dump_video=True, dump_images=False):
-    def process_properties(self):
+
+    def process_properties(self, dump_video=True, dump_images=False):
         self.last_tstamp = 0.0
         assert(self.response)
         self.med_ret = MediaRetriever(self.response.url)
@@ -106,6 +104,10 @@ class FrameDrawer(PropertiesModule):
             log.error("Unable to get flags from request dump_video or dump_images")
             pass
         
+        if self.dump_video is None:
+            self.dump_video = dump_video
+        if self.dump_images is None:
+            self.dump_images = dump_images
         if self.dump_video is False and self.dump_images is False:
             log.warning("Not dumping anything--you might want to dump something.")
             return
@@ -115,6 +117,7 @@ class FrameDrawer(PropertiesModule):
         if dump_folder:
             if not os.path.exists(dump_folder):
                 os.makedirs(dump_folder)
+
         if self.dump_video:
             filename = dump_folder + '/video.mp4'
             fps = 1
@@ -123,30 +126,31 @@ class FrameDrawer(PropertiesModule):
             fourcc = cv2.VideoWriter_fourcc(*'H264')
             log.info("filename: " + filename)
             log.info("fourcc: " + str(fourcc))
-            log.info("type(fourcc): " + str(type(fourcc)))                      
+            log.info("type(fourcc): " + str(type(fourcc)))
             log.info("fps: " + str(fps))
             log.info("type(fps): " + str(type(fps)))
             log.info("frameSize: " + str(frameSize))
             log.info("type(frameSize): " + str(type(frameSize)))
-            vid = cv2.VideoWriter(filename, fourcc, fps,frameSize)
-            self.content_type_map[os.path.basename(filename)]='video/mp4'
+            vid = cv2.VideoWriter(filename, fourcc, fps, frameSize)
+            self.content_type_map[os.path.basename(filename)] = 'video/mp4'
         face = cv2.FONT_HERSHEY_SIMPLEX
         scale = 0.65
         thickness = 2
-                  
-        #we get the image_annotation tstamps
-        tstamps=self.avro_api.get_timestamps()
-        tstamps_dets=self.avro_api.get_timestamps_from_detections()
+
+        # we get the image_annotation tstamps
+        tstamps = self.response.timestamps
+        tstamp_frame_anns = self.response.timestamps_from_frames_ann
         log.debug('tstamps: ' + str(tstamps))
-        log.debug('tstamps_dets: ' + str(tstamps_dets))
-        #we get the frame iterator
-        frames_iterator=[]
-        try:
-            frames_iterator=self.med_ret.get_frames_iterator(sample_rate=1.0)
-        except:
-            log.error(traceback.format_exc())
-            exit(1)          
+        log.debug('tstamps_dets: ' + str(tstamp_frame_anns))
         
+        # we get the frame iterator
+        frames_iterator = []
+        try:
+            frames_iterator = self.med_ret.get_frames_iterator(sample_rate=1.0)
+        except Exception:
+            log.error(traceback.format_exc())
+            raise Exception("Error loading media")
+
         for i, (img, tstamp) in enumerate(frames_iterator):
             self.last_tstamp = tstamp
             if img is None:
@@ -155,103 +159,106 @@ class FrameDrawer(PropertiesModule):
             if tstamp is None:
                 log.warning("Invalid tstamp")
                 continue
-            #log.info('tstamp: ' + str(tstamp))
-            if tstamp in tstamps_dets:
-                log.debug("drawing frame for tstamp: " + str(tstamp))            
-                #we get image_ann for that time_stamps                
-                image_ann=self.avro_api.get_image_ann_from_t(tstamp)
-                #log.info(json.dumps(image_ann, indent=2))
-                for region in image_ann["regions"]:
+            # log.info('tstamp: ' + str(tstamp))
+            if tstamp in tstamp_frame_anns:
+                log.debug("drawing frame for tstamp: " + str(tstamp))
+                # we get image_ann for that time_stamps 
+                regions = self.response.get_regions_from_tstamp(tstamp)
+                # log.info(json.dumps(image_ann, indent=2))
+                for region in regions:
                     rand_color = get_rand_bgr()
                     p0, p1 = p0p1_from_bbox_contour(region['contour'], self.w, self.h)
-                    anchor_point=[p0[0]+3,p1[1]-3]
-                    if abs(p1[1]-self.h)<30:
-                        anchor_point=[p0[0]+3,int(p1[1]/2)-3]
+                    anchor_point = [p0[0]+3, p1[1]-3]
+                    if abs(p1[1]-self.h) < 30:
+                        anchor_point = [p0[0]+3, int(p1[1]/2)-3]
                     img = cv2.rectangle(img, p0, p1, rand_color, thickness)
                     prop_strs = get_props_from_region(region)
                     for i, prop in enumerate(prop_strs):
-                        img = cv2.putText(img, prop, (anchor_point[0], anchor_point[1]+i*25), face, 1.0, rand_color, thickness)
+                        img = cv2.putText(
+                            img,
+                            prop,
+                            (anchor_point[0], anchor_point[1]+i*25),
+                            face,
+                            1.0,
+                            rand_color,
+                            thickness
+                        )
             elif tstamp in tstamps:
                 log.debug("Making frame gray")
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                img= cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+                img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             else:
                 log.debug("No processed frame")
                 continue
-            #Include the timestamp
-            img = cv2.putText(img, str(tstamp), (20, 20), face, scale, [255,255,255], thickness)
+            # Include the timestamp
+            img = cv2.putText(img, str(tstamp), (20, 20), face, scale, [255, 255, 255], thickness)
             if self.dump_video:
-                #we add the frame
+                # we add the frame
                 log.debug("Adding frame")
                 vid.write(img)
             if self.dump_images:
-                #we dump the frame
+                # we dump the frame
                 outfn = "{}/{}.jpg".format(dump_folder, tstamp)
                 log.debug("Writing to file: {}".format(outfn))
                 cv2.imwrite(outfn, img)
-                self.content_type_map[os.path.basename(outfn)]='image/jpeg'
-        
-        if  self.dump_video:            
+                self.content_type_map[os.path.basename(outfn)] = 'image/jpeg'
+
+        if self.dump_video:
             vid.release()
         if self.s3_bucket:
             try:
                 self.upload_files(dump_folder)
-            except:
+            except Exception:
                 log.error(traceback.format_exc())
-        if self.pushing_folder==DEFAULT_DUMP_FOLDER:
+        if self.pushing_folder == DEFAULT_DUMP_FOLDER:
             log.info('Removing files in '+dump_folder)
             shutil.rmtree(dump_folder)
-    def upload_files(self,path):
+
+        props = []
+        if self.dump_images:
+            props.append(
+                Property(
+                    server=self.name,
+                    ver=self.version,
+                    value=self.dumping_folder_url,
+                    property_type="dumped_images",
+                    property_id=1,
+                )
+            )
+        if self.dump_video:
+            dumped_video_url = self.dumping_folder_url + '/video.mp4'
+            dumped_video_url = dumped_video_url.replace('//', '/')
+            props.append(
+                Property(
+                    server=self.name,
+                    ver=self.version,
+                    value=dumped_video_url,
+                    property_type="dumped_video",
+                    property_id=2,
+                )
+            )
+        media_summary = VideoAnn(t1=0.0, t2=self.last_tstamp, props=props)
+        self.response.append_media_summary(media_summary)
+
+    def upload_files(self, path):
         log.info("Uploading files")
         session = boto3.Session()
         s3 = session.resource('s3')
         bucket = s3.Bucket(self.s3_bucket)
-        key_root=self.s3_key + '/' +self.media_id + '/'
-        #https://<bucket-name>.s3.amazonaws.com/<key>
-        self.dumping_folder_url='https://s3.amazonaws.com/'+self.s3_bucket+'/'+ key_root
-
+        key_root = self.s3_key + '/' + self.media_id + '/'
+        # https://<bucket-name>.s3.amazonaws.com/<key>
+        self.dumping_folder_url = 'https://s3.amazonaws.com/' + self.s3_bucket + '/' + key_root
 
         for subdir, dirs, files in os.walk(path):
             for file in files:
                 full_path = os.path.join(subdir, file)
                 with open(full_path, 'rb') as data:
-                    rel_path=os.path.basename(full_path)
-                    key=key_root+ rel_path
+                    rel_path = os.path.basename(full_path)
+                    key = key_root + rel_path
                     log.info('Pushing ' + full_path + ' to ' + self.dumping_folder_url)
                     try:
-                        content_type=self.content_type_map[os.path.basename(full_path)]
-                    except:
-                        content_type=None #file is not intended to be uploaded, it was not generated in this execution.
+                        content_type = self.content_type_map[os.path.basename(full_path)]
+                    except Exception:
+                        content_type = None #file is not intended to be uploaded, it was not generated in this execution.
                     if content_type:
-                        bucket.put_object(Key=key, Body=data,ContentType=content_type)
-                        
-
-    def update_response(self):
-        date = get_current_time()
-        n_footprints=len(self.avro_api.get_footprints())
-        footprint_id=date+str(n_footprints+1)
-        fp=create_footprint(code=self.code, ver=self.version, company="gumgum", labels=None, server_track="",
-                     server=self.name, date=date, annotator="",
-                     tstamps=None, id=footprint_id)
-        self.avro_api.append_footprint(fp)
-
-        if self.code != "SUCCESS":
-            log.error('The processing was not succesful')
-            return
-        self.avro_api.set_url(self.request_api.get_url())
-        self.avro_api.set_url_original(self.request_api.get_url())
-        self.avro_api.set_dims(*self.request_api.media_api.get_w_h())
-        module_id=0
-        if self.module_id_map:
-            module_id=self.module_id_map.get(self.name, 0)
-        p=[]
-        if self.dump_images:
-            p1 = create_prop(server=self.name, ver=self.version, value=self.dumping_folder_url, property_type="dumped_images", footprint_id=fp["id"], property_id=1,  module_id=module_id)
-            p.append(p1)
-        if self.dump_video:
-            dumped_video_url= self.dumping_folder_url+ '/video.mp4'
-            dumped_video_url=dumped_video_url.replace('//','/' )
-            p2 = create_prop(server=self.name, ver=self.version, value=dumped_video_url, property_type="dumped_video", footprint_id=fp["id"], property_id=2,  module_id=module_id)
-            p.append(p2)
-        track = create_video_ann(t1=0.0, t2=self.last_tstamp, props=p)
-        self.avro_api.append_track_to_tracks_summary(track)
+                        bucket.put_object(Key=key, Body=data, ContentType=content_type)

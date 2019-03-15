@@ -73,7 +73,6 @@ class Module(ABC):
                 num_images_processed=len(self.tstamps_processed)
             )
         )
-        self.response.url_original = self.response.url
         self._update_ids()
         return self.response
 
