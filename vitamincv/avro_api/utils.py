@@ -12,6 +12,21 @@ from vitamincv.avro_api import config
 from vitamincv.avro_api.cv_schema_factory import *
 from vitamincv.media_api.media import MediaRetriever
 
+
+def compute_box_area(contour):
+    """Function to compute the spatial fraction based on the contour
+    
+    Args:
+        contour (List[Point]): contour
+    
+    Returns:
+        float: fraction
+    """
+    assert(len(contour) == 4)
+    p0, p1 = p0p1_from_bbox_contour(contour, dtype=float)
+    return float((p1[0]-p0[0])*(p1[1]-p0[1]))
+
+
 def round_float(val):
     """Function to round a float to our set number of sigificant digits
 

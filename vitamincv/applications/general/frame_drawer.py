@@ -145,7 +145,7 @@ class FrameDrawer(CVModule):
                 continue
             #log.info('tstamp: ' + str(tstamp))
             if tstamp in tstamps_dets:
-                log.info("drawing frame for tstamp: " + str(tstamp))            
+                log.debug("drawing frame for tstamp: " + str(tstamp))            
                 #we get image_ann for that time_stamps                
                 image_ann=self.avro_api.get_image_ann_from_t(tstamp)
                 #log.info(json.dumps(image_ann, indent=2))

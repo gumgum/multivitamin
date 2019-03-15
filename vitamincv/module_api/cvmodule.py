@@ -130,6 +130,7 @@ class CVModule(ABC):
             return self.code
         
         #we go thru the frames        
+        self.processed_timestamps = []
         for i, (frame, tstamp) in enumerate(frames_iterator):
             self.processed_timestamps.append(tstamp)
             if frame is None:
