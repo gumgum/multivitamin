@@ -14,9 +14,9 @@ with open("requirements.txt") as rf:
     reqs = rf.readlines()
 
 # Install CuPy if CUDA is installed
-if os.path.exists('/usr/local/cuda/version.txt'):
-    with open('/usr/local/cuda/version.txt') as cuda:
-        cuda_ver = cuda.readlines()[0].split()[-1].rsplit('.', 1)[0]
+if os.path.exists("/usr/local/cuda/version.txt"):
+    with open("/usr/local/cuda/version.txt") as cuda:
+        cuda_ver = cuda.readlines()[0].split()[-1].rsplit(".", 1)[0]
 
     cupy_supported_cuda_vers = ["8.0", "9.0", "9.1", "9.2"]
     if cuda_ver in cupy_supported_cuda_vers:
@@ -38,7 +38,9 @@ class VerifyVersionCommand(install):
         tag = os.getenv("DRONE_TAG", "unknown")
 
         if tag != VERSION:
-            info = "Git tag: {0} does not match the version of this app: {1}".format(tag, VERSION)
+            info = "Git tag: {0} does not match the version of this app: {1}".format(
+                tag, VERSION
+            )
             sys.exit(info)
 
 
@@ -48,7 +50,9 @@ setup(
     description="Serving infrastructure for ML and CV models",
     url="https://bitbucket.org/gumgum/multivitamin/",
     author="GumGum ML",
-    packages=find_packages(exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]),
+    packages=find_packages(
+        exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]
+    ),
     install_requires=reqs,
     include_package_data=True,
     zip_safe=False,

@@ -7,10 +7,13 @@ import importlib
 import numbers
 
 from multivitamin.module import ImagesModule
-from multivitamin.data.response.utils import p0p1_from_bbox_contour, crop_image_from_bbox_contour
+from multivitamin.data.response.utils import (
+    p0p1_from_bbox_contour,
+    crop_image_from_bbox_contour,
+)
 from multivitamin.module.utils import min_conf_filter_predictions
 from multivitamin.utils.GPUUtilities import GPUUtility
-from multivitamin.data.response.data import Region, Prop
+from multivitamin.data.response.data import Region, Property
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 
@@ -122,7 +125,9 @@ class CaffeClassifier(ImagesModule):
             caffe.TEST,
         )
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
-        self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
+        self.transformer = caffe.io.Transformer(
+            {"data": self.net.blobs["data"].data.shape}
+        )
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
             data_meanfile = open(mean_file, "rb").read()
@@ -135,22 +140,28 @@ class CaffeClassifier(ImagesModule):
         # log.debug("Processing images")
         # log.debug("tstamps: "  + str(tstamps))
         assert len(images) == len(tstamps) == len(prev_regions)
-        for i, (frame, tstamp, prev_region) in enumerate(zip(images, tstamps, prev_regions)):
+        for i, (frame, tstamp, prev_region) in enumerate(
+            zip(images, tstamps, prev_regions)
+        ):
             log.debug("caffe classifier tstamp: " + str(tstamp))
             try:
                 if prev_region is not None:
-                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
+                    frame = crop_image_from_bbox_contour(
+                        frame, prev_region.get("contour")
+                    )
 
                 im = self.transformer.preprocess("data", frame)
                 self.net.blobs["data"].data[...] = im
 
                 # TODO : clean this up
                 probs = self.net.forward()[self.layer_name]
-                log.debug('probs: ' + str(probs))
-                log.debug('probs.shape: ' + str(probs.shape))
+                log.debug("probs: " + str(probs))
+                log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
                 if (probs.shape == target_shape) is False:
-                    log.info('Changing shape ' + str(probs.shape) + '->' + str(target_shape))
+                    log.info(
+                        "Changing shape " + str(probs.shape) + "->" + str(target_shape)
+                    )
                     probs = np.reshape(probs, target_shape)
 
                 props = []
@@ -183,7 +194,7 @@ class CaffeClassifier(ImagesModule):
 
                         if confidence < CONFIDENCE_MIN:
                             label = "Unknown"
-                        prop = Prop(
+                        prop = Property(
                             server=self.name,
                             ver=self.version,
                             value=label,
@@ -196,7 +207,9 @@ class CaffeClassifier(ImagesModule):
                         else:
                             props.append(prop)
                 if prev_region is None:
-                    self.module_response.append_region(t=tstamp, region=Region(props=props))
+                    self.response.append_region(
+                        t=tstamp, region=Region(props=props)
+                    )
             except Exception as e:
                 log.error(traceback.print_exc())
                 log.error(e)

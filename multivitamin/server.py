@@ -15,7 +15,9 @@ HEALTHPORT = os.environ.get("PORT", 5000)
 
 
 class Server(Flask):
-    def __init__(self, modules, input_comm, output_comms=None, use_schema_registry=True):
+    def __init__(
+        self, modules, input_comm, output_comms=None, use_schema_registry=True
+    ):
         """Serves as the public interface for CV services through multivitamin
 
         It's role is to start the healthcheck endpoint and initiate the services
@@ -70,7 +72,9 @@ class Server(Flask):
         log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
         try:
             threading.Thread(
-                target=self.run, kwargs={"host": "0.0.0.0", "port": HEALTHPORT}, daemon=True
+                target=self.run,
+                kwargs={"host": "0.0.0.0", "port": HEALTHPORT},
+                daemon=True,
             ).start()
         except Exception as e:
             log.error(e)
@@ -86,7 +90,9 @@ class Server(Flask):
                 requests = self.input_comm.pull()
                 for request in requests:
                     if request.kill_flag is True:
-                        log.info("Incoming request with kill_flag == True, killing server")
+                        log.info(
+                            "Incoming request with kill_flag == True, killing server"
+                        )
                         return
                     response = self._process_request(request)
                     log.info("Pushing reponse to output_comms")
@@ -120,6 +126,6 @@ class Server(Flask):
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
             response = module.process(response)
-            log.debug(f"response.to_json(): {response.to_json(indent=2)}")
+            log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
 
         return response

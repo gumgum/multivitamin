@@ -39,7 +39,9 @@ def test_object_detector():
             print("    Extracting file", name)
             z.extract(name, "/tmp/")
     log.info("Unzipped.")
-    tf_detector = TFDetector(server_name="TFDetector", version="1.0", net_data_dir="/tmp/net_data/")
+    tf_detector = TFDetector(
+        server_name="TFDetector", version="1.0", net_data_dir="/tmp/net_data/"
+    )
     log.info("1---------------------")
     tf_detector.process(request1)
     log.info("2---------------------")

@@ -13,11 +13,8 @@ from multivitamin.data.response.data import (
 )
 
 
-class Response():
-    def __init__(self, 
-                 input, 
-                 use_schema_registry=True
-                 ):
+class Response:
+    def __init__(self, response_input, use_schema_registry=True):
         """ SerializableResponse is a wrapper for Response with methods 
             for serializable
 
@@ -35,36 +32,40 @@ class Response():
         self._use_schema_registry = use_schema_registry
         self._request = None
         self._response_internal = None
-        self._tstamp2frameannsidx = None
+        self._tstamp2frameannsidx = {}
 
-        if isinstance(input, Request):
-            self._init_from_request(input)
-        elif isinstance(input, dict):
+        if isinstance(response_input, Request):
+            self._request = response_input
+            self._init_from_request()
+        elif isinstance(response_input, dict):
             io = AvroIO(use_schema_registry)
-            if not io.is_valid_avro_doc(input):
-                raise ValueError(
-                    "Input dict is incompatible with avro schema"
-                )
+            if not io.is_valid_avro_doc(response_input):
+                raise ValueError("Input dict is incompatible with avro schema")
             log.info("Input dict is compatible with avro schema")
-            self._response_internal = ResponseInternal().from_dict(input)
+            self._response_internal = ResponseInternal().from_dict(response_input)
         else:
-            raise TypeError(f"Expected Request or dict, found type: {type(input)}")
+            raise TypeError(
+                f"Expected Request or dict, found type: {type(response_input)}"
+            )
 
-    @property
-    def dict(self):
+    def to_dict(self):
         log.info("Returning schema response as dictionary")
         if self._request is not None:
             if self._request.bin_encoding is True:
-                log.warning("self._request.bin_encoding is True but returning dictionary")
+                log.warning(
+                    "self._request.bin_encoding is True but returning dictionary"
+                )
         return self._response_internal.to_dict()
 
-    @property
-    def bytes(self):
+    def to_bytes(self, base64=False):
+        if self._request is not None:
+            base64 = self._request.base64_encoding
+            log.info("Using self._request for base64_encoding flag")
+        log.info(f"base64 encoding: {base64}")
         log.info("Returning schema response as binary")
-        log.info(f"base64 encoding: {self._request.base64_encoding}")
         try:
             io = AvroIO(self._use_schema_registry)
-            return io.encode(self._response_internal.to_dict(), self._request.base64_encoding)
+            return io.encode(self._response_internal.to_dict(), base64)
         except Exception:
             log.error("Error serializing response")
             # what to do here?
@@ -75,14 +76,13 @@ class Response():
         """Convenience method to return either dict or bytes depending on request
         """
         if self._request is None:
-            return self.dict
+            return self.to_dict()
 
         if self._request.bin_encoding is False:
             log.info("Returning schema response as dictionary")
-            return self.dict
+            return self.to_dict()
 
-        # else: return serialized bytes
-        return self.bytes
+        return self.to_bytes(self._request.base64_encoding)
 
     @property
     def tracks(self):
@@ -96,12 +96,14 @@ class Response():
         return len(self.frame_anns) > 0
 
     def get_regions_from_tstamp(self, t):
-        assert(isinstance(t, float))
-        if not t in self._tstamp2frameannsidx:
+        assert isinstance(t, float)
+        if t not in self._tstamp2frameannsidx:
             return None
         frame_anns_idx = self._tstamp2frameannsidx[t]
-        return self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx]["regions"]
-        
+        return self._response_internal["media_annotation"]["frames_annotation"][
+            frame_anns_idx
+        ]["regions"]
+
     @property
     def request(self):
         return self._request
@@ -152,13 +154,16 @@ class Response():
 
     @property
     def timestamps_from_frames_ann(self):
-        return sorted(self._response_internal["media_annotation"]["frames_annotation"].keys())
+        return sorted(
+            self._response_internal["media_annotation"]["frames_annotation"].keys()
+        )
 
+    @property
     def timestamps(self, server=None):
         """TODO, cleanup?"""
-        tstamps=[]        
+        tstamps = []
         for c in self._response_internal["media_annotation"]["codes"]:
-            #log.debug(str(c))
+            # log.debug(str(c))
             if not c["tstamps"]:
                 continue
             if server:
@@ -166,52 +171,56 @@ class Response():
                     continue
             if not tstamps:
                 log.debug("Assigning timestamps: " + str(c["tstamps"]))
-                tstamps=c["tstamps"]
+                tstamps = c["tstamps"]
             else:
-                tstamps=list(set(tstamps) | set(c["tstamps"])) 
+                tstamps = list(set(tstamps) | set(c["tstamps"]))
         return sorted(list(set(tstamps)))
 
-### Modifiers
+    ### Modifiers
 
     def append_region(self, t, region):
-        assert(isinstance(t, float))
-        assert(isinstance(region, Region))
+        assert isinstance(t, float)
+        assert isinstance(region, type(Region()))
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, appending Region")
             frame_anns_idx = self._tstamp2frameannsidx[t]
-            self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx].append(region)
+            self._response_internal["media_annotation"]["frames_annotation"][
+                frame_anns_idx
+            ]["regions"].append(region)
         else:
             log.debug(f"t: {t} NOT in frame_anns, appending ImageAnn")
             ia = ImageAnn(t=t, regions=[region])
             self._response_internal["media_annotation"]["frames_annotation"].append(ia)
-            self._tstamp2frameannsidx[t] = len(self.frame_anns - 1)
+            self._tstamp2frameannsidx[t] = len(self.frame_anns) - 1
 
     def append_regions(self, t, regions):
-        assert(isinstance(t, float))
-        assert(isinstance(regions, list))
+        assert isinstance(t, float)
+        assert isinstance(regions, list)
         for region in regions:
-            assert(isinstance(region, Region))
-        
+            assert isinstance(region, type(Region()))
+
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, extending Regions")
             frame_anns_idx = self._tstamp2frameannsidx[t]
-            self._response_internal["media_annotation"]["frames_annotation"][frame_anns_idx].extend(regions)
+            self._response_internal["media_annotation"]["frames_annotation"][
+                frame_anns_idx
+            ].extend(regions)
         else:
             log.debug(f"t: {t} NOT in frame_anns, appending ImageAnn")
             ia = ImageAnn(t=t, regions=regions)
             self._response_internal["media_annotation"]["frames_annotation"].append(ia)
-            self._tstamp2frameannsidx[t] = len(self.frame_anns - 1)
+            self._tstamp2frameannsidx[t] = len(self.frame_anns) - 1
 
     def append_footprint(self, footprint):
-        assert(isinstance(footprint, Footprint))
+        assert isinstance(footprint, type(Footprint()))
         self._response_internal["media_annotation"]["codes"].append(footprint)
 
     def append_track(self, video_ann):
-        assert(isinstance(video_ann, VideoAnn))
+        assert isinstance(video_ann, type(VideoAnn()))
         self._response_internal["media_annotation"]["tracks_summary"].append(video_ann)
 
     def append_media_summary(self, video_ann):
-        assert(isinstance(video_ann, VideoAnn))
+        assert isinstance(video_ann, type(VideoAnn()))
         self._response_internal["media_annotation"]["media_summary"].append(video_ann)
 
     def sort_image_anns_by_timestamp(self):
@@ -255,15 +264,19 @@ class Response():
                 io = AvroIO()
                 if isinstance(self._request.prev_response, str):
                     log.info("prev_response is base64 encoded binary")
-                    bytes = io.decode(self._request.prev_response, use_base64=True, binary_flag=True)
+                    bytes = io.decode(
+                        self._request.prev_response, use_base64=True, binary_flag=True
+                    )
                 else:
                     log.info("prev_response is in binary")
-                    bytes = io.decode(self._request.prev_response, use_base64=False, binary_flag=True)
+                    bytes = io.decode(
+                        self._request.prev_response, use_base64=False, binary_flag=True
+                    )
                 log.info("Constructing ResponseInternal")
                 d = io.decode(bytes)
                 self._response_internal = ResponseInternal().from_dict(d)
             else:
-                assert(isinstance(self._request.prev_response, str))
+                assert isinstance(self._request.prev_response, str)
                 log.info("prev_response is a JSON str")
                 d = json.loads(self._request.prev_response)
                 self._response_internal = ResponseInternal().from_dict(d)
@@ -271,10 +284,6 @@ class Response():
             log.info("Loading from prev_response_url")
             raise NotImplementedError()
         else:
-            log.info("No prev_response")
-
-
-
-
-
-
+            log.info("No prev_response, constructing empty response_internal")
+            self._response_internal = ResponseInternal()
+        self.url = self._request.url

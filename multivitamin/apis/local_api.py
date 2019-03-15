@@ -74,9 +74,9 @@ class LocalAPI(CommAPI):
             responses = [responses]
 
         for response in responses:
-            assert(isinstance(response, Response))
+            assert isinstance(response, Response)
 
-        log.debug(f"Pushing {len(responses)} items to folder: {self.pushing_folder}")
+        log.info(f"Pushing {len(responses)} items to folder: {self.pushing_folder}")
         outfns = []
         for res in responses:
             fn = self.get_fn(res)
@@ -86,10 +86,10 @@ class LocalAPI(CommAPI):
             log.info(f"Writing {fn}")
             if res.request.bin_encoding is True:
                 with open(fn, "wb") as wf:
-                    wf.write(res.bytes)
+                    wf.write(res.to_bytes())
             else:
                 with open(fn, "w") as wf:
-                    wf.write(json.dumps(res.dict, indent=INDENTATION))
+                    wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
             outfns.append(fn)
         return outfns
 
@@ -110,4 +110,6 @@ class LocalAPI(CommAPI):
             extension = "avro"
         media_url = response.url
         media_name = os.path.basename(media_url)
-        return os.path.join(self.pushing_folder, f"{get_current_date()}", f"{media_name}.{extension}")
+        return os.path.join(
+            self.pushing_folder, f"{get_current_date()}", f"{media_name}.{extension}"
+        )

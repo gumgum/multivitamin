@@ -6,7 +6,9 @@ from multivitamin.module import Module
 
 
 class PropertiesModule(Module):
-    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None):
+    def __init__(
+        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
+    ):
         super().__init__(
             server_name=server_name,
             version=version,

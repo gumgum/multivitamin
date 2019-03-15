@@ -46,5 +46,7 @@ def test_cupy_numpy_conversion():
     cupy_utility = CupyUtility()
     if not cupy_utility.xp.__name__ == "cupy":
         warnings.warn(
-            RuntimeWarning("Warning! No GPU with available load or memory. Verify first!")
+            RuntimeWarning(
+                "Warning! No GPU with available load or memory. Verify first!"
+            )
         )

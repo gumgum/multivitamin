@@ -37,7 +37,7 @@ class S3API(CommAPI):
             responses = [responses]
 
         for res in responses:
-            assert(isinstance(res, Response))
+            assert isinstance(res, Response)
             fn = self.get_fn(res)
             tmp_dir = tempfile.mkdtemp()
             outfn = os.path.join(tmp_dir, fn)
@@ -48,10 +48,10 @@ class S3API(CommAPI):
 
             if res.request.bin_encoding is True:
                 with open(outfn, "wb") as wf:
-                    wf.write(res.bytes)
+                    wf.write(res.to_bytes())
             else:
                 with open(outfn, "w") as wf:
-                    wf.write(json.dumps(res.dict, indent=INDENTATION))
+                    wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
 
             s3client = boto3.client("s3")
             key_fullpath = os.path.join(self.s3_key, fn)

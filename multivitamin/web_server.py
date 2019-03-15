@@ -48,18 +48,19 @@ class WebServer(Flask):
             try:
                 message = request.get_json(force=True)
                 req = Request(request_dict=message)
-                schema_response = Response(req)
-                response = schema_response.to_module_response()
+                response = Response(req)
 
                 for module in self.modules:
                     log.info(f"Processing request for module: {module}")
                     response = module.process(response)
-                    log.debug(f"response.dict: {json.dumps(response.dict, indent=2)}")
+                    log.debug(
+                        f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}"
+                    )
 
                 if req.bin_encoding:
-                    return response.bytes
+                    return response.to_bytes()
                 else:
-                    return jsonify(response.dict)
+                    return jsonify(response.to_dict())
             except Exception as e:
                 log.error(e)
                 log.error(traceback.print_exc())
@@ -71,4 +72,3 @@ class WebServer(Flask):
 
     def start(self):
         self.run(host="0.0.0.0", port=self.port)
-

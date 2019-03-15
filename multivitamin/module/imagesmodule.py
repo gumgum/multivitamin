@@ -48,7 +48,9 @@ class ImagesModule(Module):
         try:
             log.info(f"Loading media from url: {self.response.request.url}")
             self.media = MediaRetriever(self.response.request.url)
-            self.frames_iterator = self.media.get_frames_iterator(self.response.request.sample_rate)
+            self.frames_iterator = self.media.get_frames_iterator(
+                self.response.request.sample_rate
+            )
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
@@ -64,8 +66,7 @@ class ImagesModule(Module):
 
         num_problematic_frames = 0
         for image_batch, tstamp_batch, prev_region_batch in batch_generator(
-            self.preprocess_input(),
-            self.batch_size,
+            self.preprocess_input(), self.batch_size
         ):
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
@@ -100,7 +101,8 @@ class ImagesModule(Module):
                 log.warning("Invalid tstamp")
                 continue
 
-            log.debug(f"tstamp: {tstamp}")
+            self.tstamps_processed.append(tstamp)
+            log.info(f"tstamp: {tstamp}")
 
             regions = []
             if self.prev_pois:

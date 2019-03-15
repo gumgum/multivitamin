@@ -38,7 +38,7 @@ class VertexAPI(SQSAPI):
 
         log.debug(f"Pushing {len(responses)} items")
         for res in responses:
-            assert(isinstance(res, SchemaResponse))
+            assert isinstance(res, Response)
             if dst_url:
                 log.info(f"Pushing to {dst_url}")
                 data = res.data

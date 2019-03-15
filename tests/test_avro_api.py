@@ -15,7 +15,8 @@ avro_str = "avro.json"
 avro_bin = "avro.bin"
 
 image_ann = create_image_ann(
-    t=5.0, regions=[create_region(props=[create_prop(server="test_dummy", value="exists")])]
+    t=5.0,
+    regions=[create_region(props=[create_prop(server="test_dummy", value="exists")])],
 )
 
 annotation_task_1 = create_annotation_task(
@@ -37,7 +38,9 @@ annotation_task_1 = create_annotation_task(
 def test_get_detections_from_frame_anns():
     s3_client = boto3.client("s3")
     log.info("Downloading json.")
-    tmp_filepath = "/tmp/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json"
+    tmp_filepath = (
+        "/tmp/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json"
+    )
     s3_client.download_file(
         "cvapis-data",
         "jsons/NHL_GAME_VIDEO_WPGOTT_M2_HOME_20180402_1520698435976.t.mp4.json",
@@ -86,7 +89,9 @@ def test_read_avro_json():
     s3_client = boto3.client("s3")
     log.info("Downloading json.")
     tmp_filepath = "/tmp/Threatpipeline_response0_C.json"
-    s3_client.download_file("cvapis-data", "jsons/Threatpipeline_response0_C.json", tmp_filepath)
+    s3_client.download_file(
+        "cvapis-data", "jsons/Threatpipeline_response0_C.json", tmp_filepath
+    )
     log.info("JSON downloaded.")
     avro_io = AvroIO()
     avro_str = avro_io.read_json(tmp_filepath)
@@ -105,7 +110,9 @@ def test_query_properties():
     s3_client = boto3.client("s3")
     log.info("Downloading json.")
     tmp_filepath = "/tmp/Threatpipeline_response0_C.json"
-    s3_client.download_file("cvapis-data", "jsons/Threatpipeline_response0_C.json", tmp_filepath)
+    s3_client.download_file(
+        "cvapis-data", "jsons/Threatpipeline_response0_C.json", tmp_filepath
+    )
     log.info("JSON downloaded.")
     avro_io = AvroIO()
     avro_str = avro_io.read_json(tmp_filepath)
@@ -188,8 +195,12 @@ def test_append_trackssummary_from_csv():
     jsons_folder = "../cvapis/data/jsons/"
     # input_json_filepath=jsons_folder + 'Tampa-Bay-Lightning-vs-Montreal-Canadians_03102018_112_108.json'
     # input_csv_filepath=jsons_folder + 'Tampa-Bay-Lightning-vs-Montreal-Canadians_03102018_112_108_GT.csv'
-    input_json_filepath = jsons_folder + "NHL_GAME_VIDEO_ANACHI_M2_HOME_20182016_1518124767584.json"
-    input_csv_filepath = jsons_folder + "NHL_GAME_VIDEO_ANACHI_M2_HOME_20182016_1518124767584.csv"
+    input_json_filepath = (
+        jsons_folder + "NHL_GAME_VIDEO_ANACHI_M2_HOME_20182016_1518124767584.json"
+    )
+    input_csv_filepath = (
+        jsons_folder + "NHL_GAME_VIDEO_ANACHI_M2_HOME_20182016_1518124767584.csv"
+    )
     assert os.path.exists(input_json_filepath)
     assert os.path.exists(input_csv_filepath)
     filename = os.path.basename(input_json_filepath)
@@ -258,11 +269,19 @@ def test_append_trackssummary_from_csv():
     for t1, t2, placement, sponsor in zip(t1s, t2s, placements, sponsors):
         # we create the placecement property
         p1 = create_prop(
-            confidence=1, ver="1.0", server="HAM", property_type="placement", value=placement
+            confidence=1,
+            ver="1.0",
+            server="HAM",
+            property_type="placement",
+            value=placement,
         )
         # we create the sponsor property
         p2 = create_prop(
-            confidence=1, ver="1.0", server="HAM", property_type="sponsor", value=sponsor
+            confidence=1,
+            ver="1.0",
+            server="HAM",
+            property_type="sponsor",
+            value=sponsor,
         )
         ps = [p1, p2]
         # We create the track

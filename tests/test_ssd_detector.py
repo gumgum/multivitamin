@@ -39,7 +39,9 @@ def test_object_detector():
     log.info("Downloading model.")
     tmp_filepath = "/tmp/net_data.zip"
     s3_client.download_file(
-        "cvapis-data", "ssd-detector/nhlplacementdetector/net_data_v1.1.zip", tmp_filepath
+        "cvapis-data",
+        "ssd-detector/nhlplacementdetector/net_data_v1.1.zip",
+        tmp_filepath,
     )
     log.info("Model downloaded.")
     with open(tmp_filepath, "rb") as f:
@@ -103,7 +105,9 @@ def test_init():
     else:
         os.makedirs(LOCAL_NET_DATA_DIR)
 
-    for key, net_data_bytes in generate_fileobj_from_s3_folder(S3_BUCKET_NAME, S3_NET_DATA_FOLDER):
+    for key, net_data_bytes in generate_fileobj_from_s3_folder(
+        S3_BUCKET_NAME, S3_NET_DATA_FOLDER
+    ):
         filename = os.path.basename(key)
         print("{}/{}".format(LOCAL_NET_DATA_DIR, filename))
         with open("{}/{}".format(LOCAL_NET_DATA_DIR, filename), "wb") as file:
@@ -115,7 +119,9 @@ def test_init():
 def download_expected_response(path):
     s3 = boto3.client("s3")
     filelike = BytesIO()
-    s3.download_fileobj(S3_BUCKET_NAME, S3_EXPECTED_PREV_RESPONSES + "/" + path, filelike)
+    s3.download_fileobj(
+        S3_BUCKET_NAME, S3_EXPECTED_PREV_RESPONSES + "/" + path, filelike
+    )
     filelike.seek(0)
     expected_json = json.loads(filelike.read().decode())
     return expected_json

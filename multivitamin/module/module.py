@@ -4,14 +4,16 @@ import json
 import glog as log
 
 from multivitamin.data import Response
-from multivitamin.data.response.data import create_footprint
+from multivitamin.data.response.data import Footprint
 from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
 from multivitamin.module.utils import convert_props_to_pandas_query
 
 
 class Module(ABC):
-    def __init__(self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None):
+    def __init__(
+        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
+    ):
         """Abstract base class that defines interface inheritance
 
         ImageModule, PropertiesModule
@@ -26,17 +28,20 @@ class Module(ABC):
         self.prev_pois = None
         self.code = Codes.SUCCESS
         self.prev_regions_of_interest_count = 0
+        self.tstamps_processed = []
 
     def set_prev_props_of_interest(self, pois):
         """
         """
-        assert(isinstance(pois, list))
+        assert isinstance(pois, list)
         for poi in pois:
-            assert(isinstance(poi, dict))
+            assert isinstance(poi, dict)
 
         self.prev_pois = pois
         self.prev_pois_bool_exp = convert_props_to_pandas_query(pois)
-        log.info(f"Setting previous properties of interest: {json.dumps(pois, indent=2)}")
+        log.info(
+            f"Setting previous properties of interest: {json.dumps(pois, indent=2)}"
+        )
         log.info(f"bool exp: {self.prev_pois_bool_exp}")
 
     def get_prev_props_of_interest(self):
@@ -45,6 +50,7 @@ class Module(ABC):
     @abstractmethod
     def process(self, response):
         assert isinstance(response, Response)
+        self.tstamps_processed = []
         self.code = Codes.SUCCESS
         self.response = response
         self.request = response.request
@@ -57,13 +63,14 @@ class Module(ABC):
         time = get_current_time()
         log.info("Appending footprints")
         self.response.append_footprint(
-            create_footprint(
+            Footprint(
                 code=self.code.name,
                 server=self.name,
                 date=time,
                 ver=self.version,
                 id="{}{}".format(time, num_footprints + 1),
-                tstamps=self.response.timestamps,
+                tstamps=self.tstamps_processed,
+                num_images_processed=len(self.tstamps_processed)
             )
         )
         self.response.url_original = self.response.url
@@ -74,8 +81,8 @@ class Module(ABC):
         """Internal method for updating property id and module id 
            in frame_anns and tracks
         """
-        for tstamp, regions in self.response.frame_anns.items():
-            for region in regions:
+        for image_ann in self.response.frame_anns:
+            for region in image_ann["regions"]:
                 for prop in region["props"]:
                     self._update_property_id(prop)
                     self._update_module_id(prop)

@@ -41,7 +41,9 @@ def get_props_from_region(region):
 
 
 class FrameDrawer:
-    def __init__(self, doc_fn=None, schema_response=None, decode=False, dump=False, out="./tmp"):
+    def __init__(
+        self, doc_fn=None, schema_response=None, decode=False, dump=False, out="./tmp"
+    ):
         """Given an avro document, draw all frame_annotations
         
         Args:

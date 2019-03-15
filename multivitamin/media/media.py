@@ -27,7 +27,7 @@ class Limitation(Enum):
     CPU = "cpu"
 
 
-class FileRetriever():
+class FileRetriever:
     """A generic class for retrieving files."""
 
     def __init__(self, url=None):
@@ -197,7 +197,9 @@ class MediaRetriever(FileRetriever):
 
         w, h = self.get_w_h()
         if w in [0, None] or h in [0, None]:
-            raise ValueError("Unable to load visial media properly: {}".format(self.url))
+            raise ValueError(
+                "Unable to load visial media properly: {}".format(self.url)
+            )
 
     @property
     def is_video(self):
@@ -332,7 +334,7 @@ class MediaRetriever(FileRetriever):
 
         """
         if not self.url:
-            raise ValueError('URL not set. Please use med_ret.set_url(\"...\")')
+            raise ValueError('URL not set. Please use med_ret.set_url("...")')
 
         if self.is_image:
             return self.image
@@ -354,7 +356,9 @@ class MediaRetriever(FileRetriever):
                 return ret
             return frame
 
-    def get_frames_iterator(self, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize):
+    def get_frames_iterator(
+        self, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize
+    ):
         """Get a frames iterator.
 
         If image, returns a list of length 0 with a tuple (image, tstamp),
@@ -377,12 +381,14 @@ class MediaRetriever(FileRetriever):
 
         """
         if not self.url:
-            raise ValueError("URL not set. Please use med_ret.set_url(\"...\")")
+            raise ValueError('URL not set. Please use med_ret.set_url("...")')
         self.period = 1.0 / sample_rate
         if self.is_image:
             return [(self.image, 0.00)]
         elif self.is_video:
-            return FramesIterator(self.video_capture, sample_rate, start_tstamp, end_tstamp)
+            return FramesIterator(
+                self.video_capture, sample_rate, start_tstamp, end_tstamp
+            )
 
     def get_length(self):
         """Get the temporal length of the image/video."""
@@ -401,7 +407,7 @@ class MediaRetriever(FileRetriever):
         return self.shape[0:2][::-1]
 
 
-class FramesIterator():
+class FramesIterator:
     """Frames iterator object for videos.
 
     Usage:
@@ -412,10 +418,10 @@ class FramesIterator():
     TODO: check to see if start_tstamp & end_tstamp checks cause significant slowing
 
     """
-    def __init__(self, video_cap,
-                 sample_rate=100.0,
-                 start_tstamp=0.0,
-                 end_tstamp=sys.maxsize):
+
+    def __init__(
+        self, video_cap, sample_rate=100.0, start_tstamp=0.0, end_tstamp=sys.maxsize
+    ):
         """Frames iterator constructor.
 
         Args:
@@ -466,7 +472,9 @@ class FramesIterator():
             if isinstance(self.cap, cv2.VideoCapture):
                 tstamp = self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
                 ret = self.cap.grab()
-                if (tstamp - self.cur_tstamp + FRAME_EPS) >= (self.period) or self.first_frame:
+                if (tstamp - self.cur_tstamp + FRAME_EPS) >= (
+                    self.period
+                ) or self.first_frame:
                     ret, frame = self.cap.retrieve()
                     self.cur_tstamp = tstamp
                     self.first_frame = False

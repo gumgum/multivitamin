@@ -1,4 +1,5 @@
 import random
+from collections import MutableMapping
 
 from dataclasses import dataclass, field
 from typing import List
@@ -6,7 +7,8 @@ from typeguard import typechecked
 from mashumaro import DataClassDictMixin
 
 
-# Functions for creating default fields
+# Helper functions
+
 
 def create_region_id():
     """Create a region_id
@@ -23,26 +25,63 @@ def make_whole_image_contour():
     Returns:
         List[Point]: upper left, upper right, bottom right, bottom left
     """
-    return [
-        Point(0.0, 0.0),
-        Point(1.0, 0.0),
-        Point(1.0, 1.0),
-        Point(0.0, 1.0)
-    ]
+    return [Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0), Point(0.0, 1.0)]
+
+
+def create_bbox_contour_from_points(
+    xmin, ymin, xmax, ymax,
+    bound=False,
+    lb_x=0.0, ub_x=1.0, lb_y=0.0, ub_y=1.0,
+):
+    """Helper function to create bounding box contour from 4 extrema points"""
+
+    if bound:
+        xmin = max(lb_x, xmin)
+        ymin = max(lb_y, ymin)
+        xmax = min(ub_x, xmax)
+        ymax = min(ub_y, ymax)
+    return [Point(xmin, ymin), Point(xmax, ymin), Point(xmax, ymax), Point(xmin, ymax)]
 
 
 # Data classes
 
+
+class DictLike(MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self.__dict__.update(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __delitem__(self, key):
+        del self.__dict__[key]
+
+    def __iter__(self):
+        return iter(self.__dict__)
+
+    def __len__(self):
+        return len(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return f"{super().__repr__()}, ({self.__dict__})"
+
+
 @typechecked
 @dataclass
-class PropPair(DataClassDictMixin):
+class PropPair(DataClassDictMixin, DictLike):
     property_type: str = ""
     value: str = ""
 
 
 @typechecked
 @dataclass
-class EligibleProp(DataClassDictMixin):
+class EligibleProp(DataClassDictMixin, DictLike):
     server: str = ""
     property_type: str = ""
     value: str = ""
@@ -52,7 +91,7 @@ class EligibleProp(DataClassDictMixin):
 
 @typechecked
 @dataclass
-class AnnotationTask(DataClassDictMixin):
+class AnnotationTask(DataClassDictMixin, DictLike):
     id: str = ""
     tstamps: List[float] = field(default_factory=list)
     labels: List[str] = field(default_factory=list)
@@ -61,7 +100,7 @@ class AnnotationTask(DataClassDictMixin):
 
 @typechecked
 @dataclass
-class Footprint(DataClassDictMixin):
+class Footprint(DataClassDictMixin, DictLike):
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
@@ -72,29 +111,20 @@ class Footprint(DataClassDictMixin):
     annotator: str = ""
     tstamps: List[float] = field(default_factory=list)
     id: str = ""
+    num_images_processed: int = 0
+    request_source: str = ""
 
 
 @typechecked
 @dataclass
-class Point(DataClassDictMixin):
+class Point(DataClassDictMixin, DictLike):
     x: float = 0.0
     y: float = 0.0
-    bound: bool = False
-    ub_x: float = 1.0
-    ub_y: float = 1.0
-    lb_x: float = 0.0
-    lb_y: float = 0.0
-
-    def __post_init__(self):
-        """Check if point is within bounds defined"""
-        if self.bound:
-            self.x = min(max(self.lb_x, self.x), self.ub_x)
-            self.y = min(max(self.lb_y, self.y), self.ub_y)
 
 
 @typechecked
 @dataclass
-class Property(DataClassDictMixin):
+class Property(DataClassDictMixin, DictLike):
     relationships: List[str] = field(default_factory=list)
     confidence: float = 0.0
     confidence_min: float = 0.0
@@ -110,9 +140,10 @@ class Property(DataClassDictMixin):
     value_verbose: str = ""
     property_id: int = 0
 
+
 @typechecked
 @dataclass
-class Region(DataClassDictMixin):
+class Region(DataClassDictMixin, DictLike):
     contour: List[Point] = field(default_factory=make_whole_image_contour)
     props: List[Property] = field(default_factory=list)
     father_id: str = ""
@@ -122,7 +153,7 @@ class Region(DataClassDictMixin):
 
 @typechecked
 @dataclass
-class VideoAnn(DataClassDictMixin):
+class VideoAnn(DataClassDictMixin, DictLike):
     t1: float = 0.0
     t2: float = 0.0
     props: List[Property] = field(default_factory=list)
@@ -132,14 +163,14 @@ class VideoAnn(DataClassDictMixin):
 
 @typechecked
 @dataclass
-class ImageAnn(DataClassDictMixin):
+class ImageAnn(DataClassDictMixin, DictLike):
     t: float = 0.0
     regions: List[Region] = field(default_factory=list)
 
 
 @typechecked
 @dataclass
-class MediaAnn(DataClassDictMixin):
+class MediaAnn(DataClassDictMixin, DictLike):
     codes: List[Footprint] = field(default_factory=list)
     url_original: str = ""
     url: str = ""
@@ -154,7 +185,7 @@ class MediaAnn(DataClassDictMixin):
 
 @typechecked
 @dataclass
-class ResponseInternal(DataClassDictMixin):
+class ResponseInternal(DataClassDictMixin, DictLike):
     point_aux = None
     footprint_aux = None
     proppair_aux = None
@@ -168,4 +199,4 @@ class ResponseInternal(DataClassDictMixin):
     media_annotation = None
     version: str = ""
     date: str = "20000101000000"
-    media_annotation: MediaAnn = MediaAnn()
+    media_annotation: MediaAnn = field(default_factory=MediaAnn)

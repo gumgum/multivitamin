@@ -14,7 +14,7 @@ from multivitamin.data.response.utils import get_current_time
 from multivitamin.data.response.data import (
     create_footprint,
     create_video_ann,
-    create_prop
+    create_prop,
 )
 
 
@@ -48,11 +48,17 @@ class FrameExtractor(PropertiesModule):
         self._s3_upload_args = {"ContentType": self._content_type}
 
         self._s3_write_manager = WorkerManager(
-            func=self._upload_frame_helper, n=100, max_queue_size=100, parallelization="thread"
+            func=self._upload_frame_helper,
+            n=100,
+            max_queue_size=100,
+            parallelization="thread",
         )
 
         self._local_write_manager = WorkerManager(
-            func=self._write_frame_helper, n=100, max_queue_size=100, parallelization="thread"
+            func=self._write_frame_helper,
+            n=100,
+            max_queue_size=100,
+            parallelization="thread",
         )
 
     @staticmethod
@@ -86,7 +92,9 @@ class FrameExtractor(PropertiesModule):
                 video_id=video_id, filename=filename, ext=self._encoding
             )
             full_path = "{}/{}".format(self._local_dir, relative_path)
-            full_path = "".join([e for e in full_path if e.isalnum() or e in ["/", "."]])
+            full_path = "".join(
+                [e for e in full_path if e.isalnum() or e in ["/", "."]]
+            )
             # line = "{}\t{}\n".format(tstamp, full_path)
             # filelike.write(line.encode())
             contents_json["frames"].append((tstamp, full_path))
@@ -175,7 +183,9 @@ class FrameExtractor(PropertiesModule):
                 log.info("Local Video already exists")
 
         try:
-            self._s3_client.head_object(Bucket=self._s3_bucket, Key=self.contents_file_key)
+            self._s3_client.head_object(
+                Bucket=self._s3_bucket, Key=self.contents_file_key
+            )
             log.info("Video already exists")
             return
         except:
@@ -213,9 +223,8 @@ class FrameExtractor(PropertiesModule):
 
         self.response.url_original = self.video_url
         new_url = self._s3_url_format.format(
-            bucket=self._s3_bucket, 
-            s3_key=self.contents_file_key
-            )
+            bucket=self._s3_bucket, s3_key=self.contents_file_key
+        )
         self.response.url = new_url
         p = create_prop(
             server=self.name,
@@ -226,4 +235,3 @@ class FrameExtractor(PropertiesModule):
         )
         media_summary = create_video_ann(t1=0.0, t2=float(self.last_tstamp), props=[p])
         self.response.append_media_summary(media_summary)
-

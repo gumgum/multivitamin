@@ -3,6 +3,7 @@ from enum import Enum
 
 class Codes(Enum):
     """An Enum type for return codes"""
+
     SUCCESS = 0
     NO_PREV_REGIONS_OF_INTEREST = 1
     ERROR_LOADING_MEDIA = 2

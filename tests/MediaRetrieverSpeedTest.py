@@ -8,9 +8,7 @@ from tqdm import tqdm
 print("SPEED TEST!!!")
 
 VIDEO_URL = "https://s3.amazonaws.com/video-ann-testing/NHL_GAME_VIDEO_NJDMTL_M2_NATIONAL_20180401_1520698069177.t.mp4"
-VIDEO_CODEC_PROB_1 = (
-    "https://s3.amazonaws.com/video-ann/538_Pelicans+vs+Thunder+11%3A5-fhj713lbrhi.30-31.mp4"
-)
+VIDEO_CODEC_PROB_1 = "https://s3.amazonaws.com/video-ann/538_Pelicans+vs+Thunder+11%3A5-fhj713lbrhi.30-31.mp4"
 VIDEO_CODEC_PROB_2 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/Replay%20Video%20Capture_2018-11-16_11.52.51-2816an1tb0v.mp4"
 VIDEO_CODEC_PROB_3 = "https://s3.amazonaws.com/gumgum-sports-analyst-data/media-files/1%3A3%20Houston%20Rockets%20at%20Golden%20State%20Warriors-6tgm4my1dr6.mp4"
 
@@ -49,7 +47,9 @@ def _benchmark_frames_iterator(mrs, sample_rate, num_samples=100, num_tests=100)
         for _ in tqdm(range(num_tests), desc="iterator test"):
             start = datetime.now()
             for idx, _ in enumerate(
-                mr.get_frames_iterator(sample_rate=sample_rate, start_tstamp=random_start)
+                mr.get_frames_iterator(
+                    sample_rate=sample_rate, start_tstamp=random_start
+                )
             ):
                 if idx >= num_samples:
                     break
@@ -77,7 +77,13 @@ for url in VIDEO_URLS:
     iterator_results3 = _benchmark_frames_iterator(mrs, 0.2, num_tests=5)
 
     results = list(
-        zip(test_order, get_frame_results, iterator_results1, iterator_results2, iterator_results3)
+        zip(
+            test_order,
+            get_frame_results,
+            iterator_results1,
+            iterator_results2,
+            iterator_results3,
+        )
     )
     rs.append(results)
 

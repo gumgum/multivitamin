@@ -47,8 +47,8 @@ from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import crop_image_from_bbox_contour
 from multivitamin.data.response.data import (
     create_bbox_contour_from_points,
-    Region, 
-    Prop,
+    Region,
+    Property,
 )
 from multivitamin.applications.utils import load_idmap, load_label_prototxt
 
@@ -94,7 +94,9 @@ class SSDDetector(ImagesModule):
             os.path.join(net_data_dir, "model.caffemodel"),
             caffe.TEST,
         )
-        self.transformer = caffe.io.Transformer({"data": self.net.blobs["data"].data.shape})
+        self.transformer = caffe.io.Transformer(
+            {"data": self.net.blobs["data"].data.shape}
+        )
 
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
         if os.path.exists(mean_file):
@@ -125,10 +127,12 @@ class SSDDetector(ImagesModule):
                     xmax = float(predictions[0, 0, pred_idx, 5])
                     ymax = float(predictions[0, 0, pred_idx, 6])
 
-                    contour = create_bbox_contour_from_points(xmin, ymin, xmax, ymax, bound=True)
+                    contour = create_bbox_contour_from_points(
+                        xmin, ymin, xmax, ymax, bound=True
+                    )
                     props = []
                     props.append(
-                        Prop(
+                        Property(
                             confidence=confidence,
                             confidence_min=CONFIDENCE_MIN,
                             ver=self.version,
@@ -143,4 +147,3 @@ class SSDDetector(ImagesModule):
                     )
                 except Exception:
                     log.error(traceback.format_exc())
-

@@ -51,13 +51,21 @@ class ThreadWorker(threading.Thread):
 
 
 class ThreadManager:
-    def __init__(self, func, n=1, on_kill=None, on_start=None, timeout=1, max_queue_size=-1):
+    def __init__(
+        self, func, n=1, on_kill=None, on_start=None, timeout=1, max_queue_size=-1
+    ):
         self.queue = Queue(max_queue_size)
         self._timeout = timeout
         self.workers = []
         for _ in range(n):
             self.workers.append(
-                ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+                ThreadWorker(
+                    self.queue,
+                    func,
+                    on_kill=on_kill,
+                    on_start=on_start,
+                    timeout=timeout,
+                )
             )
             self.workers[-1].start()
 
@@ -67,7 +75,13 @@ class ThreadManager:
         self.queue = Queue(max_queue_size)
         for _ in range(n):
             self.workers.append(
-                ThreadWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+                ThreadWorker(
+                    self.queue,
+                    func,
+                    on_kill=on_kill,
+                    on_start=on_start,
+                    timeout=timeout,
+                )
             )
             self.workers[-1].start()
 
@@ -158,13 +172,21 @@ class ProcessWorker(multiprocessing.Process):
 
 
 class ProcessManager:
-    def __init__(self, func, n=1, on_kill=None, on_start=None, timeout=1, max_queue_size=-1):
+    def __init__(
+        self, func, n=1, on_kill=None, on_start=None, timeout=1, max_queue_size=-1
+    ):
         self.queue = mQueue(max_queue_size)
         self._timeout = timeout
         self.workers = []
         for _ in range(n):
             self.workers.append(
-                ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+                ProcessWorker(
+                    self.queue,
+                    func,
+                    on_kill=on_kill,
+                    on_start=on_start,
+                    timeout=timeout,
+                )
             )
             self.workers[-1].start()
 
@@ -174,7 +196,13 @@ class ProcessManager:
         self.queue = mQueue(max_queue_size)
         for _ in range(n):
             self.workers.append(
-                ProcessWorker(self.queue, func, on_kill=on_kill, on_start=on_start, timeout=timeout)
+                ProcessWorker(
+                    self.queue,
+                    func,
+                    on_kill=on_kill,
+                    on_start=on_start,
+                    timeout=timeout,
+                )
             )
             self.workers[-1].start()
 

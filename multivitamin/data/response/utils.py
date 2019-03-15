@@ -21,7 +21,9 @@ def write_json(json_str, file_path, indent=None):
             wf.write(json_str)
         else:
             raise ValueError(
-                "json_str input is not a str or dict. Of type: {}".format(type(json_str))
+                "json_str input is not a str or dict. Of type: {}".format(
+                    type(json_str)
+                )
             )
 
 
@@ -37,7 +39,9 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
         Two points dict(x, y): p0 (upper left) and p1 (lower right)
     """
     if len(contour) != 4:
-        log.error("To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour")
+        log.error(
+            "To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour"
+        )
         return None
 
     # Convert number of pixel to max pixel index
@@ -194,8 +198,10 @@ def get_current_date():
     )
     return date
 
+
 # def jaccard_distance_between_contours(contourA, contourB, w, h):
 #     pass
+
 
 def intersection_between_bboxes(bbox0, bbox1):
     if type(bbox0) == type([]):

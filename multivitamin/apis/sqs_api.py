@@ -26,7 +26,9 @@ class SQSAPI(CommAPI):
             log.info("Retrieved queue: {}".format(queue))
         except:
             log.info("The queue does not exist, creating it")
-            queue = self.sqs.create_queue(QueueName=queue_name, Attributes={"DelaySeconds": "120"})
+            queue = self.sqs.create_queue(
+                QueueName=queue_name, Attributes={"DelaySeconds": "120"}
+            )
         self.queue_url = queue["QueueUrl"]
         log.info("Retrieved queue_url: {}".format(self.queue_url))
 

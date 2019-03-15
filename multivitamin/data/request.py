@@ -3,7 +3,7 @@ import glog as log
 DEFAULT_SAMPLE_RATE = 1.0
 
 
-class Request():
+class Request:
     def __init__(self, request_dict, request_id=None):
         """Data object to encapsulate and cleanse request
 
@@ -14,7 +14,9 @@ class Request():
         TODO: make Request class DictLike
         """
         if not isinstance(request_dict, dict):
-            raise ValueError(f"request_dict is type: {type(request_dict)}, should be of type dict")
+            raise ValueError(
+                f"request_dict is type: {type(request_dict)}, should be of type dict"
+            )
 
         self.request = request_dict
         self.request_id = request_id
@@ -24,7 +26,7 @@ class Request():
 
     @property
     def url(self):
-        return _standardize_url(self.request.get("url"))
+        return self.request.get("url")
 
     @property
     def sample_rate(self):
@@ -47,7 +49,6 @@ class Request():
         elif isinstance(de, int):
             de = de == 1
         return de
-
 
     @property
     def base64_encoding(self):
