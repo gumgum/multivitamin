@@ -5,7 +5,7 @@ import importlib.util
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-VERSION = '1.2.25'
+VERSION = '1.2.26'
 
 reqs = None
 with open('requirements.txt') as rf:
