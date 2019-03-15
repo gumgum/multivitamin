@@ -125,8 +125,8 @@ class FrameDrawer(CVModule):
         #we get the image_annotation tstamps
         tstamps=self.avro_api.get_timestamps()
         tstamps_dets=self.avro_api.get_timestamps_from_detections()
-        log.info('tstamps: ' + str(tstamps))
-        log.info('tstamps_dets: ' + str(tstamps_dets))
+        log.debug('tstamps: ' + str(tstamps))
+        log.debug('tstamps_dets: ' + str(tstamps_dets))
         #we get the frame iterator
         frames_iterator=[]
         try:
