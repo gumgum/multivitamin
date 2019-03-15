@@ -13,10 +13,10 @@ import json
 import os
 
 class FrameExtractor(CVModule):
-    def __init__(self, server_name, version, sample_rate=1.0, s3_bucket=None, local_dir=None, module_id_map=None):
+    def __init__(self, server_name, version, sample_rate=1.0, s3_bucket=None, local_dir=None, module_id_map=None,n_threads=100):
         super().__init__(server_name, version, module_id_map=module_id_map)
         self._sample_rate = sample_rate
-
+        self.n_threads=n_threads
         self._local_dir = local_dir
         self._s3_bucket = s3_bucket
         self._list_file = "contents"
@@ -32,16 +32,6 @@ class FrameExtractor(CVModule):
         self._encoding = "JPEG"
         self._content_type = "image/jpeg"
         self._s3_upload_args = {"ContentType": self._content_type}
-
-        self._s3_write_manager = WorkerManager(func=self._upload_frame_helper,
-                                      n=100,
-                                      max_queue_size=100,
-                                      parallelization="thread")
-
-        self._local_write_manager = WorkerManager(func=self._write_frame_helper,
-                                      n=100,
-                                      max_queue_size=100,
-                                      parallelization="thread")
 
     @staticmethod
     def _mklocaldirs(directory):
@@ -128,6 +118,16 @@ class FrameExtractor(CVModule):
         return result
 
     def process(self, message):
+        self._s3_write_manager = WorkerManager(func=self._upload_frame_helper,
+                                               n=self.n_threads,
+                                               max_queue_size=100,
+                                               parallelization="thread")
+
+        self._local_write_manager = WorkerManager(func=self._write_frame_helper,
+                                      n=self.n_threads,
+                                      max_queue_size=100,
+                                      parallelization="thread")
+
         self.set_message(message)
         self.code = "SUCCESS"
         self.last_tstamp = 0.0
@@ -154,6 +154,8 @@ class FrameExtractor(CVModule):
             self._s3_client.head_object(Bucket=self._s3_bucket,
                                     Key=self.contents_file_key)
             log.info("Video already exists")
+            self._s3_write_manager.kill_workers_on_completion()
+            self._local_write_manager.kill_workers_on_completion()
             return
         except:
             pass
@@ -189,6 +191,9 @@ class FrameExtractor(CVModule):
             result = self._add_contents_to_s3(contents)
         if self._local_dir is not None:
             self._add_contents_to_local(contents)
+        
+        self._s3_write_manager.kill_workers_on_completion()
+        self._local_write_manager.kill_workers_on_completion()
 
     def update_response(self):
         date = get_current_time()

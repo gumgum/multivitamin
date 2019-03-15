@@ -594,24 +594,24 @@ class AvroAPI():
     def get_labels(self):
         pass
 
-    def get_timestamps(self):
+    def get_timestamps_from_detections(self):
         return sorted([x['t'] for x in self.doc["media_annotation"]["frames_annotation"]])
     
-    def get_timestamps_from_footprints(self,server=None):
+    def get_timestamps(self,server=None):
         tstamps=[]        
         for c in self.doc["media_annotation"]["codes"]:
-            log.info(str(c))
+            #log.debug(str(c))
             if not c["tstamps"]:
                 continue
             if server:
                 if c["server"] != server:
                     continue
             if not tstamps:
-                log.info("Assigning timestamps: " + str(c["tstamps"]))
+                log.debug("Assigning timestamps: " + str(c["tstamps"]))
                 tstamps=c["tstamps"]
             else:
-                tstamps=list(set(tstamps) & set(c["tstamps"])) 
-        return tstamps
+                tstamps=list(set(tstamps) | set(c["tstamps"])) 
+        return sorted(list(set(tstamps)))
     def get_annotator(self):
         pass
 
@@ -703,7 +703,7 @@ class AvroAPI():
                 for d in dets:
                     conf=d['confidence']
                     #log.info("Appending in i:" + str(i) +" conf:"+str(conf))
-                    s[i]=np.append(s[i],conf)
+                    s[i]=np.append(s[i],conf)         
             return s, tstamps_msecs
 
 
