@@ -102,7 +102,7 @@ class ImagesModule(Module):
                 continue
 
             self.tstamps_processed.append(tstamp)
-            log.info(f"tstamp: {tstamp}")
+            log.debug(f"tstamp: {tstamp}")
 
             regions = []
             if self.prev_pois:

@@ -12,9 +12,9 @@ from multivitamin.utils.work_handler import WorkerManager
 from multivitamin.media import MediaRetriever
 from multivitamin.data.response.utils import get_current_time
 from multivitamin.data.response.data import (
-    create_footprint,
-    create_video_ann,
-    create_prop,
+    Footprint,
+    VideoAnn,
+    Property,
 )
 
 
@@ -186,7 +186,19 @@ class FrameExtractor(PropertiesModule):
             self._s3_client.head_object(
                 Bucket=self._s3_bucket, Key=self.contents_file_key
             )
+            new_url = self._s3_url_format.format(
+                bucket=self._s3_bucket, s3_key=self.contents_file_key
+            )
             log.info("Video already exists")
+            p = Property(
+                server=self.name,
+                ver=self.version,
+                value=new_url,
+                property_type="extraction",
+                property_id=1,
+            )
+            media_summary = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
+            self.response.append_media_summary(media_summary)
             return
         except:
             pass
@@ -226,12 +238,12 @@ class FrameExtractor(PropertiesModule):
             bucket=self._s3_bucket, s3_key=self.contents_file_key
         )
         self.response.url = new_url
-        p = create_prop(
+        p = Property(
             server=self.name,
             ver=self.version,
             value=new_url,
             property_type="extraction",
             property_id=1,
         )
-        media_summary = create_video_ann(t1=0.0, t2=float(self.last_tstamp), props=[p])
+        media_summary = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
         self.response.append_media_summary(media_summary)

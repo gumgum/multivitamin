@@ -152,9 +152,7 @@ class Response:
 
     @property
     def timestamps_from_frames_ann(self):
-        return sorted(
-            self._response_internal["media_annotation"]["frames_annotation"].keys()
-        )
+        return sorted(self._tstamp2frameannsidx.keys())
 
     @property
     def timestamps(self, server=None):
@@ -174,7 +172,7 @@ class Response:
                 tstamps = list(set(tstamps) | set(c["tstamps"]))
         return sorted(list(set(tstamps)))
 
-    ### Modifiers
+    # Modifiers
 
     def append_region(self, t, region):
         assert isinstance(t, float)

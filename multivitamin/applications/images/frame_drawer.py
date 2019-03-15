@@ -90,7 +90,7 @@ class FrameDrawer(PropertiesModule):
         self.med_ret = MediaRetriever(self.response.url)
 
         self.w, self.h = self.med_ret.get_w_h()
-        media_id = os.path.basename(self.avro_api.get_url()).rsplit(".", 1)[0]
+        media_id = os.path.basename(self.response.url).rsplit(".", 1)[0]
         self.media_id = "".join([e for e in media_id if e.isalnum() or e in ["/", "."]])
         self.content_type_map = {}
         
