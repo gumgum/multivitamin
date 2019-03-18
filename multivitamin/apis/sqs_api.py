@@ -1,5 +1,6 @@
 import glog as log
 import boto3
+import json
 
 from multivitamin.data import Request
 from multivitamin.apis.comm_api import CommAPI
@@ -45,7 +46,7 @@ class SQSAPI(CommAPI):
         for m in response["Messages"]:
             log.info(str(m))
             log.info("m.body: " + str(m["Body"]))
-            requests.append(Request(request=m["Body"], request_id=m["ReceiptHandle"]))
+            requests.append(Request(request_dict=json.loads(m["Body"]), request_id=m["ReceiptHandle"]))
         return requests
 
     def push(self, messages):

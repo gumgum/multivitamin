@@ -52,7 +52,7 @@ class Server(Flask):
         self.output_comms = output_comms
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
         self.modules = modules
-        self.use_schema_registry = False
+        self.use_schema_registry = use_schema_registry
 
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:

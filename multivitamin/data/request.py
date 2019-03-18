@@ -34,7 +34,7 @@ class Request:
 
     @property
     def bin_encoding(self):
-        be = self.request.get("bin_encoding", True)
+        be = self.request.get("bin_encoding", False)
         if isinstance(be, str):
             be = be.lower() == "true"
         elif isinstance(be, int):
@@ -43,7 +43,7 @@ class Request:
 
     @property
     def bin_decoding(self):
-        de = self.request.get("bin_decoding", True)
+        de = self.request.get("bin_decoding", False)
         if isinstance(de, str):
             de = de.lower() == "true"
         elif isinstance(de, int):
@@ -52,7 +52,7 @@ class Request:
 
     @property
     def base64_encoding(self):
-        be = self.request.get("base64_encoding", True)
+        be = self.request.get("base64_encoding", False)
         if isinstance(be, str):
             be = be.lower() == "true"
         elif isinstance(be, int):
