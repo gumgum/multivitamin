@@ -27,10 +27,12 @@ class FrameExtractor(PropertiesModule):
         s3_bucket=None,
         local_dir=None,
         module_id_map=None,
+        n_threads=100,
     ):
         super().__init__(server_name, version, module_id_map=module_id_map)
-        self._sample_rate = sample_rate
 
+        self.n_threads = n_threads
+        self._sample_rate = sample_rate
         self._local_dir = local_dir
         self._s3_bucket = s3_bucket
         self._list_file = "contents"
@@ -46,20 +48,6 @@ class FrameExtractor(PropertiesModule):
         self._encoding = "JPEG"
         self._content_type = "image/jpeg"
         self._s3_upload_args = {"ContentType": self._content_type}
-
-        self._s3_write_manager = WorkerManager(
-            func=self._upload_frame_helper,
-            n=100,
-            max_queue_size=100,
-            parallelization="thread",
-        )
-
-        self._local_write_manager = WorkerManager(
-            func=self._write_frame_helper,
-            n=100,
-            max_queue_size=100,
-            parallelization="thread",
-        )
 
     @staticmethod
     def _mklocaldirs(directory):
@@ -157,6 +145,20 @@ class FrameExtractor(PropertiesModule):
         return result
 
     def process_properties(self):
+        self._s3_write_manager = WorkerManager(
+            func=self._upload_frame_helper,
+            n=self.n_threads,
+            max_queue_size=100,
+            parallelization="thread",
+        )
+
+        self._local_write_manager = WorkerManager(
+            func=self._write_frame_helper,
+            n=self.n_threads,
+            max_queue_size=100,
+            parallelization="thread",
+        )
+
         self.last_tstamp = 0.0
         log.info("Processing")
         # filelike = self.media_api.download(return_filelike=True)
@@ -197,8 +199,10 @@ class FrameExtractor(PropertiesModule):
                 property_type="extraction",
                 property_id=1,
             )
-            media_summary = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
-            self.response.append_media_summary(media_summary)
+            track = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
+            self.response.append_track(track)
+            self._s3_write_manager.kill_workers_on_completion()
+            self._local_write_manager.kill_workers_on_completion()
             return
         except:
             pass
@@ -245,5 +249,7 @@ class FrameExtractor(PropertiesModule):
             property_type="extraction",
             property_id=1,
         )
-        media_summary = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
-        self.response.append_media_summary(media_summary)
+        track = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
+        self.response.append_track(track)
+        self._s3_write_manager.kill_workers_on_completion()
+        self._local_write_manager.kill_workers_on_completion()

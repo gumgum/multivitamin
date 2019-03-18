@@ -4,7 +4,7 @@ import importlib.util
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-from multivitamin import __version__ as VERSION
+from multivitamin import __version__ as VERSION  # see multivitamin/version.py
 
 
 reqs = None
