@@ -4,10 +4,8 @@ import importlib.util
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-from multivitamin import __version__
+from multivitamin import __version__ as VERSION
 
-
-VERSION = __version__
 
 reqs = None
 with open("requirements.txt") as rf:
