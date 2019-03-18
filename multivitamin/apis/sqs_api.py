@@ -1,6 +1,5 @@
 import glog as log
 import boto3
-import json
 
 from multivitamin.data import Request
 from multivitamin.apis.comm_api import CommAPI
@@ -18,13 +17,12 @@ class SQSAPI(CommAPI):
             queue_name: SQS name in AI account
            
         """
-        super().__init__()
         self.sqs = boto3.client("sqs")
         log.info("Attempting to retrieve queue: {}".format(queue_name))
         try:
             queue = self.sqs.get_queue_url(QueueName=queue_name)
             log.info("Retrieved queue: {}".format(queue))
-        except:
+        except Exception:
             log.info("The queue does not exist, creating it")
             queue = self.sqs.create_queue(
                 QueueName=queue_name, Attributes={"DelaySeconds": "120"}
@@ -33,7 +31,6 @@ class SQSAPI(CommAPI):
         log.info("Retrieved queue_url: {}".format(self.queue_url))
 
     def pull(self, n=1):
-        super().pull(n)
         log.info("Polling request from queue {}...".format(self.queue_url))
         response = self.sqs.receive_message(
             QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
