@@ -7,8 +7,22 @@ from multivitamin.module import Module
 
 class PropertiesModule(Module):
     def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
+        self,
+        server_name,
+        version,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None,
     ):
+        """[summary]
+        
+        Args:
+            server_name (str): [description]
+            version ([type]): [description]
+            prop_type ([type], optional): Defaults to None. [description]
+            prop_id_map ([type], optional): Defaults to None. [description]
+            module_id_map ([type], optional): Defaults to None. [description]
+        """
         super().__init__(
             server_name=server_name,
             version=version,
@@ -19,6 +33,14 @@ class PropertiesModule(Module):
         log.info("Creating PropertiesModule")
 
     def process(self, response):
+        """Process method called by Server
+
+        Args:
+            response (Response): prev_response
+        
+        Returns:
+            Response: resultant response
+        """
         super().process(response)
         self.process_properties()
         return self.update_and_return_response()
