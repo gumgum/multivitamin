@@ -15,18 +15,15 @@ from multivitamin.data.response.data import (
 
 class Response:
     def __init__(self, response_input, use_schema_registry=True):
-        """ SerializableResponse is a wrapper for Response with methods 
-            for serializable
+        """ Class for a Response object
+        
+        2 cases for construction:
 
-            There are 2 cases where SerializableResponse should be constructed:
-
-                1) constructed from a request with a previous SerializableResponse
-                2) converting a Response to SchemaResponse for sending data to client
+                1) constructed from a request with a previous Response
+                2) constructing from a dictionary
 
         Args:
-            input (Response): previous response
-            request (Request): incoming request
-            dictionary (dict): schema response dictionary
+            input (Any): previous Response or dict
             use_schema_registry (bool): whether to use schema registry when serializing to bytes
         """
         self._use_schema_registry = use_schema_registry
@@ -49,6 +46,11 @@ class Response:
             )
 
     def to_dict(self):
+        """Getter for response in the form of a dict
+
+        Returns:
+            dict: response as dict
+        """
         log.info("Returning schema response as dictionary")
         if self._request is not None:
             if self._request.bin_encoding is True:
@@ -58,6 +60,14 @@ class Response:
         return self._response_internal.to_dict()
 
     def to_bytes(self, base64=False):
+        """Getter for response in the form of bytes or base64 str
+
+        Args:
+            base64 (bool): flag for converting to base64 encoding
+        
+        Returns:
+            bytes: response as bytes
+        """
         if self._request is not None:
             base64 = self._request.base64_encoding
             log.info("Using self._request for base64_encoding flag")
@@ -73,7 +83,10 @@ class Response:
 
     @property
     def data(self):
-        """Convenience method to return either dict or bytes depending on request
+        """Convenience getter to return either dict or bytes depending on request
+
+        Returns:
+            Any: dict or bytes
         """
         if self._request is None:
             return self.to_dict()
@@ -86,16 +99,39 @@ class Response:
 
     @property
     def tracks(self):
+        """Getter for returning tracks
+
+        Returns:
+            List[VideoAnn]: tracks
+        """
         return self._response_internal["media_annotation"]["tracks_summary"]
 
     @property
     def frame_anns(self):
+        """Getter for frames annotations
+
+        Returns:
+            List[ImageAnn]: frames ann
+        """
         return self._response_internal["media_annotation"]["frames_annotation"]
 
     def has_frame_anns(self):
+        """Bool check on whether there are frame anns
+
+        Returns:
+            bool: flag for existence of frame anns
+        """
         return len(self.frame_anns) > 0
 
     def get_regions_from_tstamp(self, t):
+        """Get regions for a timestamp
+
+        Args:
+            t (float): tstamp
+        
+        Returns:
+            List[Region]: regions
+        """
         assert isinstance(t, float)
         if t not in self._tstamp2frameannsidx:
             return None
@@ -175,6 +211,14 @@ class Response:
     # Modifiers
 
     def append_region(self, t, region):
+        """Append a region given a timestamp. 
+
+        If tstamp exists in frame_anns, appends region, otherwise, creates new ImageAnn
+
+        Args:
+            t (float): tstamp
+            region (Region): region
+        """
         assert isinstance(t, float)
         assert isinstance(region, type(Region()))
         if t in self._tstamp2frameannsidx:
@@ -188,6 +232,14 @@ class Response:
             self._tstamp2frameannsidx[t] = len(self.frame_anns) - 1
 
     def append_regions(self, t, regions):
+        """Append a list of regions given a timestamp
+
+        If tstamp exists in frame_anns, appends regions, otherwise, creates new ImageAnns
+
+        Args:
+            t (float): tstamp
+            region (Region): region
+        """
         assert isinstance(t, float)
         assert isinstance(regions, list)
         for region in regions:
@@ -204,14 +256,29 @@ class Response:
             self._tstamp2frameannsidx[t] = len(self.frame_anns) - 1
 
     def append_footprint(self, footprint):
+        """Append a footprint
+
+        Args:
+            footprint (Footprint): footprint
+        """
         assert isinstance(footprint, type(Footprint()))
         self._response_internal["media_annotation"]["codes"].append(footprint)
 
     def append_track(self, video_ann):
+        """Append a track to tracks_summary
+
+        Args:
+            video_ann (VideoAnn): track
+        """
         assert isinstance(video_ann, type(VideoAnn()))
         self._response_internal["media_annotation"]["tracks_summary"].append(video_ann)
 
     def append_media_summary(self, video_ann):
+        """Append a media_summary to media_summary section
+
+        Args:
+            video_ann (VideoAnn): media_summary
+        """
         assert isinstance(video_ann, type(VideoAnn()))
         self._response_internal["media_annotation"]["media_summary"].append(video_ann)
 
@@ -244,9 +311,6 @@ class Response:
                 a) binary
                 b) base64 binary string
                 c) dict
-        
-        Args:
-            request (Request): request obj
         """
         log.info("Constructing SchemaResponse from Request")
         if self._request.prev_response:
