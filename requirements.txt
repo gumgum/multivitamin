@@ -55,4 +55,3 @@ sphinx-nameko-theme
 tqdm
 dataclasses
 typeguard
-mashumaro

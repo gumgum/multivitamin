@@ -14,14 +14,14 @@ class PropertiesModule(Module):
         prop_id_map=None,
         module_id_map=None,
     ):
-        """[summary]
+        """Module that processes properties, not images
         
         Args:
-            server_name (str): [description]
-            version ([type]): [description]
-            prop_type ([type], optional): Defaults to None. [description]
-            prop_id_map ([type], optional): Defaults to None. [description]
-            module_id_map ([type], optional): Defaults to None. [description]
+            server_name (str): server_name
+            version (str): version
+            prop_type (str, optional): Defaults to None. property_type
+            prop_id_map (str, optional): Defaults to None. Map: property_type -> id
+            module_id_map (str, optional): Defaults to None. Map: server_name -> id
         """
         super().__init__(
             server_name=server_name,
@@ -49,6 +49,7 @@ class PropertiesModule(Module):
     def process_properties(self):
         """Abstract method to be implemented to the child PropertiesModule
 
-        Should populate response with self.response.append_track()
+        Should populate response with self.response.append_track(...) 
+        or self.response.append_media_summary(...)
         """
         pass

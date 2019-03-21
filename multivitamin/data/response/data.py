@@ -1,10 +1,9 @@
 import random
 from collections import MutableMapping
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import List
 from typeguard import typechecked
-from mashumaro import DataClassDictMixin
 
 
 # Helper functions
@@ -33,8 +32,22 @@ def create_bbox_contour_from_points(
     bound=False,
     lb_x=0.0, ub_x=1.0, lb_y=0.0, ub_y=1.0,
 ):
-    """Helper function to create bounding box contour from 4 extrema points"""
+    """Helper function to create bounding box contour from 4 extrema points
 
+    Args:
+        xmin (float or int): point
+        ymin (float or int): point
+        xmax (float or int): point
+        ymax (float or int): point
+        bound (bool, optional): Defaults to False. Bound between lb and ub
+        lb_x (float, optional): Defaults to 0.0.
+        ub_x (float, optional): Defaults to 1.0.
+        lb_y (float, optional): Defaults to 0.0.
+        ub_y (float, optional): Defaults to 1.0.
+
+    Returns:
+        list[Point]: list of Points
+    """
     if bound:
         xmin = max(lb_x, xmin)
         ymin = max(lb_y, ymin)
@@ -47,6 +60,9 @@ def create_bbox_contour_from_points(
 
 
 class DictLike(MutableMapping):
+    """Base class used for the below dataclasses, so that each dataclass can 
+    act like a dict with [] access
+    """
     def __init__(self, *args, **kwargs):
         self.__dict__.update(*args, **kwargs)
 
@@ -74,14 +90,14 @@ class DictLike(MutableMapping):
 
 @typechecked
 @dataclass
-class PropPair(DataClassDictMixin, DictLike):
+class PropPair(DictLike):
     property_type: str = ""
     value: str = ""
 
 
 @typechecked
 @dataclass
-class EligibleProp(DataClassDictMixin, DictLike):
+class EligibleProp(DictLike):
     server: str = ""
     property_type: str = ""
     value: str = ""
@@ -91,7 +107,7 @@ class EligibleProp(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class AnnotationTask(DataClassDictMixin, DictLike):
+class AnnotationTask(DictLike):
     id: str = ""
     tstamps: List[float] = field(default_factory=list)
     labels: List[str] = field(default_factory=list)
@@ -100,7 +116,7 @@ class AnnotationTask(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class Footprint(DataClassDictMixin, DictLike):
+class Footprint(DictLike):
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
@@ -117,14 +133,14 @@ class Footprint(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class Point(DataClassDictMixin, DictLike):
+class Point(DictLike):
     x: float = 0.0
     y: float = 0.0
 
 
 @typechecked
 @dataclass
-class Property(DataClassDictMixin, DictLike):
+class Property(DictLike):
     relationships: List[str] = field(default_factory=list)
     confidence: float = 0.0
     confidence_min: float = 0.0
@@ -143,7 +159,7 @@ class Property(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class Region(DataClassDictMixin, DictLike):
+class Region(DictLike):
     contour: List[Point] = field(default_factory=make_whole_image_contour)
     props: List[Property] = field(default_factory=list)
     father_id: str = ""
@@ -153,7 +169,7 @@ class Region(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class VideoAnn(DataClassDictMixin, DictLike):
+class VideoAnn(DictLike):
     t1: float = 0.0
     t2: float = 0.0
     props: List[Property] = field(default_factory=list)
@@ -163,14 +179,14 @@ class VideoAnn(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class ImageAnn(DataClassDictMixin, DictLike):
+class ImageAnn(DictLike):
     t: float = 0.0
     regions: List[Region] = field(default_factory=list)
 
 
 @typechecked
 @dataclass
-class MediaAnn(DataClassDictMixin, DictLike):
+class MediaAnn(DictLike):
     codes: List[Footprint] = field(default_factory=list)
     url_original: str = ""
     url: str = ""
@@ -185,7 +201,7 @@ class MediaAnn(DataClassDictMixin, DictLike):
 
 @typechecked
 @dataclass
-class ResponseInternal(DataClassDictMixin, DictLike):
+class ResponseInternal(DictLike):
     point_aux = None
     footprint_aux = None
     proppair_aux = None

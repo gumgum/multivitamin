@@ -1,6 +1,5 @@
 import os
 import glog as log
-import pandas as pd
 
 
 def load_idmap(idmap_filepath):

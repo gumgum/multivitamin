@@ -124,6 +124,7 @@ class AvroIO:
 
         Args:
             doc (dict): avro doc as a dict
+
         Returns:
             boolean: True if json is an example of schema
         """
@@ -144,6 +145,7 @@ class AvroIO:
         Args:
             doc (dict): avro doc as a dict
             schema (str or dict): schema as a string or dict
+
         Returns:
             boolean: True if json is an example of schema
         """

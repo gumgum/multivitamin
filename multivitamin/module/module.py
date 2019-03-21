@@ -31,7 +31,21 @@ class Module(ABC):
         self.tstamps_processed = []
 
     def set_prev_props_of_interest(self, pois):
-        """
+        """If this Module is meant to be one in a sequence of Modules and is looking for a 
+        particular set of properties of interest from the previous module.
+
+        E.g.
+            [
+                {"property_type":"object", "value":"face"}, 
+                {"value":"car"}
+            ]
+            
+            is equivalent to
+            
+            '(property_type == "object") & (value == "face") | (value == "car")'
+        
+        Args:
+            pois (list[dict]): previous properties of interest
         """
         assert isinstance(pois, list)
         for poi in pois:
@@ -45,10 +59,20 @@ class Module(ABC):
         log.info(f"bool exp: {self.prev_pois_bool_exp}")
 
     def get_prev_props_of_interest(self):
+        """Getter for properties of interest
+
+        Returns:
+            list[dict]: prev props of interest
+        """
         return self.prev_pois
 
     @abstractmethod
     def process(self, response):
+        """Abstract method, public entry point for procesing a response
+
+        Args:
+            response (Response): response
+        """
         assert isinstance(response, Response)
         self.tstamps_processed = []
         self.code = Codes.SUCCESS
@@ -57,6 +81,11 @@ class Module(ABC):
 
     def update_and_return_response(self):
         """Update footprints, moduleID, propertyIDs
+
+        Note: to be moved into aigumgum
+
+        Returns:
+            Response: output response
         """
         log.info(f"Updating and returning response with code: {self.code.name}")
         num_footprints = len(self.response.footprints)

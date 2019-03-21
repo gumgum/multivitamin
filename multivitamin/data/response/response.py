@@ -1,6 +1,7 @@
 import json
 
 import glog as log
+from dataclasses import asdict
 
 from multivitamin.data import Request
 from multivitamin.data.response.io import AvroIO
@@ -39,7 +40,9 @@ class Response:
             if not io.is_valid_avro_doc(response_input):
                 raise ValueError("Input dict is incompatible with avro schema")
             log.info("Input dict is compatible with avro schema")
-            self._response_internal = ResponseInternal().from_dict(response_input)
+
+            # unpack dictionary values into kwargs using ** operator
+            self._response_internal = ResponseInternal(**response_input) 
         else:
             raise TypeError(
                 f"Expected Request or dict, found type: {type(response_input)}"
@@ -57,7 +60,7 @@ class Response:
                 log.warning(
                     "self._request.bin_encoding is True but returning dictionary"
                 )
-        return self._response_internal.to_dict()
+        return asdict(self._response_internal)
 
     def to_bytes(self, base64=False):
         """Getter for response in the form of bytes or base64 str
@@ -75,7 +78,7 @@ class Response:
         log.info("Returning schema response as binary")
         try:
             io = AvroIO(self._use_schema_registry)
-            return io.encode(self._response_internal.to_dict(), base64)
+            return io.encode(asdict(self._response_internal), base64)
         except Exception:
             log.error("Error serializing response")
             # what to do here?
@@ -186,12 +189,10 @@ class Response:
         assert isinstance(h, int)
         self._response_internal["media_annotation"]["h"] = h
 
-    @property
-    def timestamps_from_frames_ann(self):
+    def get_timestamps_from_frames_ann(self):
         return sorted(self._tstamp2frameannsidx.keys())
 
-    @property
-    def timestamps(self, server=None):
+    def get_timestamps(self, server=None):
         """TODO, cleanup?"""
         tstamps = []
         for c in self._response_internal["media_annotation"]["codes"]:
@@ -295,8 +296,10 @@ class Response:
         )
 
     def _init_from_request(self):
-        """Construct from a request. Request object has a field for "prev_response"
-        If not None, convert prev_response into a SchemaResponse
+        """Construct from a request. 
+        
+        Request object has a field for "prev_response", if not None, 
+        convert prev_response into a Response
         
         prev_responses can come in the following forms
 
@@ -312,7 +315,7 @@ class Response:
                 b) base64 binary string
                 c) dict
         """
-        log.info("Constructing SchemaResponse from Request")
+        log.info("Constructing Response from Request")
         if self._request.prev_response:
             log.info("Loading from prev_response")
             if self._request.bin_encoding is True:
@@ -330,12 +333,12 @@ class Response:
                     )
                 log.info("Constructing ResponseInternal")
                 d = io.decode(bytes)
-                self._response_internal = ResponseInternal().from_dict(d)
+                self._response_internal = ResponseInternal(**d)
             else:
                 assert isinstance(self._request.prev_response, str)
                 log.info("prev_response is a JSON str")
                 d = json.loads(self._request.prev_response)
-                self._response_internal = ResponseInternal().from_dict(d)
+                self._response_internal = ResponseInternal(**d)
         elif self._request.prev_response_url:
             log.info("Loading from prev_response_url")
             raise NotImplementedError()

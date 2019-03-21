@@ -9,7 +9,7 @@ from multivitamin.data import Response
 
 class VertexAPI(SQSAPI):
     def __init__(self, queue_name):
-        """Vertex API inherits from SQSAPI
+        """Vertex API inherits from SQSAPI. Pulls messages from SQS queue, posts messages to dst_url
 
         Args:
             queue_name (str): AWS SQS queue name

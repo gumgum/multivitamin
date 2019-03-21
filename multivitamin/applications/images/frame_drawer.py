@@ -138,8 +138,8 @@ class FrameDrawer(PropertiesModule):
         thickness = 2
 
         # we get the image_annotation tstamps
-        tstamps = self.response.timestamps
-        tstamp_frame_anns = self.response.timestamps_from_frames_ann
+        tstamps = self.response.get_timestamps()
+        tstamp_frame_anns = self.response.get_timestamps_from_frames_ann()
         log.debug('tstamps: ' + str(tstamps))
         log.debug('tstamps_dets: ' + str(tstamp_frame_anns))
         

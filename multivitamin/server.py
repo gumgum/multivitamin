@@ -23,7 +23,7 @@ class Server(Flask):
         It's role is to start the healthcheck endpoint and initiate the services
 
         Args:
-            modules (list[Module]): list of concrete child implementation of CVModule
+            modules (list[Module]): list of concrete child implementation of Module
             input_comm (CommAPI): Concrete child implementation of CommAPI, called for pulling 
                                   responses to process
             output_comms (list[CommAPI]): List of concrete child implementations of CommAPI, 
@@ -31,13 +31,11 @@ class Server(Flask):
         """
         if isinstance(modules, Module):
             modules = [modules]
-        if not isinstance(modules, list):
-            raise TypeError("modules is not a list of Module")
+        assert(isinstance(modules, list))
         if len(modules) == 0:
-            raise TypeError("No modules was provided.")
+            raise ValueError("No modules was provided.")
         for m in modules:
-            if not isinstance(m, Module):
-                raise TypeError(f"Found type {type(m)}, expected type Module")
+            assert(isinstance(m, Module))
         if not input_comm:
             raise TypeError("No input_comm set")
         if not output_comms:
@@ -45,8 +43,7 @@ class Server(Flask):
         if not isinstance(output_comms, list):
             output_comms = [output_comms]
         for out in output_comms:
-            if not isinstance(out, CommAPI):
-                raise TypeError("comm_apis_outputs must be CommAPIs")
+            assert(isinstance(out, CommAPI))
 
         self.input_comm = input_comm
         self.output_comms = output_comms
@@ -65,9 +62,10 @@ class Server(Flask):
             return jsonify(self.modules_info)
 
     def start(self):
-        """Entry point for starting a server.
+        """Public entry point for starting a server.
 
-            Note: this starts a healthcheck endpoint in a separate thread
+        Starts a healthcheck endpoint in a separate thread and calls self._start() which
+        runs the actual server, pulling, processing, and posting requests
         """
         log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
         try:
@@ -84,6 +82,9 @@ class Server(Flask):
         self._start()
 
     def _start(self):
+        """Start server. While loop that pulls requests from the input_comm, calls
+        _process_request(request), and posts responses to output_comms
+        """
         while True:
             try:
                 log.info("Pulling requests")
