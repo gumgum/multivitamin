@@ -117,6 +117,21 @@ class AnnotationTask(DictLike):
 @typechecked
 @dataclass
 class Footprint(DictLike):
+    """Footprint of a module 
+
+    Args:
+        code (str): return code
+        ver (str): version
+        company (str): company
+        labels (List[EligibleProp]): list of labels
+        server_track (str): server_track
+        date (str): date in YYYYMMDDhhmmss
+        annotator (str): annotator
+        tstamps (List[float]): list of timestamps processed by module
+        id (str): footprint id
+        num_images_processed (int): number of images processed
+        request_source (str): source of requests, e.g. SQS queue name
+    """
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
@@ -134,6 +149,12 @@ class Footprint(DictLike):
 @typechecked
 @dataclass
 class Point(DictLike):
+    """Point class
+
+    Args:
+        x (float): Defaults to 0.0
+        y (float): Defaults to 0.0
+    """
     x: float = 0.0
     y: float = 0.0
 
@@ -141,6 +162,24 @@ class Point(DictLike):
 @typechecked
 @dataclass
 class Property(DictLike):
+    """Property class
+
+    Args:
+        relationships (List[str]): N/A
+        confidence (float): Defaults to 0.0
+        confidence_min (float): Defaults to 0.0
+        ver (str): version
+        company (str): Defaults to "gumgum"
+        server_track (str): server track
+        value (str): value
+        server (str): server/module name
+        footprint_id (str): associated footprint
+        fraction (float): Defaults to 0.0
+        module_id (int): Defaults to 0, used for mapping server name to an ID
+        property_type (str): type of the value field
+        value_verbose (str): extra field for value
+        property_id (int): mapping property value to an ID
+    """
     relationships: List[str] = field(default_factory=list)
     confidence: float = 0.0
     confidence_min: float = 0.0

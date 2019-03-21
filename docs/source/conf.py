@@ -14,7 +14,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../..'))
+sys.setrecursionlimit(1500)
 
 # -- Project information -----------------------------------------------------
 
@@ -25,7 +26,7 @@ author = 'GumGum CV'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '1.3.5'
+release = '1.3.6'
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,14 +40,10 @@ release = '1.3.5'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -57,8 +54,6 @@ templates_path = ['_templates']
 #
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
-
-autoclass_content = 'both'
 
 # The master toctree document.
 master_doc = 'index'
@@ -85,7 +80,10 @@ pygments_style = None
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+#import sphinx_nameko_theme
 
+#html_theme_path = [sphinx_nameko_theme.get_html_theme_path()]
+#html_theme = 'nameko'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -111,15 +109,57 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'multivitamindoc'
+htmlhelp_basename = 'Multivitamindoc'
+
+
+# -- Options for LaTeX output ------------------------------------------------
+
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    #
+    # 'papersize': 'letterpaper',
+
+    # The font size ('10pt', '11pt' or '12pt').
+    #
+    # 'pointsize': '10pt',
+
+    # Additional stuff for the LaTeX preamble.
+    #
+    # 'preamble': '',
+
+    # Latex figure (float) alignment
+    #
+    # 'figure_align': 'htbp',
+}
+
+# Grouping the document tree into LaTeX files. List of tuples
+# (source start file, target name, title,
+#  author, documentclass [howto, manual, or own class]).
+latex_documents = [
+    (master_doc, 'Multivitamin.tex', 'Multivitamin Documentation',
+     'GumGum CV', 'manual'),
+]
+
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'multivitamin', 'multivitamin Documentation',
+    (master_doc, 'multivitamin', 'Multivitamin Documentation',
      [author], 1)
+]
+
+
+# -- Options for Texinfo output ----------------------------------------------
+
+# Grouping the document tree into Texinfo files. List of tuples
+# (source start file, target name, title, author,
+#  dir menu entry, description, category)
+texinfo_documents = [
+    (master_doc, 'Multivitamin', 'Multivitamin Documentation',
+     author, 'Multivitamin', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 
@@ -142,11 +182,6 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
-
-# -- Options for intersphinx extension ---------------------------------------
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
 
 # -- Options for todo extension ----------------------------------------------
 
