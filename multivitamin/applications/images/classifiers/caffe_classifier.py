@@ -13,7 +13,7 @@ from multivitamin.data.response.utils import (
 )
 from multivitamin.module.utils import min_conf_filter_predictions
 from multivitamin.utils.GPUUtilities import GPUUtility
-from multivitamin.data.response.data import Region, Property
+from multivitamin.data.response.dataclasses import Region, Property
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
 

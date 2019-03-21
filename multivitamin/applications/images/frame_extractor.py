@@ -11,7 +11,7 @@ from multivitamin.module import PropertiesModule
 from multivitamin.utils.work_handler import WorkerManager
 from multivitamin.media import MediaRetriever
 from multivitamin.data.response.utils import get_current_time
-from multivitamin.data.response.data import (
+from multivitamin.data.response.dataclasses import (
     Footprint,
     VideoAnn,
     Property,

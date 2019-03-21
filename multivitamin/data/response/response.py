@@ -5,7 +5,7 @@ from dataclasses import asdict
 
 from multivitamin.data import Request
 from multivitamin.data.response.io import AvroIO
-from multivitamin.data.response.data import (
+from multivitamin.data.response.dataclasses import (
     ResponseInternal,
     Region,
     VideoAnn,
