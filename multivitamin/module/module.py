@@ -4,7 +4,7 @@ import json
 import glog as log
 
 from multivitamin.data import Response
-from multivitamin.data.response.dataclasses import Footprint
+from multivitamin.data.response.dtypes import Footprint
 from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
 from multivitamin.module.utils import convert_props_to_pandas_query

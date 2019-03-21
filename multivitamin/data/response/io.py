@@ -112,7 +112,8 @@ class AvroIO:
         return True
 
     def encode(self, doc, use_base64=False):
-        """Encode an avro doc to bytes"""
+        """Encode an avro doc to bytes
+        """
         bytes = self.impl.encode(doc)
         if use_base64:
             log.info(f"use_base64={use_base64}")

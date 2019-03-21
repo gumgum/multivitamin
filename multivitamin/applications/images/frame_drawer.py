@@ -13,7 +13,7 @@ from colour import Color
 from multivitamin.module import PropertiesModule
 from multivitamin.data import Response
 from multivitamin.data.response.utils import p0p1_from_bbox_contour, get_current_time
-from multivitamin.data.response.dataclasses import Property, VideoAnn
+from multivitamin.data.response.dtypes import Property, VideoAnn
 from multivitamin.media import MediaRetriever
 
 

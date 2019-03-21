@@ -4,7 +4,7 @@ import glog as log
 import json
 
 from multivitamin.data.response import config
-from multivitamin.data.response.dataclasses import Point
+from multivitamin.data.response.dtypes import Point
 
 
 def read_json(file_path):
