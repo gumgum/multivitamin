@@ -54,7 +54,7 @@ class Response:
         Returns:
             dict: response as dict
         """
-        log.info("Returning schema response as dictionary")
+        log.info("Returning response as dictionary")
         if self._request is not None:
             if self._request.bin_encoding is True:
                 log.warning(
@@ -73,9 +73,9 @@ class Response:
         """
         if self._request is not None:
             base64 = self._request.base64_encoding
-            log.info("Using self._request for base64_encoding flag")
+            log.info("Using self._request to check base64_encoding flag")
         log.info(f"base64 encoding: {base64}")
-        log.info("Returning schema response as binary")
+        log.info("Returning response as binary")
         try:
             io = AvroIO(self._use_schema_registry)
             return io.encode(asdict(self._response_internal), base64)
@@ -95,7 +95,7 @@ class Response:
             return self.to_dict()
 
         if self._request.bin_encoding is False:
-            log.info("Returning schema response as dictionary")
+            log.info("Returning response as dictionary")
             return self.to_dict()
 
         return self.to_bytes(self._request.base64_encoding)
