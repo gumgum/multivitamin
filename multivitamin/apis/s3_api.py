@@ -13,7 +13,7 @@ INDENTATION = 2
 
 
 class S3API(CommAPI):
-    def __init__(self, s3_bucket, s3_key):
+    def __init__(self, s3_bucket, s3_key, bin_encoding=False):
         """ S3API is a CommAPI object that pushes responses to an
             s3_bucket/s3_key or pushing_folder
 
@@ -23,6 +23,7 @@ class S3API(CommAPI):
         """
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
+        self.bin_encoding = bin_encoding
 
     def pull(self, n=1):
         raise NotImplementedError("S3API.pull() not yet implemented")
@@ -47,7 +48,7 @@ class S3API(CommAPI):
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
 
-            if res.request.bin_encoding is True:
+            if self.bin_encoding is True:
                 with open(outfn, "wb") as wf:
                     wf.write(res.to_bytes())
             else:
