@@ -4,7 +4,7 @@
 
 ![](https://i.imgur.com/ll70SQO.png)
 
-**Multivitamin** is python framework for serving computer vision (CV) and machine learning (ML) models in the cloud, aimed at It is intended to define the infrastructure around a single service.
+**Multivitamin** is python framework for serving computer vision (CV) and machine learning (ML). It's intention is to simplify the infrastructure for a single service.
 
 ## Main Features
 
@@ -15,6 +15,7 @@
 ## Getting Started
 
 To start an asynchronous service, construct a `Server` object, which accepts 3 input parameters:
+
 * An input `CommAPI`, which is an abstract base class that defines the `push()` and `pull()` interface
 * An output `CommAPI`
 * A `Module`, an abstract base class that defines the interface for `process(Request)`, `process_properties()` or `process_images(...)`
@@ -71,17 +72,19 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 ### High-level overview
 
 **Data flow**: 
+
 1. JSON request is "pulled" by a `CommAPI` object
-1. JSON request is used to construct a `Request` class
-1. `Server` creates a (typically) empty `Response` from the `Request`. If the `Request`contains a previous module's `Response` (for modules run in a sequence), that is pre-populated in the `Response`
-1. `process_request()` sends the `Response` through all `Module`s
-1. Each `Module` appends/modifies the `Response`
-1. `process_request()` returns the `Response` back to the `Server`
-1. `Server` sends the `Response` to the output `CommAPI`(s) and calls the `push(Response)` method
+2. JSON request is used to construct a `Request` class
+3. `Server` creates a (typically) empty `Response` from the `Request`. If the `Request`contains a previous module's `Response` (for modules run in a sequence), that is pre-populated in the `Response`
+4. `process_request()` sends the `Response` through all `Module`s
+5. Each `Module` appends/modifies the `Response`
+6. `process_request()` returns the `Response` back to the `Server`
+7. `Server` sends the `Response` to the output `CommAPI`(s) and calls the `push(Response)` method
 
 ![](https://i.imgur.com/NwpdShq.png)
 
 **Data structures:**
+
 * data/  
   * **Request:** data object encapsulating request JSON
   * response/
