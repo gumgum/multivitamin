@@ -39,6 +39,7 @@ class S3API(CommAPI):
         for res in responses:
             assert isinstance(res, Response)
             fn = self.get_fn(res)
+            log.debug(f"fn: {fn}")
             tmp_dir = tempfile.mkdtemp()
             outfn = os.path.join(tmp_dir, fn)
 
@@ -54,6 +55,7 @@ class S3API(CommAPI):
                     wf.write(json.dumps(res.to_dict(), indent=INDENTATION))
 
             s3client = boto3.client("s3")
+            assert(self.s3_key is not None)
             key_fullpath = os.path.join(self.s3_key, fn)
             log.info("Pushing {} to {}/{}".format(outfn, self.s3_bucket, key_fullpath))
             with open(outfn, "rb") as data:

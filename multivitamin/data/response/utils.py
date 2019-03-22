@@ -65,6 +65,20 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
     return (x0, y0), (x1, y1)
 
 
+def compute_box_area(contour):
+    """Function to compute the spatial fraction based on the contour
+    
+    Args:
+        contour (List[Point]): contour
+    
+    Returns:
+        float: fraction
+    """
+    assert(len(contour) == 4)
+    p0, p1 = p0p1_from_bbox_contour(contour, dtype=float)
+    return float((p1[0]-p0[0])*(p1[1]-p0[1]))
+
+
 def crop_image_from_bbox_contour(image, contour):
     """Crop an image given a bounding box contour
     

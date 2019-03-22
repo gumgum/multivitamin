@@ -44,7 +44,10 @@ from caffe.proto import caffe_pb2 as cpb2
 
 from multivitamin.utils.GPUUtilities import GPUUtility
 from multivitamin.module import ImagesModule
-from multivitamin.data.response.utils import crop_image_from_bbox_contour
+from multivitamin.data.response.utils import (
+    crop_image_from_bbox_contour,
+    compute_box_area
+)
 from multivitamin.data.response.dtypes import (
     create_bbox_contour_from_points,
     Region,
@@ -114,7 +117,6 @@ class SSDDetector(ImagesModule):
             self.net.blobs["data"].data[...] = im
             predictions = self.net.forward()[LAYER_NAME]
 
-            # regions = []
             for pred_idx in range(predictions.shape[2]):
                 try:
                     confidence = float(predictions[0, 0, pred_idx, 2])
@@ -130,20 +132,18 @@ class SSDDetector(ImagesModule):
                     contour = create_bbox_contour_from_points(
                         xmin, ymin, xmax, ymax, bound=True
                     )
-                    props = []
-                    props.append(
-                        Property(
+                    area = compute_box_area(contour)
+                    prop = Property(
                             confidence=confidence,
                             confidence_min=CONFIDENCE_MIN,
                             ver=self.version,
                             server=self.name,
                             value=label,
                             property_type=self.prop_type,
+                            fraction=area,
                         )
-                    )
-                    # regions.append(create_region(contour=contour, props=props))
                     self.response.append_region(
-                        t=tstamp, region=Region(contour=contour, props=props)
+                        t=tstamp, region=Region(contour=contour, props=[prop])
                     )
                 except Exception:
                     log.error(traceback.format_exc())
