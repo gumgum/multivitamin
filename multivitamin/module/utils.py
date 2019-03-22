@@ -1,4 +1,7 @@
 import os
+import json
+import itertools as it
+
 import glog as log
 
 
@@ -79,7 +82,7 @@ def pandas_query_matches_props(bool_exp, props):
         bool: True if bool exp evals to True, else False
     """
     log.debug(f"bool_exp: {bool_exp}")
-    log.debug(f"against properties: {props}")
+    log.debug(f"against properties: {json.dumps(props.to_dict(), indent=2)}")
     queried_pois = props.query(bool_exp)
     log.debug(f"matches? : {not queried_pois.empty}")
     return not queried_pois.empty
@@ -120,15 +123,20 @@ def convert_props_to_pandas_query(query_props):
 
 
 def batch_generator(iterator, batch_size):
+# def batch_generator(iterable, batch_size):
     """Take an iterator, convert it to a batching generator
+
+    See: https://realpython.com/python-itertools/
 
     Args:
         iterator: Any iterable object where each element is a list or a tuple of length N
 
-    Yields:
+    Returns:
         list: A list of N batches of size `self.batch_size`. The last
                 batch may be smaller than the others
     """
+    # iters = [iter(iterable)] * batch_size
+    # return it.zip_longest(*iters, fillvalue=None)
     batch = []
     for iteration in iterator:
         batch.append(iteration)

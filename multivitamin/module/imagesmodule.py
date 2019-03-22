@@ -68,6 +68,8 @@ class ImagesModule(Module):
         for image_batch, tstamp_batch, prev_region_batch in batch_generator(
             self.preprocess_input(), self.batch_size
         ):
+            if image_batch is None or tstamp_batch is None:
+                continue
             try:
                 self.process_images(image_batch, tstamp_batch, prev_region_batch)
             except ValueError as e:
@@ -103,24 +105,27 @@ class ImagesModule(Module):
 
             self.tstamps_processed.append(tstamp)
             log.debug(f"tstamp: {tstamp}")
+            if i % 100 == 0:
+                log.info(f"tstamp: {tstamp}")
 
-            regions = []
-            if self.prev_pois:
+            if not self.prev_pois:
+                yield frame, tstamp, None
+            else:
                 log.debug("Processing with previous response")
                 log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
-
+                regions_that_match_props = []
                 regions_at_tstamp = self.response.get_regions_from_tstamp(tstamp)
+                log.debug(f"Finding regions at tstamp: {tstamp}")
                 if regions_at_tstamp is not None:
+                    log.debug(f"len(regions_at_tstamp): {len(regions_at_tstamp)}")
                     for i_region in regions_at_tstamp:
                         if self._region_contains_props(i_region):
-                            regions.append(i_region)
+                            log.debug(f"region: {i_region} contains props of interest")
+                            regions_that_match_props.append(i_region)
                             self.prev_regions_of_interest_count += 1
 
-            if len(regions) == 0:
-                yield frame, tstamp, None
-
-            for region in regions:
-                yield frame, tstamp, region
+                for region in regions_that_match_props:
+                    yield frame, tstamp, region
 
     @abstractmethod
     def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
