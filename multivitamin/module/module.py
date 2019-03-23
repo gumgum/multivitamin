@@ -90,7 +90,7 @@ class Module(ABC):
         log.info(f"Updating and returning response with code: {self.code.name}")
         num_footprints = len(self.response.footprints)
         time = get_current_time()
-        log.info("Appending footprints")
+        log.debug("Appending footprints")
         self.response.append_footprint(
             Footprint(
                 code=self.code.name,

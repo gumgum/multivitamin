@@ -30,7 +30,7 @@ class PropertiesModule(Module):
             prop_id_map=prop_id_map,
             module_id_map=module_id_map,
         )
-        log.info("Creating PropertiesModule")
+        log.debug("Creating PropertiesModule")
 
     def process(self, response):
         """Process method called by Server

@@ -441,7 +441,7 @@ class FramesIterator:
             fps = self.cap.frame_rate
 
         self.period = max(1.0 / sample_rate, 1.0 / fps)
-        log.info("Period: {}".format(self.period))
+        log.debug("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
         self.cur_tstamp = self.start_tstamp
@@ -450,7 +450,7 @@ class FramesIterator:
         if isinstance(self.cap, cv2.VideoCapture) and start_tstamp != 0.0:
             self.cap.set(cv2.CAP_PROP_POS_MSEC, start_tstamp * 1000)
 
-        log.info("Setting start_tstamp of iterator to {}".format(start_tstamp))
+        log.debug("Setting start_tstamp of iterator to {}".format(start_tstamp))
 
     def __iter__(self):
         """Iterate over frames."""

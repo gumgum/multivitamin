@@ -39,7 +39,7 @@ class Response:
             io = AvroIO(use_schema_registry)
             if not io.is_valid_avro_doc(response_input):
                 raise ValueError("Input dict is incompatible with avro schema")
-            log.info("Input dict is compatible with avro schema")
+            log.debug("Input dict is compatible with avro schema")
 
             # unpack dictionary values into kwargs using ** operator
             self._response_internal = ResponseInternal(**response_input) 
@@ -54,7 +54,7 @@ class Response:
         Returns:
             dict: response as dict
         """
-        log.info("Returning response as dictionary")
+        log.debug("Returning response as dictionary")
         if self._request is not None:
             if self._request.bin_encoding is True:
                 log.warning(
@@ -74,8 +74,8 @@ class Response:
         if self._request is not None:
             base64 = self._request.base64_encoding
             log.info("Using self._request to check base64_encoding flag")
-        log.info(f"base64 encoding: {base64}")
-        log.info("Returning response as binary")
+        log.debug(f"base64 encoding: {base64}")
+        log.debug("Returning response as binary")
         try:
             io = AvroIO(self._use_schema_registry)
             return io.encode(asdict(self._response_internal), base64)
@@ -95,7 +95,7 @@ class Response:
             return self.to_dict()
 
         if self._request.bin_encoding is False:
-            log.info("Returning response as dictionary")
+            log.debug("Returning response as dictionary")
             return self.to_dict()
 
         return self.to_bytes(self._request.base64_encoding)
@@ -315,34 +315,34 @@ class Response:
                 b) base64 binary string
                 c) dict
         """
-        log.info("Constructing Response from Request")
+        log.debug("Constructing Response from Request")
         if self._request.prev_response:
-            log.info("Loading from prev_response")
+            log.debug("Loading from prev_response")
             if self._request.bin_encoding is True:
-                log.info("bin_encoding is True")
+                log.debug("bin_encoding is True")
                 io = AvroIO()
                 if isinstance(self._request.prev_response, str):
-                    log.info("prev_response is base64 encoded binary")
+                    log.debug("prev_response is base64 encoded binary")
                     bytes = io.decode(
                         self._request.prev_response, use_base64=True, binary_flag=True
                     )
                 else:
-                    log.info("prev_response is in binary")
+                    log.debug("prev_response is in binary")
                     bytes = io.decode(
                         self._request.prev_response, use_base64=False, binary_flag=True
                     )
-                log.info("Constructing ResponseInternal")
+                log.debug("Constructing ResponseInternal")
                 d = io.decode(bytes)
                 self._response_internal = ResponseInternal(**d)
             else:
                 assert isinstance(self._request.prev_response, str)
-                log.info("prev_response is a JSON str")
+                log.debug("prev_response is a JSON str")
                 d = json.loads(self._request.prev_response)
                 self._response_internal = ResponseInternal(**d)
         elif self._request.prev_response_url:
-            log.info("Loading from prev_response_url")
+            log.debug("Loading from prev_response_url")
             raise NotImplementedError()
         else:
-            log.info("No prev_response, constructing empty response_internal")
+            log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
         self.url = self._request.url

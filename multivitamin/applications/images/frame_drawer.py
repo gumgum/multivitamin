@@ -63,7 +63,7 @@ class FrameDrawer(PropertiesModule):
         elif isinstance(response, dict):
             self.response = Response(response)
         else:
-            log.info("No response")
+            log.debug("No response")
 
         self.med_ret = med_ret
         if med_ret is None:

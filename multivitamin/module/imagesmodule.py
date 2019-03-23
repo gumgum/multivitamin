@@ -42,7 +42,7 @@ class ImagesModule(Module):
         Returns:
             Response: response object
         """
-        log.info("Processing message")
+        log.debug("Processing message")
         super().process(response)
 
         try:
@@ -60,7 +60,7 @@ class ImagesModule(Module):
         self._update_w_h_in_response()
 
         if self.prev_pois and not self.response.has_frame_anns():
-            log.info("NO_PREV_REGIONS_OF_INTEREST")
+            log.warning("NO_PREV_REGIONS_OF_INTEREST, returning...")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
             return self.update_and_return_response()
 
@@ -79,10 +79,10 @@ class ImagesModule(Module):
                     log.error(e)
                     self.code = Codes.ERROR_PROCESSING
                     return self.update_and_return_response()
-        log.info("Finished processing.")
+        log.debug("Finished processing.")
 
         if self.prev_pois and self.prev_regions_of_interest_count == 0:
-            log.info("NO_PREV_REGIONS_OF_INTEREST")
+            log.warning("NO_PREV_REGIONS_OF_INTEREST, returning...")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
         return self.update_and_return_response()
 
