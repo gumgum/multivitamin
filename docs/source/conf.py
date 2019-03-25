@@ -14,19 +14,19 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
-sys.setrecursionlimit(1500)
+sys.path.insert(0, os.path.abspath('../../'))
+
 
 # -- Project information -----------------------------------------------------
 
 project = 'Multivitamin'
-copyright = '2019, GumGum'
+copyright = '2019, GumGum CV'
 author = 'GumGum CV'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '1.3.6'
+release = '1.3.10'
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,6 +41,7 @@ release = '1.3.6'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
+    'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
@@ -79,11 +80,8 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-#import sphinx_nameko_theme
+html_theme = 'alabaster'
 
-#html_theme_path = [sphinx_nameko_theme.get_html_theme_path()]
-#html_theme = 'nameko'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.

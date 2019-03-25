@@ -67,10 +67,10 @@ class S3API(CommAPI):
                 shutil.rmtree(tmp_dir)
 
     def get_fn(self, response):
-        """Create a fn from url string from avro_api
+        """Create a fn from url string from Response
 
         Args:
-            aapi (avro_api): avro_api of response
+            response (Response): response
         
         Returns:
             str: unique identifier
