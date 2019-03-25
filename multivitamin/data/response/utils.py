@@ -12,7 +12,7 @@ def read_json(file_path):
     return json.load(open(file_path))
 
 
-def write_json(json_str, file_path, indent=None):
+def write_json(json_str, file_path, indent=2):
     """Convenience method for writing jsons"""
     with open(file_path, "w") as wf:
         if type(json_str) is dict:
@@ -218,6 +218,7 @@ def get_current_date():
 
 
 def intersection_between_bboxes(bbox0, bbox1):
+    assert(len(bbox0) == len(bbox1) == 4)
     if type(bbox0) == type([]):
         bbox0 = p0p1_from_bbox_contour(bbox0, dtype=float)
     if type(bbox1) == type([]):
@@ -233,6 +234,7 @@ def intersection_between_bboxes(bbox0, bbox1):
 
 
 def union_and_intersection_between_bboxes(bbox0, bbox1):
+    assert(len(bbox0) == len(bbox1) == 4)
     if type(bbox0) == type([]):
         bbox0 = p0p1_from_bbox_contour(bbox0, dtype=float)
     if type(bbox1) == type([]):

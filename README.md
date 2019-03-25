@@ -39,7 +39,7 @@ from multivitamin.applications.images.detectors import TFDetector
 obj_det_module = TFDetector(name="IG_obj_det", ver="1.0.0", model="models_dir/")
 ```
 
-Now, let's put it all together and construct a `Server` which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
+And finally, construct a `Server` which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
 
 ```
 from multivitamin.server import Server
@@ -58,6 +58,12 @@ obj_det_server.start()
 Using [conda](https://conda.io/en/latest/):
 ```
 conda install multivitamin
+```
+
+Using [pip](https://pip.pypa.io/en/stable/installing/)
+*Note: this requires opencv be already installed. We highly recommend installing with conda instead*
+```
+pip install multivitamin
 ```
 
 Using [nvidia-docker](https://github.com/NVIDIA/nvidia-docker):
@@ -86,10 +92,10 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 **Data structures:**
 
 * data/  
-  * **Request:** data object encapsulating request JSON
-  * response/
-    * **Response:** data object encapsulating response that reflects the schema. Contains methods for serialization, modifying internal data 
-    * **ResponseInternal:** Python dataclasses with typechecking that matches the schema
+    * **Request:** data object encapsulating request JSON
+    * response/
+      * **Response:** data object encapsulating response that reflects the schema. Contains methods for serialization, modifying internal data 
+      * **ResponseInternal:** Python dataclasses with typechecking that matches the schema
 * module/
     * **Module:** abstract parent class that defines an interface for processing requests
     * **ImagesModule:** abstract child class of `Module` that defines an interface for processing requests with images or video, `process_images(...)` and handles retrieval of media.  

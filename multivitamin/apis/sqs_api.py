@@ -57,15 +57,8 @@ class SQSAPI(CommAPI):
             )
         return requests
 
-    def push(self, messages):
-        """Push messages into SQS queue
-
-        Args:
-            messages (list[str]): list of messages in str json format
-        """
-        for m in messages:
-            response = self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=m)
-            log.info(f"sqs.send_message response: {response}")
+    def push(self, request):
+        raise NotImplementedError("Intentionally not implemented--we don't want to push resposnes to SQS")
 
     def delete_message(self, request_id):
         """Delete a message from the SQS queue given a request_id

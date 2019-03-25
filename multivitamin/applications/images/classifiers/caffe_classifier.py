@@ -47,11 +47,6 @@ else:
 from caffe.proto import caffe_pb2
 
 
-GPU = True
-DEVICE_ID = 0
-LAYER_NAME = "prob"
-N_TOP = 1
-CONFIDENCE_MIN = 0.1
 LOGOEXCLUDE = ["Garbage", "Messy", "MessyDark"]
 
 
@@ -179,12 +174,12 @@ class CaffeClassifier(ImagesModule):
                             p_indexes = np.delete(p_indexes, 0)
                         else:
                             break
-                    p_indexes = p_indexes[:N_TOP]
+                    p_indexes = p_indexes[:self.top_n]
 
                     # log.debug("p_indexes: " + str(p_indexes))
 
                     for i, property_id in enumerate(p_indexes):
-                        if i == N_TOP:
+                        if i == self.top_n:
                             break
                         index = p_indexes[i]
                         label = self.labels[index]
@@ -192,7 +187,7 @@ class CaffeClassifier(ImagesModule):
 
                         # TODO remove this unknown
 
-                        if confidence < CONFIDENCE_MIN:
+                        if confidence < self.confidence_min:
                             label = "Unknown"
                         prop = Property(
                             server=self.name,
