@@ -1,0 +1,188 @@
+{
+   "type":"record",
+   "name":"ImageAnnotationData",
+   "namespace":"com.gumgum.vertex.sdk.avro",
+   "fields":
+    [
+        {
+           "name": "version",
+           "type":"string"
+        },
+        {
+           "name": "date",
+           "type":"string",
+           "doc": "This date is for enabling ElasticSearch searching capabilities. The format must be yyyy-MM-dd'T'HH:mm:ss, 2014-07-04T12:08:56"
+        },
+        {
+            "name": "relationship_aux",
+            "type": ["null", {
+                "name": "relationship",
+                "doc": "Relationship between this property and other, nearby, properties",
+                "type": "record",
+                "fields" : [
+                    {"name": "relation", "type": "string", "doc": "Relationship that associates parents to this property"},
+                    {"name": "sources", "type": { "type": "array", "items": "string"}, "doc": "Direct sources pointing to this property"}   
+                ]
+            }]
+        },
+        {
+            "name": "proppair_aux",
+            "type": ["null", {
+                "name": "proppair",
+                "doc": "Property type and value.",
+                "type": "record",
+                "fields" : [
+                    {"name": "property_type", "type": "string", "doc": "Property type, aka category."},
+                    {"name": "value", "type": "string", "doc": "Property value."}
+                ]
+            }]
+        },
+        {
+            "name": "eligibleprop_aux",
+            "type": ["null", {
+                "name": "eligibleprop",
+                "doc": "Property that could be detected/annotated for a certain detector.",
+                "type": "record",
+                "fields" : [
+                    {"name": "server", "type": "string", "doc": "Name of the source server, it applies."},
+                    {"name": "property_type", "type": "string", "doc": "Property type, aka category."},
+                    {"name": "value", "type": "string", "doc": "Property value."},
+                    {"name": "confidence_min", "type": "float", "doc": "The minimum required confidence for this property"},
+                    {"name": "father_properties", "type": {"type": "array", "items" : "proppair"}, "doc": "Fathers properties."}
+                ]
+            }]	
+        },
+        {
+            "name": "footprint_aux",
+            "type": ["null", {
+                "name": "footprint",
+                "doc": "footprint of the returning codes of an executed server.",
+                "type": "record",
+                "fields" : [
+                    {"name": "server", "type": "string", "doc": "Name of the server."},
+                    {"name": "server_track", "type": "string", "doc": "Name of the server generating a track, if any."},	
+                    {"name": "ver", "type": "string", "doc": "Version of the server."},
+                    {"name": "code", "type": "string", "doc": "Code returned by the server."},
+                    {"name": "company", "type": "string", "doc": "String identifying the company, by default gumgum"},
+                    {"name": "date", "type": "string", "doc": "the date of the footprint YYYYMMDDHHMMss. In linux date <quotes>+%Y%m%d%H%M%S<quotes>"},
+                    {"name": "annotator","type": "string", "doc": "String identifying the annotator if any."},
+                    {"name": "tstamps", "type": { "type": "array", "items": "float"}, "doc": "Array of timestamps being processed"},
+                    {"name": "labels",  "type": { "type": "array", "items": "eligibleprop"}, "doc": "Array of labels that can be detected/annotated."},
+                    {"name": "id", "type": "string", "doc": "id that maps to footprint_id in property's."},
+                    {"name": "num_images_processed", "type": "int", "default": 0, "doc": "Number of images processed by this module."},
+                    {"name": "request_source", "type": "string", "default": "", "doc": "Where the request comes from, e.g. queue_name"}
+                ]
+            }]
+        },
+        {
+            "name": "property_aux",
+            "type": ["null", {
+                "name": "property",
+                "type": "record",
+                "fields" : [
+                    {"name": "module_id", "type": "int", "doc": "ID of the vertex server"},
+                    {"name": "property_id", "type": "int", "doc": "ID of the property"},
+                    {"name": "server", "type": "string", "doc": "Name of the server"},
+                    {"name": "server_track", "type": "string", "doc": "Name of the server generating a track, if any."},	
+                    {"name": "ver", "type": "string", "doc": "Version of the server."},
+                    {"name": "company", "type": "string", "doc": "String identifying the company, by default gumgum"},		
+                    {"name": "property_type", "type": "string", "doc": "Type of property."},
+                    {"name": "value", "type": "string", "doc": "Value of the property."},
+                    {"name": "value_verbose", "type": "string", "doc": "Verbose value."},
+                    {"name": "confidence", "type": "float", "doc": "The confidence of the property detections, between 0 and 1."},
+                    {"name": "confidence_min", "type": "float", "doc": "The minimum required confidence for this property"},
+                    {"name": "fraction", "type": "float", "doc": "For images, the fraction of the screen the region takes up. For video, the fraction of time in the video the region is found. Between 0 and 1."},
+                    {"name": "relationships", "type":{ "type": "array", "items": "relationship"}, "doc": "Array of relations and parents concepts"},
+                    {"name": "footprint_id", "type":"string","doc": "id that maps to id in footprint."}
+                ]
+            }]
+        },
+        {
+            "name": "point_aux",
+            "doc": "An (x,y) point.",
+            "type": ["null", {
+                "name": "point",
+                "type": "record",
+                "fields" : [
+                    {"name": "x", "doc": "The x-coordinate of the point", "type": "float"},
+                    {"name": "y", "doc": "The y-coordinate of the point", "type": "float"}
+                ]
+            }]
+        },
+        {
+            "name": "region_aux",
+            "doc": "A region is defined by a contour and at least one property. It can also contain nested sub-regions",
+            "type": ["null", {
+                "name": "region",
+                "type": "record",
+                "fields" : [
+                    {"name": "id", "type":"string","doc":"Id of the region."},
+                    {"name": "father_id", "type":"string","doc":"Id of the father region it any."},
+                    {"name": "contour", "type":{ "type": "array", "items": "point"},"doc": "An array of points defining the shape of the region."},
+                    {"name": "props", "type":{ "type": "array", "items": "property"}, "doc": "An array of properties found in the region."},
+                    {"name": "features", "type": "string", "doc": "Not currently in use, in case we want to associate some new feature to a region."}
+                ]
+            }]
+        },
+        {
+            "name": "image_annotation_aux",
+            "doc": "The parent object that contains all of the regions for images",
+            "type": ["null", {
+                "name": "image_annotation",
+                "type": "record",
+                "fields" : [                    
+                    {"name": "t", "type": "float","doc": "The timestamp of the frame within the item being annotated. For a single image, t will be equal to 0."},
+                    {"name": "regions", "type": { "type": "array", "items": "region"}, "doc": "Array of regions found for the region."}
+                ]
+            }]
+        },
+        {
+            "name": "video_annotation_aux",
+            "doc": "The parent object that contains all of the regions for videos. We'll be working at a shot level, each shot is defined by t1 and t2.",
+            "type": ["null", {
+                "name": "video_annotation",
+                "type": "record",
+                "fields" : [
+                    {"name": "t1", "type": "float", "doc": "Initial timestamp."},
+                    {"name": "t2", "type": "float", "doc": "Ending timestamp."},
+                    {"name": "props", "type": { "type": "array", "items": "property"}, "doc": "An array of properties found in the video segment."},
+                    {"name": "region_ids", "type": { "type": "array", "items": "string"}, "doc": "An array of region ids associated to the video segment."},
+                    {"name": "regions", "type": { "type": "array", "items": "region"}, "doc": "OBSOLETE."}   
+                ]
+            }]
+        },
+        {
+            "name": "annotation_task_aux",
+            "doc": "This defines what frames and properties to be annotated. As well, the minimum confidences to proceed with prepopulation. And to finish, the parentship between properties, if any.",
+            "type": ["null", {
+                "name": "annotation_task",
+                "type": "record",
+                "fields" : [
+                    {"name" : "id", "type": "string", "doc": "task id"},			
+                    {"name": "tstamps", "type": { "type": "array", "items": "float"}, "doc": "Array of timestamps being annotated. Note that is to be copied, literally, in the annotation footprint."},
+                    {"name": "labels",  "type": { "type": "array", "items": "eligibleprop"}, "doc": "Array of labels that can be detected/annotated. Note that is to be copied, literally, in the annotation footprint"},
+                    {"name": "tags", "type": {"type": "array", "items": "string"}, "doc": "Array of tags, for searching purposes."}
+                ]
+            }]
+        },
+        {
+            "name": "media_annotation",
+            "type": {
+                "name": "media_annotation_type",
+                "type": "record",
+                "fields" : [
+                    {"name": "codes",  "type": { "type": "array", "items": "footprint"}, "doc": "Array of returned code and ids to keep track of the executed sequence."},
+                    {"name": "url", "type": "string", "doc": "The url of the image or video to be analyzed."},
+                    {"name": "url_original", "type": "string", "doc": "The url of the image or video to be analyzed, with no modifications."},
+                    {"name": "post_url", "type": "string", "doc": "The url of the image or post, if any, to be analyzed, with no modifications."},	
+                    {"name": "w", "type": "int"},
+                    {"name": "h", "type": "int"},
+                    {"name": "frames_annotation", "type": { "type": "array", "items": "image_annotation"}, "doc": "Array of image annotations, one per input image"},
+                    {"name": "media_summary", "type": { "type": "array", "items": "video_annotation"}, "doc": "Array of video annotations, one per input shot."},
+                    {"name": "tracks_summary","type": { "type": "array", "items": "video_annotation"}, "doc": "Array of video annotations, one per detection track, containing one region of average detections across the track"},
+                    {"name": "annotation_tasks","type": { "type": "array", "items": "annotation_task"},"doc": "Set of annotation tasks."}
+                ]
+            }
+        }
+    ]
+}

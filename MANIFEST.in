@@ -1,7 +1,3 @@
 include requirements.txt
 include readme.md
-recursive-include vitamincv/comm_apis/painless_scripts *
-include vitamincv/comm_apis/es_mapping.json
-include vitamincv/avro_api/image-science-response.avsc
-include vitamincv/data/jsons/dummy.json
-recursive-include data/ *
+include multivitamin/data/response/schema.avsc

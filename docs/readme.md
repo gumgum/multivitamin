@@ -1,7 +1,7 @@
 #Docs creation
 
 ```
-make clean
+cd docs
+sphinx-apidoc -f -o source/ ../multivitamin/
 make html
-firefox _build/html/index.html &
 ```

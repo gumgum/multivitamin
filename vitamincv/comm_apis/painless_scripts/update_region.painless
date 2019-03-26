@@ -1,6 +1,0 @@
-{"script":
-    {
-        "lang":"painless",
-        "source":"def type = params.type; def idxs = params.idxs; def new_region = params.entry; def idx = idxs[0]; def path = ctx._source.media_annotation[type][idx].regions; if(idxs.length==1 && !path.contains(params.entry)){path.add(params.entry) } for(int i=1; i<idxs.length; i++){idx = idxs[i]; path = path[idx].sub_regions; if(path!=null){path = path; if(!path.contains(params.entry) && i==idxs.length-1){path.add(params.entry) } }else{path['array'] = params.entry; } }"
-    }
-}
