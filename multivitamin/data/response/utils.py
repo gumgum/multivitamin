@@ -4,7 +4,7 @@ import glog as log
 import json
 
 from multivitamin.data.response import config
-from multivitamin.data.response.dtypes import Point
+# from multivitamin.data.response.dtypes import Point
 
 
 def read_json(file_path):
@@ -122,19 +122,19 @@ def round_float_to_str(val):
     return "{:.4f}".format(val)
 
 
-def round_all_pts_in_contour(contour):
-    """Function to round all pts in a contour
+# def round_all_pts_in_contour(contour):
+#     """Function to round all pts in a contour
 
-    Args:
-        contour (list): list of dicts with keys x, y
+#     Args:
+#         contour (list): list of dicts with keys x, y
     
-    Returns:
-        list: of dicts of points
-    """
-    rounded_contour = []
-    for pt in contour:
-        rounded_contour.append(Point(x=round_float(pt["x"]), y=round_float(pt["y"])))
-    return rounded_contour
+#     Returns:
+#         list: of dicts of points
+#     """
+#     rounded_contour = []
+#     for pt in contour:
+#         rounded_contour.append(Point(x=round_float(pt["x"]), y=round_float(pt["y"])))
+#     return rounded_contour
 
 
 def round_all_pts_in_contour_to_str(contour):

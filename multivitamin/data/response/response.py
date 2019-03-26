@@ -13,10 +13,10 @@ from multivitamin.data.response.dtypes import (
     ImageAnn,
     Footprint,
 )
-
+from multivitamin.data.response.utils import round_float
 
 class Response:
-    def __init__(self, response_input, use_schema_registry=True):
+    def __init__(self, response_input=None, use_schema_registry=True):
         """ Class for a Response object
         
         2 cases for construction:
@@ -49,9 +49,10 @@ class Response:
                 log.error("error unpacking prev_response_dict")
                 log.error(traceback.format_exc())
         else:
-            raise TypeError(
-                f"Expected Request or dict, found type: {type(response_input)}"
-            )
+            log.debug("Initializing empty response")
+            self._response_internal = ResponseInternal()
+            
+        self._init_tstamp2frameannsidx()
 
     def to_dict(self):
         """Getter for response in the form of a dict
@@ -227,6 +228,7 @@ class Response:
         """
         assert isinstance(t, float)
         assert isinstance(region, type(Region()))
+        log.debug(self._tstamp2frameannsidx)
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, appending Region")
             frame_anns_idx = self._tstamp2frameannsidx[t]
@@ -355,3 +357,12 @@ class Response:
             log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
         self.url = self._request.url
+
+    def _init_tstamp2frameannsidx(self):
+        """If there is a previous response, we want to store the tstamp 2 frame_anns idx dict
+        """
+        log.debug("Creating tstamp2frameannsidx")
+        log.debug(f"prev_response frame_anns: {self.frame_anns}")
+        for idx, image_ann in enumerate(self.frame_anns):
+            self._tstamp2frameannsidx[round_float(image_ann["t"])] = idx
+        log.debug(f"tstamp2frameannsidx: {self._tstamp2frameannsidx}")
