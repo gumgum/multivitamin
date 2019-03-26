@@ -70,7 +70,7 @@ obj_det_server = Server(
     ],
 )
 ```
-*note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.
+*note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.*
 
 If we wanted to **run a sequence of `Module`s**, we could add a second `Module` like so. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
 ```
