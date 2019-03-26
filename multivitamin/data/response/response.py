@@ -1,4 +1,5 @@
 import json
+import traceback
 
 import glog as log
 from dataclasses import asdict
@@ -12,10 +13,11 @@ from multivitamin.data.response.dtypes import (
     ImageAnn,
     Footprint,
 )
+from multivitamin.data.response.utils import round_float
 
 
-class Response:
-    def __init__(self, response_input, use_schema_registry=True):
+class Response():
+    def __init__(self, response_input=None, use_schema_registry=True):
         """ Class for a Response object
         
         2 cases for construction:
@@ -42,11 +44,16 @@ class Response:
             log.debug("Input dict is compatible with avro schema")
 
             # unpack dictionary values into kwargs using ** operator
-            self._response_internal = ResponseInternal(**response_input) 
+            try:
+                self._response_internal = ResponseInternal(**response_input) 
+            except Exception as e:
+                log.error("error unpacking prev_response_dict")
+                log.error(traceback.format_exc())
         else:
-            raise TypeError(
-                f"Expected Request or dict, found type: {type(response_input)}"
-            )
+            log.debug("Initializing empty response")
+            self._response_internal = ResponseInternal()
+            
+        self._init_tstamp2frameannsidx()
 
     def to_dict(self):
         """Getter for response in the form of a dict
@@ -222,6 +229,7 @@ class Response:
         """
         assert isinstance(t, float)
         assert isinstance(region, type(Region()))
+        log.debug(self._tstamp2frameannsidx)
         if t in self._tstamp2frameannsidx:
             log.debug(f"t: {t} in frame_anns, appending Region")
             frame_anns_idx = self._tstamp2frameannsidx[t]
@@ -318,27 +326,31 @@ class Response:
         log.debug("Constructing Response from Request")
         if self._request.prev_response:
             log.debug("Loading from prev_response")
+            prev_response_dict = None
             if self._request.bin_encoding is True:
                 log.debug("bin_encoding is True")
                 io = AvroIO()
                 if isinstance(self._request.prev_response, str):
                     log.debug("prev_response is base64 encoded binary")
-                    bytes = io.decode(
+                    prev_response_dict = io.decode(
                         self._request.prev_response, use_base64=True, binary_flag=True
                     )
                 else:
                     log.debug("prev_response is in binary")
-                    bytes = io.decode(
+                    prev_response_dict = io.decode(
                         self._request.prev_response, use_base64=False, binary_flag=True
                     )
-                log.debug("Constructing ResponseInternal")
-                d = io.decode(bytes)
-                self._response_internal = ResponseInternal(**d)
             else:
                 assert isinstance(self._request.prev_response, str)
                 log.debug("prev_response is a JSON str")
-                d = json.loads(self._request.prev_response)
-                self._response_internal = ResponseInternal(**d)
+                prev_response_dict = json.loads(self._request.prev_response)
+            if prev_response_dict is None:
+                raise ValueError("error: prev_response_dict is None")
+            try:
+                self._response_internal = ResponseInternal(**prev_response_dict)
+            except Exception as e:
+                log.error("error unpacking prev_response_dict")
+                log.error(traceback.format_exc())
         elif self._request.prev_response_url:
             log.debug("Loading from prev_response_url")
             raise NotImplementedError()
@@ -346,3 +358,12 @@ class Response:
             log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
         self.url = self._request.url
+
+    def _init_tstamp2frameannsidx(self):
+        """If there is a previous response, we want to store the tstamp 2 frame_anns idx dict
+        """
+        log.debug("Creating tstamp2frameannsidx")
+        log.debug(f"prev_response frame_anns: {self.frame_anns}")
+        for idx, image_ann in enumerate(self.frame_anns):
+            self._tstamp2frameannsidx[round_float(image_ann["t"])] = idx
+        log.debug(f"tstamp2frameannsidx: {self._tstamp2frameannsidx}")

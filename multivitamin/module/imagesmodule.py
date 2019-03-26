@@ -12,7 +12,7 @@ from multivitamin.media import MediaRetriever
 
 
 MAX_PROBLEMATIC_FRAMES = 10
-BATCH_SIZE = 2
+BATCH_SIZE = 1
 
 
 class ImagesModule(Module):

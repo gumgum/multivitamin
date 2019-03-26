@@ -1,10 +1,11 @@
 import random
 from collections import MutableMapping
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import List
 from typeguard import typechecked
 
+from multivitamin.data.response.utils import round_float
 
 # Helper functions
 
@@ -93,6 +94,13 @@ class DictLike(MutableMapping):
 class PropPair(DictLike):
     property_type: str = ""
     value: str = ""
+
+
+@typechecked
+@dataclass
+class Relationship(DictLike):
+    relation: str = ""
+    sources: List[str] = field(default_factory=list)
 
 
 @typechecked
@@ -215,6 +223,10 @@ class VideoAnn(DictLike):
     regions: List[Region] = field(default_factory=list)
     region_ids: List[str] = field(default_factory=list)
 
+    def __post_init__(self):
+        self.t1 = round_float(self.t1)
+        self.t2 = round_float(self.t2)
+
 
 @typechecked
 @dataclass
@@ -222,6 +234,8 @@ class ImageAnn(DictLike):
     t: float = 0.0
     regions: List[Region] = field(default_factory=list)
 
+    def __post_init__(self):
+        self.t = round_float(self.t)
 
 @typechecked
 @dataclass
@@ -241,17 +255,16 @@ class MediaAnn(DictLike):
 @typechecked
 @dataclass
 class ResponseInternal(DictLike):
-    point_aux = None
-    footprint_aux = None
-    proppair_aux = None
-    annotation_task_aux = None
-    image_annotation_aux = None
-    video_annotation_aux = None
-    property_aux = None
-    relationship_aux = None
-    eligibleprop_aux = None
-    region_aux = None
-    media_annotation = None
+    point_aux: Point = None
+    footprint_aux: Footprint = None
+    proppair_aux: PropPair = None
+    annotation_task_aux: AnnotationTask = None
+    image_annotation_aux: ImageAnn = None
+    video_annotation_aux: VideoAnn = None
+    property_aux: Property = None
+    relationship_aux: Relationship = None
+    eligibleprop_aux: EligibleProp = None
+    region_aux: Region = None
     version: str = ""
     date: str = "20000101000000"
     media_annotation: MediaAnn = field(default_factory=MediaAnn)
