@@ -16,7 +16,7 @@ from multivitamin.data.response.dtypes import (
 
 
 class Response:
-    def __init__(self, response_input, use_schema_registry=True):
+    def __init__(self, response_input=None, use_schema_registry=True):
         """ Class for a Response object
         
         2 cases for construction:
@@ -49,9 +49,11 @@ class Response:
                 log.error("error unpacking prev_response_dict")
                 log.error(traceback.format_exc())
         else:
-            raise TypeError(
-                f"Expected Request or dict, found type: {type(response_input)}"
-            )
+            #raise TypeError(
+            #    f"Expected Request or dict, found type: {type(response_input)}"
+            #)
+            log.debug("Initializing empty response")
+            self._response_internal = ResponseInternal()
 
     def to_dict(self):
         """Getter for response in the form of a dict
