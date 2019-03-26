@@ -15,7 +15,8 @@ from multivitamin.data.response.dtypes import (
 )
 from multivitamin.data.response.utils import round_float
 
-class Response:
+
+class Response():
     def __init__(self, response_input=None, use_schema_registry=True):
         """ Class for a Response object
         
