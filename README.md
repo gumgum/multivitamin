@@ -72,7 +72,7 @@ obj_det_server = Server(
 ```
 *note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.*
 
-If we wanted to **run a sequence of `Module`s**, we could add a second `Module` like so. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
+If we wanted to **run a sequence of `Module`s**, we could add a second `Module`. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
 ```
 from multivitamin.applications.images.classifiers.pyt_classifier import PYTClassifier
 
@@ -82,7 +82,10 @@ make_model_clf.set_previous_properties_of_interest([
     {"value":"truck"},
 ])
 ```
-and modifying the above `Server` we created:
+The `set_previous_properties_of_interest` is a method to tell this `make_model_clf` module to only run its `predict_images` function for predictions of `car` OR `truck` found in the previous module (the 600 class TensorFlow object detector).
+
+
+And now, creating a `Server`:
 ```
 vehicle_mm_server = Server(
     modules=[
@@ -138,8 +141,8 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 * data/  
     * **Request:** data object encapsulating request JSON
     * response/
-      * **Response:** data object encapsulating response that reflects the schema. Contains methods for serialization, modifying internal data 
-      * **ResponseInternal:** Python dataclasses with typechecking that matches the schema
+          * **Response:** data object encapsulating response that reflects the schema. Contains methods for serialization, modifying internal data 
+          * **ResponseInternal:** Python dataclasses with typechecking that matches the schema
 * module/
     * **Module:** abstract parent class that defines an interface for processing requests
     * **ImagesModule:** abstract child class of `Module` that defines an interface for processing requests with images or video, `process_images(...)` and handles retrieval of media.  
