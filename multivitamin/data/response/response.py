@@ -318,27 +318,27 @@ class Response:
         log.debug("Constructing Response from Request")
         if self._request.prev_response:
             log.debug("Loading from prev_response")
+            prev_response_dict = None
             if self._request.bin_encoding is True:
                 log.debug("bin_encoding is True")
                 io = AvroIO()
                 if isinstance(self._request.prev_response, str):
                     log.debug("prev_response is base64 encoded binary")
-                    bytes = io.decode(
+                    prev_response_dict = io.decode(
                         self._request.prev_response, use_base64=True, binary_flag=True
                     )
                 else:
                     log.debug("prev_response is in binary")
-                    bytes = io.decode(
+                    prev_response_dict = io.decode(
                         self._request.prev_response, use_base64=False, binary_flag=True
                     )
-                log.debug("Constructing ResponseInternal")
-                d = io.decode(bytes)
-                self._response_internal = ResponseInternal(**d)
             else:
                 assert isinstance(self._request.prev_response, str)
                 log.debug("prev_response is a JSON str")
-                d = json.loads(self._request.prev_response)
-                self._response_internal = ResponseInternal(**d)
+                prev_response_dict = json.loads(self._request.prev_response)
+            if prev_response_dict is None:
+                raise ValueError("Error unpacking previous response")
+            self._response_internal = ResponseInternal(**prev_response_dict)
         elif self._request.prev_response_url:
             log.debug("Loading from prev_response_url")
             raise NotImplementedError()

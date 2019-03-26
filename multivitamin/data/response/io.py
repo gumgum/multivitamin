@@ -72,7 +72,16 @@ class AvroIO:
         return self.decode(open(file_path, "rb").read())
 
     def decode(self, bytes, use_base64=False, binary_flag=True):
-        """Decode an Avro Binary using the CV schema from bytes"""
+        """Decode an Avro Binary using the CV schema from bytes
+        
+        Args:
+            bytes
+            use_base64
+            binary_flag
+        
+        Returns:
+            dict:
+        """
         if use_base64:
             bytes = base64.b64decode(bytes)
         if binary_flag:

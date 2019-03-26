@@ -238,20 +238,33 @@ class MediaAnn(DictLike):
     annotation_tasks: List[AnnotationTask] = field(default_factory=list)
 
 
-@typechecked
-@dataclass
 class ResponseInternal(DictLike):
-    point_aux = None
-    footprint_aux = None
-    proppair_aux = None
-    annotation_task_aux = None
-    image_annotation_aux = None
-    video_annotation_aux = None
-    property_aux = None
-    relationship_aux = None
-    eligibleprop_aux = None
-    region_aux = None
-    media_annotation = None
-    version: str = ""
-    date: str = "20000101000000"
-    media_annotation: MediaAnn = field(default_factory=MediaAnn)
+    def __init__(
+        self,
+        point_aux=None,
+        footprint_aux=None,
+        proppair_aux=None,
+        annotation_task_aux=None,
+        image_annotation_aux=None,
+        video_annotation_aux=None,
+        property_aux=None,
+        relationship_aux=None,
+        eligibleprop_aux=None,
+        region_aux=None,
+        version="",
+        date="20000101000000",
+        media_annotation=None,
+    ):
+        self.point_aux = point_aux
+        self.footprint_aux = footprint_aux
+        self.proppair_aux = proppair_aux
+        self.annotation_task_aux = annotation_task_aux
+        self.image_annotation_aux = image_annotation_aux
+        self.video_annotation_aux = video_annotation_aux
+        self.property_aux = property_aux
+        self.relationship_aux = relationship_aux
+        self.eligibleprop_aux = eligibleprop_aux
+        self.region_aux = region_aux
+        self.media_annotation = media_annotation
+        if media_annotation is None:
+            self.media_annotation = MediaAnn()
