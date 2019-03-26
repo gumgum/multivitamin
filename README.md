@@ -10,7 +10,7 @@
 
 * Asynchronous APIs sharing a common interface (`CommAPI`) for pulling requests and pushing responses
 * An interface (via the `Module` class) for processing images, video, text, or any form of data
-* A data model for storing the computed data
+* A data model for storing the output of the modules
 
 ## Getting Started
 

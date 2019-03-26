@@ -39,7 +39,7 @@ class S3API(CommAPI):
 
         for res in responses:
             assert isinstance(res, Response)
-            fn = self.get_fn(res)
+            fn = self.get_fn(res, self.bin_encoding)
             log.debug(f"fn: {fn}")
             tmp_dir = tempfile.mkdtemp()
             outfn = os.path.join(tmp_dir, fn)
@@ -66,7 +66,7 @@ class S3API(CommAPI):
                 log.info("Removing temp dir {}".format(tmp_dir))
                 shutil.rmtree(tmp_dir)
 
-    def get_fn(self, response):
+    def get_fn(self, response, bin_encoding):
         """Create a fn from url string from Response
 
         Args:
@@ -77,6 +77,6 @@ class S3API(CommAPI):
         """
         media_url = response.url
         ext = ".json"
-        if response.request.bin_encoding is True:
+        if bin_encoding is True:
             ext = ".avro"
         return os.path.basename(media_url) + ext
