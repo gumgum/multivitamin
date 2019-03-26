@@ -1,0 +1,13 @@
+from enum import Enum
+
+
+class Codes(Enum):
+    """An Enum type for return codes"""
+
+    SUCCESS = 0
+    NO_PREV_REGIONS_OF_INTEREST = 1
+    ERROR_LOADING_MEDIA = 2
+    ERROR_PROCESSING = 3
+    ERROR_INCORRECT_SAMPLERATE = 4
+    ERROR_INCORRECT_PREVIOUS_RESPONSE = 5
+    ERROR_SERIALIZING_RESPONSE = 6

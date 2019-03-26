@@ -1,6 +1,0 @@
-{"script":
-    {
-        "lang":"painless",
-        "source":"ctx._source.media_annotation.task_details[params.index][params.field]=params.entry"
-    }
-}
