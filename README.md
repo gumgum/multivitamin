@@ -1,10 +1,10 @@
 # Multivitamin
 
-*Python supplements for serving your computer vision & machine learning models.*
+*Python supplements for serving your CV, NLP, and ML models.*
 
 ![](https://i.imgur.com/ll70SQO.png)
 
-**Multivitamin** is python framework for serving computer vision (CV) and machine learning (ML). It's intention is to simplify the infrastructure for a single service.
+**Multivitamin** is python framework built for serving computer vision (CV), natural language processing (NLP), and machine learning (ML) models. It's aim is to provide the serving infrastructure around a single service and to allow the flexibility to use any python framework for prediction.
 
 ## Main Features
 
@@ -18,9 +18,9 @@ To start an asynchronous service, construct a `Server` object, which accepts 3 i
 
 * An input `CommAPI`, which is an abstract base class that defines the `push()` and `pull()` interface
 * An output `CommAPI`
-* A `Module`, an abstract base class that defines the interface for `process(Request)`, `process_properties()` or `process_images(...)`
+* A `Module` or sequence of `Module`s, which is an abstract base class that defines the interface for `process(Request)`, `process_properties()` or `process_images(...)`
 
-Defining input and output `CommAPI`s:
+**Defining input and output `CommAPI`s:**
 ```
 from multivitamin.apis import SQSAPI, S3API
 
@@ -30,7 +30,7 @@ s3_api = S3API(s3_bucket='od-output', s3_key='2019-03-22')
 
 Both `SQSAPI` and `S3API` are concrete implementations of `CommAPI`.
 
-Defining a `Module`:
+**Defining a `Module`:**
 
 For convenience, we provide several example modules (which are concrete implementations of `Module`) that you can import for your purposes. Let's say we want a object detector built using [TensorFlow's object detection API](https://github.com/tensorflow/models/tree/master/research/object_detection):
 ```
@@ -39,7 +39,7 @@ from multivitamin.applications.images.detectors import TFDetector
 obj_det_module = TFDetector(name="IG_obj_det", ver="1.0.0", model="models_dir/")
 ```
 
-And finally, construct a `Server` which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
+And finally, **construct a `Server`**, which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
 
 ```
 from multivitamin.server import Server
@@ -53,6 +53,50 @@ obj_det_server = Server(
 obj_det_server.start()
 ```
 
+If we wanted to **send our responses to multiple endpoints**, we could add a second output `CommAPI` like so:
+```
+from multivitamin.apis import HTTPAPI
+
+http_api = HTTPAPI()
+```
+and modifying the above `Server` we created like:
+```
+obj_det_server = Server(
+    modules=[obj_det_module],
+    input_comm=sqs_api,
+    output_comms=[
+        s3_api,
+        http_api,
+    ],
+)
+```
+*note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.
+
+If we wanted to **run a sequence of `Module`s**, we could add a second `Module` like so. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
+```
+from multivitamin.applications.images.classifiers.pyt_classifier import PYTClassifier
+
+make_model_clf = PYTClassifier(name="make-model", ver="1.0.0", model="models/mm.pth")
+make_model_clf.set_previous_properties_of_interest([
+    {"value":"car"},
+    {"value":"truck"},
+])
+```
+and modifying the above `Server` we created:
+```
+vehicle_mm_server = Server(
+    modules=[
+        obj_det_module,
+        make_model_clf,
+    ],
+    input_comm=sqs_api,
+    output_comms=[
+        s3_api,
+        http_api,
+    ],
+)
+vehicle_mm_server.start()
+```
 ## Installation
 
 Using [conda](https://conda.io/en/latest/):
