@@ -1,4 +1,5 @@
 import json
+import traceback
 
 import glog as log
 from dataclasses import asdict
@@ -42,7 +43,11 @@ class Response:
             log.debug("Input dict is compatible with avro schema")
 
             # unpack dictionary values into kwargs using ** operator
-            self._response_internal = ResponseInternal(**response_input) 
+            try:
+                self._response_internal = ResponseInternal(**response_input) 
+            except Exception as e:
+                log.error("error unpacking prev_response_dict")
+                log.error(traceback.format_exc())
         else:
             raise TypeError(
                 f"Expected Request or dict, found type: {type(response_input)}"
@@ -337,8 +342,12 @@ class Response:
                 log.debug("prev_response is a JSON str")
                 prev_response_dict = json.loads(self._request.prev_response)
             if prev_response_dict is None:
-                raise ValueError("Error unpacking previous response")
-            self._response_internal = ResponseInternal(**prev_response_dict)
+                raise ValueError("error: prev_response_dict is None")
+            try:
+                self._response_internal = ResponseInternal(**prev_response_dict)
+            except Exception as e:
+                log.error("error unpacking prev_response_dict")
+                log.error(traceback.format_exc())
         elif self._request.prev_response_url:
             log.debug("Loading from prev_response_url")
             raise NotImplementedError()
