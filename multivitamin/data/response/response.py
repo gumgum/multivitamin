@@ -200,21 +200,21 @@ class Response():
         return sorted(self._tstamp2frameannsidx.keys())
 
     def get_timestamps(self, server=None):
-        """TODO, cleanup?"""
+        """Get timestamps from footprints. Option for querying on module name
+        
+        Args:
+            server (str): module name
+        
+        Returns:
+            List[float]: unique timestamps
+        """
         tstamps = []
         for c in self._response_internal["media_annotation"]["codes"]:
-            # log.debug(str(c))
-            if not c["tstamps"]:
-                continue
             if server:
                 if c["server"] != server:
                     continue
-            if not tstamps:
-                log.debug("Assigning timestamps: " + str(c["tstamps"]))
-                tstamps = c["tstamps"]
-            else:
-                tstamps = list(set(tstamps) | set(c["tstamps"]))
-        return sorted(list(set(tstamps)))
+            tstamps.extend([round_float(t) for t in c["tstamps"]])
+        return sorted(set(tstamps))
 
     # Modifiers
 
