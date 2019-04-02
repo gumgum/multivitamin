@@ -57,6 +57,7 @@ class FrameDrawer(PropertiesModule):
             version=version,
             module_id_map=module_id_map
         )
+        #log.setLevel('DEBUG')
         self.response = None
         if isinstance(response, Response):
             self.response = response
@@ -84,7 +85,7 @@ class FrameDrawer(PropertiesModule):
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
 
-    def process_properties(self, dump_video=True, dump_images=False):
+    def process_properties(self, dump_video=True, dump_images=False,tstamps_Of_Interest=None):
         self.last_tstamp = 0.0
         assert(self.response)
         self.med_ret = MediaRetriever(self.response.url)
@@ -145,11 +146,17 @@ class FrameDrawer(PropertiesModule):
         
         # we get the frame iterator
         frames_iterator = []
-        try:
-            frames_iterator = self.med_ret.get_frames_iterator(sample_rate=1.0)
-        except Exception:
-            log.error(traceback.format_exc())
-            raise Exception("Error loading media")
+        if tstamps_Of_Interest:
+            if type(tstamps_Of_Interest) is list:
+                for t in tstamps_Of_Interest:
+                    frame=self.med_ret.get_frame(tstamp=t)
+                    frames_iterator.append((frame,t))
+        elif tstamps_Of_Interest is None:
+            try:
+                frames_iterator = self.med_ret.get_frames_iterator(sample_rate=1.0)
+            except Exception:
+                log.error(traceback.format_exc())
+                raise Exception("Error loading media")
 
         for i, (img, tstamp) in enumerate(frames_iterator):
             self.last_tstamp = tstamp
