@@ -1,1 +1,3 @@
-from .media import MediaRetriever
+from .opencv_media_retriever import OpenCVMediaRetriever
+from .pims_media_retriever import PIMSMediaRetriever
+from .file_retriever import FileRetriever
