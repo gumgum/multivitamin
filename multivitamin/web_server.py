@@ -47,7 +47,7 @@ class WebServer(Flask):
             log.info("Pulling request")
             try:
                 message = request.get_json(force=True)
-                req = Request(request_dict=message)
+                req = Request(message)
                 response = Response(req)
 
                 for module in self.modules:
