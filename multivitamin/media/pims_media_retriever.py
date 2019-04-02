@@ -1,7 +1,7 @@
 import sys
 import pims
 import numpy as np
-from .media_retriever import MediaRetriever, FramesIterator
+from .media_retriever import AbstractMediaRetriever, AbstractFramesIterator
 
 
 class PIMSMediaRetriever(MediaRetriever):

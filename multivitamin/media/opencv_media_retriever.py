@@ -1,10 +1,11 @@
 import cv2
 import sys
 
-from .media_retriever import MediaRetriever, FramesIterator, FRAME_EPS
+from .media_retriever import AbstractMediaRetriever, AbstractFramesIterator
+from .media_retriever import FRAME_EPS
 
 
-class OpenCVMediaRetriever(MediaRetriever):
+class OpenCVMediaRetriever(AbstractMediaRetriever):
     """A fileretriever for visual media."""
 
     def __init__(self, url=None):

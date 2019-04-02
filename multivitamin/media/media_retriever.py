@@ -10,7 +10,7 @@ FRAME_EPS = 0.001
 DECIMAL_SIGFIG = 3
 
 
-class MediaRetriever(FileRetriever, ABC):
+class AbstractMediaRetriever(FileRetriever, ABC):
     """A fileretriever for visual media."""
 
     def __init__(self, url=None):
@@ -247,7 +247,7 @@ class MediaRetriever(FileRetriever, ABC):
         return self.shape[0:2][::-1]
 
 
-class FramesIterator(ABC):
+class AbstractFramesIterator(ABC):
     """Frames iterator object for videos.
 
     Usage:
