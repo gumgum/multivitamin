@@ -53,7 +53,7 @@ class SQSAPI(CommAPI):
         for m in response["Messages"]:
             log.info(str(m))
             requests.append(
-                Request(request_dict=json.loads(m["Body"]), request_id=m["ReceiptHandle"])
+                Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
             )
         return requests
 

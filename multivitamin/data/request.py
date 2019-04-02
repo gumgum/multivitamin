@@ -1,22 +1,35 @@
+import json
+import traceback
+
 import glog as log
+
 
 DEFAULT_SAMPLE_RATE = 1.0
 
 
 class Request:
-    def __init__(self, request_dict, request_id=None):
+    def __init__(self, request_input, request_id=None):
         """Data object to encapsulate and cleanse request
 
         Args:
-            request_dict (dict): input request json 
+            request_input (dict or str): input request json as str or dict
             request_id (str): ID tied to request (esp from AWS SQS)
         """
-        if not isinstance(request_dict, dict):
+        d = {}
+        if isinstance(request_input, str):
+            try:
+                d = json.loads(request_input)
+            except ValueError as v:
+                log.error(v)
+                log.error(traceback.format_exc())
+                raise ValueError("Error decoding str into dict")
+        elif isinstance(request_input, dict):
+            d = request_input
+        else:
             raise ValueError(
-                f"request_dict is type: {type(request_dict)}, should be of type dict"
+                f"request input is type: {type(request_input)}, should be of type str or dict"
             )
-
-        self.request = request_dict
+        self.request = d
         self.request_id = request_id
 
     def get(self, key, default=None):
