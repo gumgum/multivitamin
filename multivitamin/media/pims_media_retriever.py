@@ -14,7 +14,7 @@ class PIMSMediaRetriever(AbstractMediaRetriever):
             url (str | optional): The local or remote url to a file
 
         """
-        super(MediaRetriever, self).__init__(url=url)
+        super(AbstractMediaRetriever, self).__init__(url=url)
 
     @property
     def is_video(self):
