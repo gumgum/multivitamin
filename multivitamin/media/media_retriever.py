@@ -276,7 +276,7 @@ class AbstractFramesIterator(ABC):
 
         """
         self.cap = video_cap
-        self.period = max(1.0 / sample_rate, 1.0 / self.fps)
+        self.period = max(1.0 / sample_rate, 1.0 / video_fps)
         log.debug("Period: {}".format(self.period))
         self.start_tstamp = start_tstamp
         self.end_tstamp = end_tstamp
