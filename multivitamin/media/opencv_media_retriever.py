@@ -104,7 +104,7 @@ class OpenCVFramesIterator(AbstractFramesIterator):
 
     def _get_next_frame(self):
         ret = True
-        while ret:
+        while ret and self.cur_tstamp <= self.end_tstamp:
             tstamp = self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
             ret = self.cap.grab()
             if (tstamp - self.cur_tstamp + FRAME_EPS) >= (
