@@ -24,7 +24,7 @@ class AbstractMediaRetriever(FileRetriever, ABC):
         self._image = None
         self._shape = None
 
-        super(MediaRetriever, self).__init__(url=url)
+        super(AbstractMediaRetriever, self).__init__(url=url)
 
     @FileRetriever.url.setter
     def url(self, value):
