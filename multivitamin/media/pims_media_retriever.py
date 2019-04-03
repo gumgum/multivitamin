@@ -4,7 +4,7 @@ import numpy as np
 from .media_retriever import AbstractMediaRetriever, AbstractFramesIterator
 
 
-class PIMSMediaRetriever(MediaRetriever):
+class PIMSMediaRetriever(AbstractMediaRetriever):
     """A fileretriever for visual media."""
 
     def __init__(self, url=None):
@@ -73,7 +73,7 @@ class PIMSMediaRetriever(MediaRetriever):
         return PIMSFramesIterator
 
 
-class PIMSFramesIterator(FramesIterator):
+class PIMSFramesIterator(AbstractFramesIterator):
     """Frames iterator object for videos."""
 
     def __init__(self,

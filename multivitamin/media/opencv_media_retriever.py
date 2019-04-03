@@ -68,7 +68,7 @@ class OpenCVMediaRetriever(AbstractMediaRetriever):
         return OpenCVFramesIterator
 
 
-class OpenCVFramesIterator(FramesIterator):
+class OpenCVFramesIterator(AbstractFramesIterator):
     """Frames iterator object for videos.
 
     Usage:
