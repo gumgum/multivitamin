@@ -18,12 +18,14 @@ from multivitamin.data.response.dtypes import (
 )
 
 
-def get_contents_file_s3_key(url):
+def get_contents_file_s3_key(url, sample_rate=None):
     contents_file_name = "contents"
     contents_file_ext = "json"
     rel_path_format = "{video_id}/{filename}.{ext}"
     video_id = os.path.basename(url).rsplit(".", 1)[0]
     video_id = "".join([e for e in video_id if e.isalnum() or e in ["/", "."]])
+    if video_id is not None:
+        video_id += ".{}fps".format(sample_rate)
     contents_file_key = rel_path_format.format(
         video_id=video_id, filename=contents_file_name, ext=contents_file_ext
     )
@@ -185,7 +187,8 @@ class FrameExtractor(PropertiesModule):
         # video_hash = hashfileobject(filelike, hexdigest=True)
         self.video_url = self.response.request.url
         self.med_ret = MediaRetriever(self.video_url)
-        self.contents_file_key = get_contents_file_s3_key(self.video_url)
+        self.contents_file_key = get_contents_file_s3_key(self.video_url,
+                                                          self._sample_rate)
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
             self._mklocaldirs("{}/{}/frames".format(self._local_dir, video_id))
