@@ -154,7 +154,7 @@ class CaffeClassifier(ImagesModule):
                 # log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
                 if (probs.shape == target_shape) is False:
-                    log.info(
+                    log.debug(
                         "Changing shape " + str(probs.shape) + "->" + str(target_shape)
                     )
                     probs = np.reshape(probs, target_shape)
