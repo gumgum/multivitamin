@@ -189,6 +189,7 @@ class FrameExtractor(PropertiesModule):
         self.med_ret = MediaRetriever(self.video_url)
         self.contents_file_key = get_contents_file_s3_key(self.video_url,
                                                           self._sample_rate)
+        video_id = self.contents_file_key.split("/")[0]
         if self._local_dir is not None:
             self._mklocaldirs("{}/{}".format(self._local_dir, video_id))
             self._mklocaldirs("{}/{}/frames".format(self._local_dir, video_id))
