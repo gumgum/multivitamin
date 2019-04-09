@@ -3,3 +3,4 @@
 *pytest*
 *.vscode*
 *build*
+*.coverage*

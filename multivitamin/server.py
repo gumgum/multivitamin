@@ -124,7 +124,7 @@ class Server(Flask):
         """
         if not isinstance(request, Request):
             raise ValueError(f"request is of type {type(request)}, not Request")
-        log.info(f"Processing: {request}")
+        log.debug(f"Processing: {request}")
 
         response = Response(request, self.use_schema_registry)
 
