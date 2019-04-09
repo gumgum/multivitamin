@@ -16,7 +16,12 @@ HEALTHPORT = os.environ.get("PORT", 5000)
 
 class Server(Flask):
     def __init__(
-        self, modules, input_comm, output_comms=None, use_schema_registry=True
+        self, 
+        modules,
+        input_comm,
+        output_comms=None,
+        schema_registry_url=None,
+        schema_registry_id=None,
     ):
         """Serves as the public interface for CV services through multivitamin
 
@@ -28,6 +33,7 @@ class Server(Flask):
                                   responses to process
             output_comms (list[CommAPI]): List of concrete child implementations of CommAPI, 
                                           called for pushing responses to somewhere
+            schema_registry_url (str): use schema in registry url instead of local schema
         """
         if isinstance(modules, Module):
             modules = [modules]
@@ -49,7 +55,8 @@ class Server(Flask):
         self.output_comms = output_comms
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
         self.modules = modules
-        self.use_schema_registry = use_schema_registry
+        self.schema_registry_url = schema_registry_url
+        self.schema_registry_id = schema_registry_id
 
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
@@ -126,7 +133,7 @@ class Server(Flask):
             raise ValueError(f"request is of type {type(request)}, not Request")
         log.info(f"Processing: {request}")
 
-        response = Response(request, self.use_schema_registry)
+        response = Response(request, self.schema_registry_url, self.schema_registry_id)
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")

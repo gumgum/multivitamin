@@ -141,9 +141,7 @@ class CaffeClassifier(ImagesModule):
             log.debug("caffe classifier tstamp: " + str(tstamp))
             try:
                 if prev_region is not None:
-                    frame = crop_image_from_bbox_contour(
-                        frame, prev_region.get("contour")
-                    )
+                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
 
                 im = self.transformer.preprocess("data", frame)
                 self.net.blobs["data"].data[...] = im

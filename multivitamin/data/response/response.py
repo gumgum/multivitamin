@@ -17,7 +17,7 @@ from multivitamin.data.response.utils import round_float
 
 
 class Response():
-    def __init__(self, response_input=None, use_schema_registry=True):
+    def __init__(self, response_input=None, schema_registry_url=None):
         """ Class for a Response object
         
         2 cases for construction:
@@ -27,9 +27,9 @@ class Response():
 
         Args:
             input (Any): previous Response or dict
-            use_schema_registry (bool): whether to use schema registry when serializing to bytes
+            schema_registry_url (str): whether to use schema registry when serializing to bytes
         """
-        self._use_schema_registry = use_schema_registry
+        self._schema_registry_url = schema_registry_url
         self._request = None
         self._response_internal = None
         self._tstamp2frameannsidx = {}

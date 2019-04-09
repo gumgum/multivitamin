@@ -25,7 +25,7 @@ from multivitamin.data.response import config
 
 
 class AvroIO:
-    def __init__(self, use_schema_registry=True):
+    def __init__(self, schema_registry_url=None):
         """Public interface for Avro IO functionality
         
         Args:
@@ -34,9 +34,9 @@ class AvroIO:
         """
         self.impl = None
         self.use_base64 = False
-        log.info(f"use_schema_registry: {use_schema_registry}")
-        if use_schema_registry:
-            self.impl = _AvroIORegistry()
+        log.info(f"schema_registry_url: {schema_registry_url}")
+        if schema_registry_url:
+            self.impl = _AvroIORegistry(schema_registry_url)
         else:
             self.impl = _AvroIOLocal()
 
