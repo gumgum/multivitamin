@@ -29,9 +29,7 @@ def make_whole_image_contour():
 
 
 def create_bbox_contour_from_points(
-    xmin, ymin, xmax, ymax,
-    bound=False,
-    lb_x=0.0, ub_x=1.0, lb_y=0.0, ub_y=1.0,
+    xmin, ymin, xmax, ymax, bound=False, lb_x=0.0, ub_x=1.0, lb_y=0.0, ub_y=1.0
 ):
     """Helper function to create bounding box contour from 4 extrema points
 
@@ -64,6 +62,7 @@ class DictLike(MutableMapping):
     """Base class used for the below dataclasses, so that each dataclass can 
     act like a dict with [] access
     """
+
     def __init__(self, *args, **kwargs):
         self.__dict__.update(*args, **kwargs)
 
@@ -140,6 +139,7 @@ class Footprint(DictLike):
         num_images_processed (int): number of images processed
         request_source (str): source of requests, e.g. SQS queue name
     """
+
     code: str = ""
     ver: str = ""
     company: str = "gumgum"
@@ -163,6 +163,7 @@ class Point(DictLike):
         x (float): Defaults to 0.0
         y (float): Defaults to 0.0
     """
+
     x: float = 0.0
     y: float = 0.0
 
@@ -188,6 +189,7 @@ class Property(DictLike):
         value_verbose (str): extra field for value
         property_id (int): mapping property value to an ID
     """
+
     relationships: List[str] = field(default_factory=list)
     confidence: float = 0.0
     confidence_min: float = 0.0
@@ -236,6 +238,7 @@ class ImageAnn(DictLike):
 
     def __post_init__(self):
         self.t = round_float(self.t)
+
 
 @typechecked
 @dataclass
