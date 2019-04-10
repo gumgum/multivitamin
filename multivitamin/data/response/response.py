@@ -14,7 +14,7 @@ from multivitamin.data.response.dtypes import (
     Footprint,
 )
 from multivitamin.data.response.utils import round_float
-
+from multivitamin.media.file_retriever import FileRetriever
 
 class Response():
     def __init__(self, response_input=None, use_schema_registry=True):
@@ -312,9 +312,6 @@ class Response():
         prev_responses can come in the following forms
 
             1) prev_response_url
-                a) binary
-                b) base64 binary string
-                c) string (json file)
                 i) local file
                 ii) remote file
 
@@ -324,6 +321,14 @@ class Response():
                 c) dict
         """
         log.debug("Constructing Response from Request")
+        if self._request.prev_response_url:
+            log.debug("Loading from prev_response_url: " + self._request.prev_response_url)
+            try:
+                file_retriever=FileRetriever(url=self._request.prev_response_url)
+                f=file_retriever.download(return_filelike=True)
+                self._request.prev_response=f.read().decode()
+            except:
+                log.error(traceback.format_exc())        
         if self._request.prev_response:
             log.debug("Loading from prev_response")
             prev_response_dict = None
@@ -350,13 +355,10 @@ class Response():
                 self._response_internal = ResponseInternal(**prev_response_dict)
             except Exception as e:
                 log.error("error unpacking prev_response_dict")
-                log.error(traceback.format_exc())
-        elif self._request.prev_response_url:
-            log.debug("Loading from prev_response_url")
-            raise NotImplementedError()
+                log.error(traceback.format_exc())        
         else:
             log.debug("No prev_response, constructing empty response_internal")
-            self._response_internal = ResponseInternal()
+            self._response_internal = ResponseInternal()        
         self.url = self._request.url
 
     def _init_tstamp2frameannsidx(self):
