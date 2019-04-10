@@ -113,6 +113,15 @@ class Request:
         """
         return self.request.get("prev_response")
 
+    @prev_response.setter
+    def prev_response(self, prev_response):
+        """Getter for prev_response
+        
+        Returns:
+            str: prev_response
+        """
+        self.request["prev_response"] = prev_response
+
     @property
     def prev_response_url(self):
         """Getter for prev_response_url
