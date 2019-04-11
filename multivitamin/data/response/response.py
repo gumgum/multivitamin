@@ -345,9 +345,15 @@ class Response:
                         self._request.prev_response, use_base64=False, binary_flag=True
                     )
             else:
-                assert isinstance(self._request.prev_response, str)
-                log.debug("prev_response is a JSON str")
-                prev_response_dict = json.loads(self._request.prev_response)
+                if isinstance(self._request.prev_response, str):
+                    log.debug("prev_response is a JSON str")
+                    prev_response_dict = json.loads(self._request.prev_response)
+                elif isinstance(self._request.prev_response, dict):
+                    log.debug("prev_response is a dict")
+                    prev_response_dict = self._request.prev_response
+                else:
+                    raise NotImplementedError("Intentionally not implemented--prev_response is not a JSON str or dict")
+
             if prev_response_dict is None:
                 raise ValueError("error: prev_response_dict is None")
             try:
