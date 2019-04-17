@@ -56,7 +56,6 @@ from multivitamin.data.response.dtypes import (
 from multivitamin.applications.utils import load_idmap, load_label_prototxt
 
 LAYER_NAME = "detection_out"
-CONFIDENCE_MIN = 0.3
 
 
 class SSDDetector(ImagesModule):
@@ -65,6 +64,7 @@ class SSDDetector(ImagesModule):
         server_name,
         version,
         net_data_dir,
+        confidence_min=0.3,
         prop_type=None,
         prop_id_map=None,
         module_id_map=None,
@@ -77,7 +77,7 @@ class SSDDetector(ImagesModule):
             prop_id_map=prop_id_map,
             module_id_map=module_id_map,
         )
-
+        self.confidence_min = confidence_min
         if not self.prop_type:
             self.prop_type = "object"
 
@@ -120,7 +120,7 @@ class SSDDetector(ImagesModule):
             for pred_idx in range(predictions.shape[2]):
                 try:
                     confidence = float(predictions[0, 0, pred_idx, 2])
-                    if confidence < CONFIDENCE_MIN:
+                    if confidence < self.confidence_min:
                         continue
                     index = int(predictions[0, 0, pred_idx, 1])
                     label = self.labelmap[index]
@@ -135,7 +135,7 @@ class SSDDetector(ImagesModule):
                     area = compute_box_area(contour)
                     prop = Property(
                             confidence=confidence,
-                            confidence_min=CONFIDENCE_MIN,
+                            confidence_min=self.confidence_min,
                             ver=self.version,
                             server=self.name,
                             value=label,
