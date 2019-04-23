@@ -4,6 +4,7 @@ import glog as log
 import json
 
 from multivitamin.data.response import config
+
 # from multivitamin.data.response.dtypes import Point
 
 
@@ -21,9 +22,7 @@ def write_json(json_str, file_path, indent=2):
             wf.write(json_str)
         else:
             raise ValueError(
-                "json_str input is not a str or dict. Of type: {}".format(
-                    type(json_str)
-                )
+                "json_str input is not a str or dict. Of type: {}".format(type(json_str))
             )
 
 
@@ -39,9 +38,7 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
         Two points dict(x, y): p0 (upper left) and p1 (lower right)
     """
     if len(contour) != 4:
-        log.error(
-            "To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour"
-        )
+        log.error("To use p0p1_from_bbox_contour(), input must be a 4 point bbox contour")
         return None
 
     # Convert number of pixel to max pixel index
@@ -74,9 +71,9 @@ def compute_box_area(contour):
     Returns:
         float: fraction
     """
-    assert(len(contour) == 4)
+    assert len(contour) == 4
     p0, p1 = p0p1_from_bbox_contour(contour, dtype=float)
-    return float((p1[0]-p0[0])*(p1[1]-p0[1]))
+    return float((p1[0] - p0[0]) * (p1[1] - p0[1]))
 
 
 def crop_image_from_bbox_contour(image, contour):
@@ -127,7 +124,7 @@ def round_float_to_str(val):
 
 #     Args:
 #         contour (list): list of dicts with keys x, y
-    
+
 #     Returns:
 #         list: of dicts of points
 #     """
@@ -218,7 +215,7 @@ def get_current_date():
 
 
 def intersection_between_bboxes(bbox0, bbox1):
-    assert(len(bbox0) == len(bbox1) == 4)
+    assert len(bbox0) == len(bbox1) == 4
     if type(bbox0) == type([]):
         bbox0 = p0p1_from_bbox_contour(bbox0, dtype=float)
     if type(bbox1) == type([]):
@@ -234,7 +231,7 @@ def intersection_between_bboxes(bbox0, bbox1):
 
 
 def union_and_intersection_between_bboxes(bbox0, bbox1):
-    assert(len(bbox0) == len(bbox1) == 4)
+    assert len(bbox0) == len(bbox1) == 4
     if type(bbox0) == type([]):
         bbox0 = p0p1_from_bbox_contour(bbox0, dtype=float)
     if type(bbox1) == type([]):

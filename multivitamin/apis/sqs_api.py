@@ -48,10 +48,10 @@ class SQSAPI(CommAPI):
             response = self.sqs.receive_message(
                 QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
             )
-        log.info(f"sqs.receive_message response: {response}")
+        log.debug(f"sqs.receive_message response: {response}")
         requests = []
         for m in response["Messages"]:
-            log.info(str(m))
+            log.debug(str(m))
             requests.append(
                 Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
             )

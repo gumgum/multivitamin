@@ -91,7 +91,11 @@ class CaffeClassifier(ImagesModule):
 
         log.info("Constructing CaffeClassifier")
         gpu_util = GPUUtility(**gpukwargs)
-        available_devices = gpu_util.get_gpus()
+        available_devices = None
+        try:
+            available_devices = gpu_util.get_gpus()
+        except FileNotFoundError:
+            log.exception("Unable to get available GPUs")
         if available_devices:
             caffe.set_mode_gpu()
             caffe.set_device(int(available_devices[0]))  # py-caffe only supports 1 GPU

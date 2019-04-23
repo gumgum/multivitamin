@@ -14,6 +14,7 @@ from multivitamin.data.response.dtypes import (
     Footprint,
 )
 from multivitamin.data.response.utils import round_float
+from multivitamin.media.file_retriever import FileRetriever
 
 
 class Response():
@@ -45,14 +46,14 @@ class Response():
 
             # unpack dictionary values into kwargs using ** operator
             try:
-                self._response_internal = ResponseInternal(**response_input) 
+                self._response_internal = ResponseInternal(**response_input)
             except Exception as e:
                 log.error("error unpacking prev_response_dict")
                 log.error(traceback.format_exc())
         else:
             log.debug("Initializing empty response")
             self._response_internal = ResponseInternal()
-            
+
         self._init_tstamp2frameannsidx()
 
     def to_dict(self):
@@ -64,9 +65,7 @@ class Response():
         log.debug("Returning response as dictionary")
         if self._request is not None:
             if self._request.bin_encoding is True:
-                log.warning(
-                    "self._request.bin_encoding is True but returning dictionary"
-                )
+                log.warning("self._request.bin_encoding is True but returning dictionary")
         return asdict(self._response_internal)
 
     def to_bytes(self, base64=False):
@@ -312,9 +311,6 @@ class Response():
         prev_responses can come in the following forms
 
             1) prev_response_url
-                a) binary
-                b) base64 binary string
-                c) string (json file)
                 i) local file
                 ii) remote file
 
@@ -324,6 +320,14 @@ class Response():
                 c) dict
         """
         log.debug("Constructing Response from Request")
+        if self._request.prev_response_url:
+            log.debug(f"Loading from prev_response_url: {self._request.prev_response_url}")
+            try:
+                file_retriever = FileRetriever(url=self._request.prev_response_url)
+                f = file_retriever.download(return_filelike=True)
+                self._request.prev_response = f.read().decode()
+            except:
+                log.error(traceback.format_exc())
         if self._request.prev_response:
             log.debug("Loading from prev_response")
             prev_response_dict = None
@@ -351,9 +355,6 @@ class Response():
             except Exception as e:
                 log.error("error unpacking prev_response_dict")
                 log.error(traceback.format_exc())
-        elif self._request.prev_response_url:
-            log.debug("Loading from prev_response_url")
-            raise NotImplementedError()
         else:
             log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
