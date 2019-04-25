@@ -165,18 +165,3 @@ class Request:
 
     def __repr__(self):
         return f"request: {self.request}; request_id: {self.request_id}"
-
-
-def _standardize_url(url):
-    log.info("Formatting urls in request")
-    if not url:
-        raise ValueError("url is None")
-    # url=url.replace("&amp;", "&")
-    # url=url.replace(" ", "\\ ")
-    # url=url.replace("https://", "http://")
-    # url=url.replace("s://", "http://")
-    # url=url.replace("s:", "http://")
-    # url=url.replace("https://", "")
-    # url=url.replace("http://s.yimg.com", "https://s.yimg.com")
-    # url=url.replace(" ", "%20")
-    return url
