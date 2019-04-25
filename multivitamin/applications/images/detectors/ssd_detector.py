@@ -82,8 +82,12 @@ class SSDDetector(ImagesModule):
             self.prop_type = "object"
 
         gpu_util = GPUUtility(**gpukwargs)
-        available_devices = gpu_util.get_gpus()
-        log.info("Found GPU devices: {}".format(available_devices))
+        available_devices = None
+        try:
+            available_devices = gpu_util.get_gpus()
+            log.info("Found GPU devices: {}".format(available_devices))
+        except FileNotFoundError:
+            log.exception("Unable to get GPUs")
         if available_devices:
             caffe.set_mode_gpu()
             caffe.set_device(int(available_devices[0]))  # py-caffe only supports 1 GPU
