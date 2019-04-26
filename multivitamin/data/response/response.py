@@ -115,6 +115,15 @@ class Response:
         """
         return self._response_internal["media_annotation"]["tracks_summary"]
 
+    @tracks.setter
+    def tracks(self, tracks):
+        """Setter for tracks
+
+        Args:
+            tracks (List[VideoAnn]): tracks
+        """
+        self._response_internal["media_annotation"]["tracks_summary"] = tracks
+
     @property
     def frame_anns(self):
         """Getter for frames annotations
