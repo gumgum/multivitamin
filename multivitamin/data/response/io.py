@@ -23,7 +23,7 @@ from multivitamin.data.response import config
 
 
 class AvroIO:
-    def __init__(self, use_schema_registry=True):
+    def __init__(self, schema_registry_url=None):
         """Public interface for Avro IO functionality
         
         Args:
@@ -32,10 +32,11 @@ class AvroIO:
         """
         self.impl = None
         self.use_base64 = False
-        log.info(f"use_schema_registry: {use_schema_registry}")
-        if use_schema_registry:
-            self.impl = _AvroIORegistry()
+        if schema_registry_url:
+            log.info(f"schema_registry_url: {schema_registry_url}")
+            self.impl = _AvroIORegistry(schema_registry_url)
         else:
+            log.warning("registry_url is None, using local schema and serializing w/o magic byte")
             self.impl = _AvroIOLocal()
 
     def get_schema(self):
@@ -204,11 +205,11 @@ class _AvroIOLocal:
 
 
 class _AvroIORegistry:
-    def __init__(self):
+    def __init__(self, schema_registry_url):
         """Private implementation class for Avro IO using the registry"""
-        log.info("Using registry with schema_id {}".format(config.SCHEMA_ID))
+        log.info(f"Using registry with schema_url/id {schema_registry_url}/{config.SCHEMA_ID}")
         try:
-            self.client = CachedSchemaRegistryClient(url=config.REGISTRY_URL)
+            self.client = CachedSchemaRegistryClient(url=schema_registry_url)
             self.schema = self.client.get_by_id(config.SCHEMA_ID)
             self.serializer = MessageSerializer(self.client)
         except:
