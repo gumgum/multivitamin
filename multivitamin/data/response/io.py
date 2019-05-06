@@ -32,10 +32,11 @@ class AvroIO:
         """
         self.impl = None
         self.use_base64 = False
-        log.info(f"schema_registry_url: {schema_registry_url}")
         if schema_registry_url:
+            log.info(f"schema_registry_url: {schema_registry_url}")
             self.impl = _AvroIORegistry(schema_registry_url)
         else:
+            log.info("registry_url is None, using local schema")
             self.impl = _AvroIOLocal()
 
     def get_schema(self):
