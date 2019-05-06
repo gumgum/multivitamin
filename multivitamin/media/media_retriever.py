@@ -147,7 +147,7 @@ class AbstractMediaRetriever(FileRetriever, ABC):
             return self._image
 
         filelike_obj = self.download(return_filelike=True)
-        image = np.array(Image.open(filelike_obj))
+        image = np.array(Image.open(filelike_obj).convert('RGB'))
         if image.shape[2] > 3:
             log.warning("Image has >3 channels. Cropping to 3.")
             image = image[:, :, :3]

@@ -204,11 +204,11 @@ class _AvroIOLocal:
 
 
 class _AvroIORegistry:
-    def __init__(self):
+    def __init__(self, schema_registry_url):
         """Private implementation class for Avro IO using the registry"""
-        log.info("Using registry with schema_id {}".format(config.SCHEMA_ID))
+        log.info(f"Using registry with schema_url/id {schema_registry_url}/{config.SCHEMA_ID}")
         try:
-            self.client = CachedSchemaRegistryClient(url=config.REGISTRY_URL)
+            self.client = CachedSchemaRegistryClient(url=schema_registry_url)
             self.schema = self.client.get_by_id(config.SCHEMA_ID)
             self.serializer = MessageSerializer(self.client)
         except:

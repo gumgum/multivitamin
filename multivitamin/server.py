@@ -21,7 +21,6 @@ class Server(Flask):
         input_comm,
         output_comms=None,
         schema_registry_url=None,
-        schema_registry_id=None,
     ):
         """Serves as the public interface for CV services through multivitamin
 
@@ -56,7 +55,6 @@ class Server(Flask):
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
         self.modules = modules
         self.schema_registry_url = schema_registry_url
-        self.schema_registry_id = schema_registry_id
 
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
@@ -134,7 +132,7 @@ class Server(Flask):
         log.debug(f"Processing: {request}")
         log.info(f"Processing url: {request.get('url')}")
 
-        response = Response(request, self.schema_registry_url, self.schema_registry_id)
+        response = Response(request, self.schema_registry_url)
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
