@@ -17,8 +17,8 @@ from multivitamin.data.response.utils import round_float
 from multivitamin.media.file_retriever import FileRetriever
 
 
-class Response:
-    def __init__(self, response_input=None, use_schema_registry=True):
+class Response():
+    def __init__(self, response_input=None, schema_registry_url=None):
         """ Class for a Response object
         
         2 cases for construction:
@@ -28,18 +28,18 @@ class Response:
 
         Args:
             input (Any): previous Response or dict
-            use_schema_registry (bool): whether to use schema registry when serializing to bytes
+            schema_registry_url (str): whether to use schema registry when serializing to bytes
         """
-        self._use_schema_registry = use_schema_registry
         self._request = None
         self._response_internal = None
+        self._schema_registry_url = schema_registry_url
         self._tstamp2frameannsidx = {}
 
         if isinstance(response_input, Request):
             self._request = response_input
             self._init_from_request()
         elif isinstance(response_input, dict):
-            io = AvroIO(use_schema_registry)
+            io = AvroIO(schema_registry_url)
             if not io.is_valid_avro_doc(response_input):
                 raise ValueError("Input dict is incompatible with avro schema")
             log.debug("Input dict is compatible with avro schema")
@@ -83,7 +83,7 @@ class Response:
         log.debug(f"base64 encoding: {base64}")
         log.debug("Returning response as binary")
         try:
-            io = AvroIO(self._use_schema_registry)
+            io = AvroIO(self._schema_registry_url)
             return io.encode(asdict(self._response_internal), base64)
         except Exception:
             log.error("Error serializing response")
