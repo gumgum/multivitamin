@@ -46,7 +46,7 @@ setup(
     name="multivitamin",
     version=VERSION,
     description="Python framework for serving ML models",
-    url="https://bitbucket.org/gumgum/multivitamin/",
+    url="https://github.com/gumgum/multivitamin/",
     author="GumGum ML",
     packages=find_packages(
         exclude=["docs*", "tests*", "examples*", "docker*", "tools*"]

@@ -1,7 +1,10 @@
 # Multivitamin
 ![](https://i.imgur.com/ll70SQO.png)
 
-**Multivitamin** is python framework built for serving computer vision (CV), natural language processing (NLP), and machine learning (ML) models. It's aim is to provide the serving infrastructure around a single service and to allow the flexibility to use any python framework for prediction.
+[![Build Status](https://travis-ci.org/gumgum/multivitamin.svg?branch=develop)](https://travis-ci.org/gumgum/multivitamin)
+[![PyPI version](https://badge.fury.io/py/multivitamin.svg)](https://badge.fury.io/py/multivitamin)
+
+**Multivitamin** is python framework built for serving computer vision (CV), natural language processing (NLP), and machine learning (ML) models. It aims to provide the serving infrastructure around a single service and to allow the flexibility to use any python framework for prediction.
 
 ## Main Features
 
