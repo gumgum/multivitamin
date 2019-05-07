@@ -45,7 +45,7 @@ class VerifyVersionCommand(install):
 setup(
     name="multivitamin",
     version=VERSION,
-    description="Serving infrastructure for ML and CV models",
+    description="Python framework for serving ML models",
     url="https://bitbucket.org/gumgum/multivitamin/",
     author="GumGum ML",
     packages=find_packages(
