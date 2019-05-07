@@ -1,7 +1,4 @@
 # Multivitamin
-
-*Python supplements for serving your CV, NLP, and ML models.*
-
 ![](https://i.imgur.com/ll70SQO.png)
 
 **Multivitamin** is python framework built for serving computer vision (CV), natural language processing (NLP), and machine learning (ML) models. It's aim is to provide the serving infrastructure around a single service and to allow the flexibility to use any python framework for prediction.
