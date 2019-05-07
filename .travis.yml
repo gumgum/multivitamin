@@ -1,3 +1,8 @@
+language: python
+
+python:
+  - "3.6"
+
 deploy:
   provider: pypi
   user: gregorious10
@@ -5,3 +10,4 @@ deploy:
     secure: MEjxxwA5r+eh4GffaPo/z9tAPZRrod5D4ka9e+v8Wo8HN7zNKFY6HsOoWf6SMu3X0PvN9jwvEJHCyhZMIXAhO3wmFgZZjokwSYPGgxSm2eY8OLYAxHXau4jksiuRho+/25AtYfFIpSPOqCrenAwqiOOlYrBuhZvkTTphNlqgPlRbdmiWftollV42+yT/NFD4hy9REUjf18Lrx8cFnSQRuIq272b4rN1jJmDhLR0qjokhNHcKULIIZSglARdC7IwLurUW0GUZCwD/kqRvF/lnyQ2MuLKK7XjJefne7C0/Tp8dFjuU5a7nBltjK45W/n3XPAfsCWqbnemU8+hjYdd1C4P0RhFAWsQzncpgK5nmDJ/eXuGjS0MPwrQbznWAvSXanfbqWoEYPLm0qyYp7x46Blg3jVLSLaZMtWZCSAcDnUPN4TWTGQttAWQqWzFB5DcpyQFmzdwH2oko7Ixz5MuXcrpQ6hYBULKPG+SKJ7dIGG3s7dQAuL+5rYr1PrTrlc8kpoTW05kbMnli51JOH70bX4doXbf3Kw0Tzlm7h62Gkpb1xgXXWgtXRu0hER8SnYccgKP6OCDr2t3n3bGIMtIu/Nk4LJw5i2lsLLmEmwz3aozN+iSPSPa8E7Izk8zv/DPh0W5re3Afbpx0Vbg66iENPO9s03yMjNjsq2kWKAjA6Rk=
   on:
     tags: true
+    branch: master
