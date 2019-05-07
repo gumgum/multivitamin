@@ -3,6 +3,9 @@ language: python
 python:
 - '3.6'
 
+script:
+  - git clone https://github.com/gumgum/multivitamin
+
 deploy:
   provider: script
   script: python3 setup.py verify
