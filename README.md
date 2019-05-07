@@ -133,7 +133,7 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 
 ![](https://i.imgur.com/NwpdShq.png)
 
-**Data structures:**
+**Repository organization:**
 
 * data/  
     * **Request:** data object encapsulating request JSON
@@ -148,6 +148,6 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 * apis/
     * **CommAPI:** abstract parent class that defines an interface, i.e. `push()` and `pull()`
     * **SQSAPI:** pulls requests from an SQS queue, pushes requests to a queue
-    * **VertexAPI:** pulls requests from an SQS queue, pushes Responses by posting to a HTTP endpoint (provided in the request)
+    * **HTTPAPI:** pushes Responses by posting to a HTTP endpoint (provided in the request)
     * **LocalAPI:** pulls requests from a local directory of JSONs, pushes Responses to a local directory
     * **S3API:** pulls requests from an S3 bucket of JSONs, pushes Responses to an S3 bucket
