@@ -1,0 +1,6 @@
+*pyc
+*__pycache*
+*pytest*
+*.vscode*
+*build*
+*.coverage*

@@ -1,0 +1,3 @@
+include requirements.txt
+include readme.md
+include multivitamin/data/response/schema.avsc

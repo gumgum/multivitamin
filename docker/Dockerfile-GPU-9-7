@@ -1,0 +1,15 @@
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+MAINTAINER ggcv
+
+ARG workdir=/opt
+
+COPY install_deps.sh $workdir
+COPY install_opencv.sh $workdir
+WORKDIR $workdir
+
+RUN apt-get update \
+    && chmod +x install_deps.sh \
+    && chmod +x install_opencv.sh \
+    && ./install_deps.sh \
+    && ./install_opencv.sh 
+RUN cd $workdir
