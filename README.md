@@ -164,4 +164,4 @@ To file a bug or request a feature, please file a GitHub issue. Pull requests ar
 
 ## The Team
 
-Multivitamin is currently maintained by [Greg Chu](https://github.com/gregchu), [Matthew Greenberg](https://github.com/magreenberg1), and [Javier Molina](https://github.com/javimol), with contributions from [Divyaa Ravichandran](https://github.com/stalagmite7), and Rohit Annigeri, and with collaboration from Cambron Carter, Shankar Chatterjee, Nandakishore Puttashamachar, and Iris Fu.
+Multivitamin is currently maintained by [Greg Chu](https://github.com/gregchu), [Matthew Greenberg](https://github.com/magreenberg1), and [Javier Molina](https://github.com/javimol), with contributions from [Divyaa Ravichandran](https://github.com/stalagmite7), and Rohit Annigeri, and with collaboration from Cambron Carter, Shankar Chatterjee, Nandakishore Puttashamachar, Nishita Sant, and Iris Fu.
