@@ -3,6 +3,7 @@
 
 [![Build Status](https://travis-ci.org/gumgum/multivitamin.svg?branch=master)](https://travis-ci.org/gumgum/multivitamin)
 [![PyPI version](https://badge.fury.io/py/multivitamin.svg)](https://badge.fury.io/py/multivitamin)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)]
 
 **Multivitamin** is python framework built for serving computer vision (CV), natural language processing (NLP), and machine learning (ML) models. It aims to provide the serving infrastructure around a single service and to allow the flexibility to use any python framework for prediction.
 
@@ -20,7 +21,7 @@ To start an asynchronous service, construct a `Server` object, which accepts 3 i
 * An output `CommAPI`
 * A `Module` or sequence of `Module`s, which is an abstract base class that defines the interface for `process(Request)`, `process_properties()` or `process_images(...)`
 
-**Defining input and output `CommAPI`s:**
+### Defining input and output `CommAPI`s:
 ```
 from multivitamin.apis import SQSAPI, S3API
 
@@ -30,7 +31,7 @@ s3_api = S3API(s3_bucket='od-output', s3_key='2019-03-22')
 
 Both `SQSAPI` and `S3API` are concrete implementations of `CommAPI`.
 
-**Defining a `Module`:**
+###Defining a `Module`:
 
 For convenience, we provide several example modules (which are concrete implementations of `Module`) that you can import for your purposes. Let's say we want a object detector built using [TensorFlow's object detection API](https://github.com/tensorflow/models/tree/master/research/object_detection):
 ```
@@ -39,7 +40,8 @@ from multivitamin.applications.images.detectors import TFDetector
 obj_det_module = TFDetector(name="IG_obj_det", ver="1.0.0", model="models_dir/")
 ```
 
-And finally, **construct a `Server`**, which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
+###Constructing a `Server`
+Which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
 
 ```
 from multivitamin.server import Server
@@ -72,6 +74,7 @@ obj_det_server = Server(
 ```
 *note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.*
 
+###Chaining `Modules` 
 If we wanted to **run a sequence of `Module`s**, we could add a second `Module`. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
 ```
 from multivitamin.applications.images.classifiers.pyt_classifier import PYTClassifier
@@ -154,3 +157,11 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
     * **HTTPAPI:** pushes Responses by posting to a HTTP endpoint (provided in the request)
     * **LocalAPI:** pulls requests from a local directory of JSONs, pushes Responses to a local directory
     * **S3API:** pulls requests from an S3 bucket of JSONs, pushes Responses to an S3 bucket
+
+## Contributing
+
+To file a bug or request a feature, please file a GitHub issue. Pull requests are welcome. 
+
+## The Team
+
+Multivitamin is currently maintained by [Greg Chu](https://github.com/gregchu), [Matthew Greenberg](https://github.com/magreenberg1), and [Javier Molina](https://github.com/javimol).
