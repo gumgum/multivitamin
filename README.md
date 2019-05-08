@@ -137,7 +137,7 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
 6. `process_request()` returns the `Response` back to the `Server`
 7. `Server` sends the `Response` to the output `CommAPI`(s) and calls the `push(Response)` method
 
-![](https://i.imgur.com/9BYdESd.png)
+![](https://i.imgur.com/NwpdShq.png)
 
 **Repository organization:**
 
@@ -150,7 +150,7 @@ For API documentation and full details, see [https://multivitamin.readthedocs.io
     * **Module:** abstract parent class that defines an interface for processing requests
     * **ImagesModule:** abstract child class of `Module` that defines an interface for processing requests with images or video, `process_images(...)` and handles retrieval of media.  
     * **PropertiesModule:** abstract child class of `Module` that defines an interface `process_properties()`
-![](https://i.imgur.com/1xLsTS9.png)
+![](https://i.imgur.com/hfF4Ong.png)
 * apis/
     * **CommAPI:** abstract parent class that defines an interface, i.e. `push()` and `pull()`
     * **SQSAPI:** pulls requests from an SQS queue, pushes requests to a queue
