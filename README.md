@@ -31,7 +31,7 @@ s3_api = S3API(s3_bucket='od-output', s3_key='2019-03-22')
 
 Both `SQSAPI` and `S3API` are concrete implementations of `CommAPI`.
 
-###Defining a `Module`:
+### Defining a `Module`:
 
 For convenience, we provide several example modules (which are concrete implementations of `Module`) that you can import for your purposes. Let's say we want a object detector built using [TensorFlow's object detection API](https://github.com/tensorflow/models/tree/master/research/object_detection):
 ```
@@ -40,7 +40,7 @@ from multivitamin.applications.images.detectors import TFDetector
 obj_det_module = TFDetector(name="IG_obj_det", ver="1.0.0", model="models_dir/")
 ```
 
-###Constructing a `Server`
+### Constructing a `Server`
 Which will pull requests from the AWS SQS queue `queue_name=SQS-ObjectDetector` and push the responses to `s3://aws.amazon.com/od-output/2019-03-22/`
 
 ```
@@ -74,7 +74,7 @@ obj_det_server = Server(
 ```
 *note: the `HTTPAPI` assumes that the `Request` has a field called `dst_url`. `HTTPAPI` will send a POST request to that destination URL.*
 
-###Chaining `Modules` 
+### Chaining `Modules` 
 If we wanted to **run a sequence of `Module`s**, we could add a second `Module`. Say, we had an image classifier written in [pytorch](https://github.com/pytorch/pytorch) that predicted the make and model of a vehicle. A pytorch image classifier is another example application we provide in `multivitamin.applications.images`
 ```
 from multivitamin.applications.images.classifiers.pyt_classifier import PYTClassifier
