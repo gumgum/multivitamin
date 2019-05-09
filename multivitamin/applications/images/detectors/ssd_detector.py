@@ -42,7 +42,6 @@ else:
 from google.protobuf import text_format
 from caffe.proto import caffe_pb2 as cpb2
 
-from multivitamin.utils.GPUUtilities import GPUUtility
 from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import (
     crop_image_from_bbox_contour,
@@ -68,7 +67,7 @@ class SSDDetector(ImagesModule):
         prop_type=None,
         prop_id_map=None,
         module_id_map=None,
-        **gpukwargs,
+        gpuid=0,
     ):
         super().__init__(
             server_name,
@@ -81,16 +80,8 @@ class SSDDetector(ImagesModule):
         if not self.prop_type:
             self.prop_type = "object"
 
-        gpu_util = GPUUtility(**gpukwargs)
-        available_devices = None
-        try:
-            available_devices = gpu_util.get_gpus()
-            log.info("Found GPU devices: {}".format(available_devices))
-        except FileNotFoundError:
-            log.exception("Unable to get GPUs")
-        if available_devices:
-            caffe.set_mode_gpu()
-            caffe.set_device(int(available_devices[0]))  # py-caffe only supports 1 GPU
+        caffe.set_mode_gpu()
+        caffe.set_device(gpuid)
 
         idmap_file = os.path.join(net_data_dir, "labelmap.prototxt")
         self.labelmap = load_label_prototxt(idmap_file)
