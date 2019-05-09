@@ -65,7 +65,7 @@ class CaffeClassifier(ImagesModule):
         top_n=1,
         postprocess_predictions=None,
         postprocess_args=None,
-        **gpukwargs,
+        gpuid=0,
     ):
 
         super().__init__(
@@ -90,15 +90,8 @@ class CaffeClassifier(ImagesModule):
             self.prop_type = "label"
 
         log.info("Constructing CaffeClassifier")
-        gpu_util = GPUUtility(**gpukwargs)
-        available_devices = None
-        try:
-            available_devices = gpu_util.get_gpus()
-        except FileNotFoundError:
-            log.exception("Unable to get available GPUs")
-        if available_devices:
-            caffe.set_mode_gpu()
-            caffe.set_device(int(available_devices[0]))  # py-caffe only supports 1 GPU
+        caffe.set_mode_gpu()
+        caffe.set_device(gpuid)
 
         labels_file = os.path.join(net_data_dir, "labels.txt")
         try:
