@@ -12,7 +12,6 @@ from multivitamin.data.response.utils import (
     crop_image_from_bbox_contour,
 )
 from multivitamin.module.utils import min_conf_filter_predictions
-from multivitamin.utils.GPUUtilities import GPUUtility
 from multivitamin.data.response.dtypes import Region, Property
 
 glog_level = os.environ.get("GLOG_minloglevel", None)
