@@ -235,6 +235,7 @@ class FrameDrawer(PropertiesModule):
         if self.dump_video:
             dumped_video_url = self.dumping_folder_url + '/video.mp4'
             dumped_video_url = dumped_video_url.replace('//', '/')
+            dumped_video_url = dumped_video_url.replace('https:/', 'https://')
             props.append(
                 Property(
                     server=self.name,
