@@ -94,31 +94,26 @@ class Server(Flask):
             try:
                 log.info("Pulling requests")
                 requests = self.input_comm.pull()
-                for request in requests:
-                    try:
-                        if request.kill_flag is True:
-                            log.info(
-                                "Incoming request with kill_flag == True, killing server"
-                            )
-                            return
-                        response = self._process_request(request)
-                        log.info("Pushing reponse to output_comms")
-                        for output_comm in self.output_comms:
-                            try:
-                                ret = output_comm.push(response)
-                            except Exception as e:
-                                log.error(e)
-                                log.error(traceback.format_exc())
-                                log.error(f"Error pushing to output_comm: {output_comm}")
-                    except Exception:
-                        log.error(traceback.format_exc())
-                        log.error(f"Error processing request: {request}")
-            except Exception as e:
-                log.error(e)
-                log.error(traceback.format_exc())
-                log.error("Error processing requests")
 
-    def _process_request(self, request):
+                responses, end_flag = self._process_requests(requests)                
+                for response in responses:
+                    log.info("Pushing reponse to output_comms")
+                    for output_comm in self.output_comms:
+                        try:
+                            ret = output_comm.push(response)
+                        except Exception as e:
+                            log.error(e)
+                            log.error(traceback.format_exc())
+                            log.error(f"Error pushing to output_comm: {output_comm}")
+                if end_flag:
+                    log.info("Finishing execution. end_flag activated.")
+                    exit(0)
+            except Exception:
+                log.error(traceback.format_exc())
+                log.error(f"Error processing requests: {requests}")
+            
+
+    def _process_requests(self, requests):
         """Send request_message through all the modules
 
         Args:
@@ -127,16 +122,25 @@ class Server(Flask):
         Returns:
             Response: outgoing response message
         """
-        if not isinstance(request, Request):
-            raise ValueError(f"request is of type {type(request)}, not Request")
-        log.debug(f"Processing: {request}")
-        log.info(f"Processing url: {request.get('url')}")
-
-        response = Response(request, self.schema_registry_url)
+        end_flag=False  
+        if not isinstance(requests, list):
+            raise ValueError(f"request is of type {type(requests)}, not list")
+        responses=[]
+        for request in requests:
+            log.info(f"Processing: {request}")
+            if request.kill_flag is True:
+                log.info(
+                    "Incoming request with kill_flag == True, killing server"
+                )
+                end_flag=True             
+                break
+            log.info(f"Processing url: {request.get('url')}")
+            response = Response(request, self.schema_registry_url)
+            responses.append(response)
 
         for module in self.modules:
             log.info(f"Processing request for module: {module}")
-            response = module.process(response)
-            log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
-
-        return response
+            responses = module.process(responses)
+            for response in responses:
+                log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
+        return responses,end_flag

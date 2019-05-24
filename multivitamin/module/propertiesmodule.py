@@ -13,7 +13,6 @@ class PropertiesModule(Module):
         prop_type=None,
         prop_id_map=None,
         module_id_map=None,
-        enable_fsm=False,
         to_be_processed_buffer_size=1
     ):
         """Module that processes properties, not images
@@ -30,8 +29,7 @@ class PropertiesModule(Module):
             version=version,
             prop_type=prop_type,
             prop_id_map=prop_id_map,
-            module_id_map=module_id_map,
-            enable_fsm=enable_fsm,
+            module_id_map=module_id_map,           
             to_be_processed_buffer_size=to_be_processed_buffer_size
         )
         log.debug("Creating PropertiesModule")
@@ -47,7 +45,7 @@ class PropertiesModule(Module):
         """
         super().process(responses)
         self.process_properties()
-        return self.update_and_return_response()
+        return self.update_and_return_responses()
 
     @abstractmethod
     def process_properties(self):

@@ -13,13 +13,13 @@ from multivitamin.data.response.dtypes import (
     ImageAnn,
     Footprint,
 )
-from multivitamin.data.responsefinititestatemachine import ResponseFiniteStateMachine
+from multivitamin.data.response.responsefinitestatemachine import ResponseFiniteStateMachine
 from multivitamin.data.response.utils import round_float
 from multivitamin.media.file_retriever import FileRetriever
 
 
 class Response(ResponseFiniteStateMachine):
-    def __init__(self, response_input=None, schema_registry_url=None, activate_fsm=False):
+    def __init__(self, response_input=None, schema_registry_url=None):
         """ Class for a Response object
         
         2 cases for construction:
@@ -31,7 +31,7 @@ class Response(ResponseFiniteStateMachine):
             input (Any): previous Response or dict
             schema_registry_url (str): whether to use schema registry when serializing to bytes
         """
-        super.__init__(enabled=activate_fsm)
+        super().__init__()
         self._request = None
         self._response_internal = None
         self._schema_registry_url = schema_registry_url

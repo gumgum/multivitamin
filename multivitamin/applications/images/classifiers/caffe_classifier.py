@@ -127,23 +127,24 @@ class CaffeClassifier(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def process_images(self, images, tstamps, prev_regions):
-        # log.debug("Processing images")
-        # log.debug("tstamps: "  + str(tstamps))
+    def process_images(self, images, tstamps,responses, prev_regions):
+        log.debug("Processing images")
+        #log.debug("tstamps: "  + str(tstamps))
         assert len(images) == len(tstamps) == len(prev_regions)
-        for i, (frame, tstamp, prev_region) in enumerate(
-            zip(images, tstamps, prev_regions)
+        for i, (frame, tstamp, prev_region, response) in enumerate(
+            zip(images, tstamps, prev_regions, responses)
         ):
             log.debug("caffe classifier tstamp: " + str(tstamp))
             try:
                 if prev_region is not None:
-                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
-
+                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))                
                 im = self.transformer.preprocess("data", frame)
                 self.net.blobs["data"].data[...] = im
 
                 # TODO : clean this up
+                log.debug("Forward pass before")
                 probs = self.net.forward()[self.layer_name]
+                log.debug("Forward pass after")
                 # log.debug("probs: " + str(probs))
                 # log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
@@ -196,7 +197,7 @@ class CaffeClassifier(ImagesModule):
                         else:
                             props.append(prop)
                 if prev_region is None:
-                    self.response.append_region(
+                    response.append_region(
                         t=tstamp, region=Region(props=props)
                     )
             except Exception as e:

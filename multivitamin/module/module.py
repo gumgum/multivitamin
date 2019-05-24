@@ -30,11 +30,11 @@ class Module(ABC):
         self.code = Codes.SUCCESS
         self.prev_regions_of_interest_count = 0
         self.tstamps_processed = []
-        self.responses_to be_processed = []
+        self.responses_to_be_processed = []
         self.responses = []
 
     def get_required_number_requests(self):
-        return self.to_be_processed_buffer_size-len(self.responses_to be_processed)
+        return self.to_be_processed_buffer_size-len(self.responses_to_be_processed)
 
     def set_prev_props_of_interest(self, pois):
         """If this Module is meant to be one in a sequence of Modules and is looking for a 
@@ -84,7 +84,6 @@ class Module(ABC):
         for r in responses:                             
             r.tstamps_processed = []
             r.code = Codes.SUCCESS            
-            r.request = r.request
             r.set_as_to_be_processed()
             self.responses_to_be_processed.append(r)
 
@@ -97,7 +96,7 @@ class Module(ABC):
             Response: response
         """
         log.info(f"Updating and returning response with code: {response.code.name}")
-        num_footprints = len(r.footprints)
+        num_footprints = len(response.footprints)
         time = get_current_time()
         log.debug("Appending footprints")
         response.append_footprint(
@@ -125,11 +124,12 @@ class Module(ABC):
         """
         self.responses = []
         #we move from to_be_processed to processed
-        for r in self.responses_to be_processed:
+        for r in self.responses_to_be_processed:
             if r.is_already_processed():#if de the children doesn't activate the request's FSM, this will always returns true
                 self.responses.append(r)
         #we remove from to_be_processed the responses already processed
-        filterfalse(lambda x: x.is_already_processed(), self.responses_to be_processed)
+        # filterfalse(lambda x: x.is_already_processed(), self.responses_to_be_processed)
+        self.responses_to_be_processed = [x for x in self.responses_to_be_processed if not x.is_already_processed()]
         for r in self.responses:                          
             self.update_and_return_response(response=r)
         return self.responses
