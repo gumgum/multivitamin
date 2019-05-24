@@ -23,23 +23,24 @@ class ImagesModule(Module):
         prop_type=None,
         prop_id_map=None,
         module_id_map=None,
-        batch_size=1,
-        enable_fsm=False,
-        to_be_processed_buffer_size=1
+        batch_size=1,        
+        to_be_processed_buffer_size=1,
+        parallel_downloading=False
     ):
         super().__init__(
             server_name=server_name,
             version=version,
             prop_type=prop_type,
             prop_id_map=prop_id_map,
-            module_id_map=module_id_map,
-            enable_fsm=enable_fsm,
+            module_id_map=module_id_map,           
             to_be_processed_buffer_size=to_be_processed_buffer_size
         )
         self.batch_size = batch_size
+        self.parallel_downloading=parallel_downloading
         log.debug(f"Creating ImagesModule with batch_size: {batch_size}")
-    
-    def fetch_media(self,response):
+
+    @staticmethod
+    def _fetch_media(response):
         """Fetches the media from response.request.url
            Careful, you must keep this method threadsafe
         """
@@ -56,9 +57,10 @@ class ImagesModule(Module):
             log.error(e)
             log.error(traceback.print_exc())
             response.code = Codes.ERROR_LOADING_MEDIA
-            self.set_as_processed(response)#error downloading the image
-        self.set_as_ready_to_be_processed(r)
-        return ret
+            response.set_as_processed()#error downloading the image
+
+        response.set_as_ready_to_be_processed()
+        return
 
     def process(self, responses):
         """Process the message, calls process_images(batch, tstamps, contours=None)
@@ -70,20 +72,25 @@ class ImagesModule(Module):
         log.debug("Processing messages")
         super().process(responses)
         for r in self.responses_to_be_processed:
-             if self.is_to_be_processed(r):
-                if !self.set_as_preparing_to_be_processed(r):
+            if self.parallel_downloading:
+                r.enablefsm()
+            if r.is_to_be_processed():
+                if !r.set_as_preparing_to_be_processed():
                     continue#if it was already set, we must continue
-                _thread.start_new_thread(fetch_media,(r))               
+                if self.parallel_downloading:
+                    _thread.start_new_thread(_fetch_media,(r))
+                else:
+                    _fetch_media(r)
                 
         for r in self.responses_to_be_processed:
-            if self.is_ready_to_processed(r)==False:
+            if r.is_ready_to_be_processed()==False:
                 continue                
-            if !self.set_as_being_processed(r):
+            if !r.set_as_being_processed():
                 continue#if it was already set, we must continue
             if self.prev_pois and not r.has_frame_anns():
                     log.warning("NO_PREV_REGIONS_OF_INTEREST")
                     r.code = Codes.NO_PREV_REGIONS_OF_INTEREST
-                    self.set_as_processed(response)#error, no previous regions of interest
+                    r.set_as_processed()#error, no previous regions of interest
                     continue
             if r.code == Codes.SUCCESS:
                 num_problematic_frames = 0
@@ -102,7 +109,7 @@ class ImagesModule(Module):
                             self.code = Codes.ERROR_PROCESSING
                             self.set_as_processed(r)
                             return self.update_and_return_response()
-                self.set_as_processed(r)
+                r.set_as_processed()
         log.debug("Finished processing.")
         
         if self.prev_pois and self.prev_regions_of_interest_count == 0:

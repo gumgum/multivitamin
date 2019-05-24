@@ -10,17 +10,16 @@ from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
 from multivitamin.module.utils import convert_props_to_pandas_query
 
-class Module(FiniteStateMachine):
+class Module(ABC):
     def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None, enable_fsm=False, to_be_processed_buffer_size=1
+        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None, to_be_processed_buffer_size=1
     ):
         """Abstract base class that defines interface inheritance
 
         ImageModule, PropertiesModule
 
         Handles processing of request and previous response
-        """
-        super().__init__(enabled=enable_fsm)
+        """        
         self.name = server_name
         self.version = version
         self.prop_type = prop_type
@@ -86,7 +85,7 @@ class Module(FiniteStateMachine):
             r.tstamps_processed = []
             r.code = Codes.SUCCESS            
             r.request = r.request
-            self.set_as_to_be_processed(r)
+            r.set_as_to_be_processed()
             self.responses_to_be_processed.append(r)
 
     def update_and_return_response(self,response):
@@ -113,7 +112,6 @@ class Module(FiniteStateMachine):
             )
         )
         self._update_ids(response)
-        self.check_response_state(response=r)==States.PROCESSED
         return response
 
 
@@ -128,10 +126,10 @@ class Module(FiniteStateMachine):
         self.responses = []
         #we move from to_be_processed to processed
         for r in self.responses_to be_processed:
-            if self.is_already_processed(r):
+            if r.is_already_processed():#if de the children doesn't activate the request's FSM, this will always returns true
                 self.responses.append(r)
         #we remove from to_be_processed the responses already processed
-        filterfalse(lambda x: self.is_already_processed(r), self.responses_to be_processed)
+        filterfalse(lambda x: x.is_already_processed(), self.responses_to be_processed)
         for r in self.responses:                          
             self.update_and_return_response(response=r)
         return self.responses
