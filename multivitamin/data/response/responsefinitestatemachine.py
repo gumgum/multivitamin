@@ -15,7 +15,7 @@ class ResponseFiniteStateMachine(ABC):
         self.enabled=enablefsm
         #we instanciate the lock
         self._lock = Lock()
-
+        self.state=States.IRRELEVANT
     def enablefsm(self):
         self.enabled=True
 
@@ -42,7 +42,7 @@ class ResponseFiniteStateMachine(ABC):
     def is_to_be_processed(self):
         if self.enabled==False:
             return True
-        return self.self_check_response_state()==States.TO_BE_PROCESSED
+        return self._check_response_state()==States.TO_BE_PROCESSED
     def is_preparing_to_be_processed(self):
         if self.enabled==False:
             return True
