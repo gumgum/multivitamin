@@ -24,7 +24,7 @@ class ResponseFiniteStateMachine(ABC):
     def _update_response_state(self,state):
         ret=True
         if self.enabled==False:
-            return        
+            return ret
         self._lock.acquire()
         if self.state==state:
             ret=False
