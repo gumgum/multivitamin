@@ -2,6 +2,8 @@ from threading import Lock
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import glog as log
+
 class States(Enum):
     IRRELEVANT=1
     TO_BE_PROCESSED=2
@@ -21,6 +23,7 @@ class ResponseFiniteStateMachine(ABC):
 
     #Updating or checking the state of whichever response is controlled by a lock
     def _update_response_state(self,state):
+        log.info('From ' + self.state.name + ' to '+ state.name)
         ret=True
         if self.enabled==False:
             return ret
@@ -31,6 +34,7 @@ class ResponseFiniteStateMachine(ABC):
         self._lock.release()
         return ret
     def _check_response_state(self):
+        log.info(self.state.name)
         if self.enabled==False:
             return States.IRRELEVANT
         self._lock.acquire()

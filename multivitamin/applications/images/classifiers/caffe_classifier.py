@@ -142,9 +142,9 @@ class CaffeClassifier(ImagesModule):
                 self.net.blobs["data"].data[...] = im
 
                 # TODO : clean this up
-                log.debug("Forward pass before")
+                log.info("Forward pass before")
                 probs = self.net.forward()[self.layer_name]
-                log.debug("Forward pass after")
+                log.info("Forward pass after")
                 # log.debug("probs: " + str(probs))
                 # log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
