@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import json
+from itertools import filterfalse
 
 import glog as log
 
@@ -9,10 +10,9 @@ from multivitamin.data.response.utils import get_current_time
 from multivitamin.module.codes import Codes
 from multivitamin.module.utils import convert_props_to_pandas_query
 
-
-class Module(ABC):
+class Module(FiniteStateMachine):
     def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
+        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None, enable_fsm=False, to_be_processed_buffer_size=1
     ):
         """Abstract base class that defines interface inheritance
 
@@ -20,15 +20,22 @@ class Module(ABC):
 
         Handles processing of request and previous response
         """
+        super().__init__(enabled=enable_fsm)
         self.name = server_name
         self.version = version
         self.prop_type = prop_type
         self.prop_id_map = prop_id_map
         self.module_id_map = module_id_map
+        self.to_be_processed_buffer_size=to_be_processed_buffer_size
         self.prev_pois = None
         self.code = Codes.SUCCESS
         self.prev_regions_of_interest_count = 0
         self.tstamps_processed = []
+        self.responses_to be_processed = []
+        self.responses = []
+
+    def get_required_number_requests(self):
+        return self.to_be_processed_buffer_size-len(self.responses_to be_processed)
 
     def set_prev_props_of_interest(self, pois):
         """If this Module is meant to be one in a sequence of Modules and is looking for a 
@@ -66,61 +73,85 @@ class Module(ABC):
         """
         return self.prev_pois
 
+    
     @abstractmethod
-    def process(self, response):
+    def process(self, responses):
         """Abstract method, public entry point for procesing a response
 
         Args:
-            response (Response): response
-        """
-        assert isinstance(response, Response)
-        self.tstamps_processed = []
-        self.code = Codes.SUCCESS
-        self.response = response
-        self.request = response.request
+            responses list[Response]: responses
+        """               
+        assert isinstance(responses, list)                
+        for r in responses:                             
+            r.tstamps_processed = []
+            r.code = Codes.SUCCESS            
+            r.request = r.request
+            self.set_as_to_be_processed(r)
+            self.responses_to_be_processed.append(r)
 
-    def update_and_return_response(self):
+    def update_and_return_response(self,response):
         """Update footprints, moduleID, propertyIDs
 
         Note: to be moved into aigumgum
 
         Returns:
-            Response: output response
+            Response: response
         """
-        log.info(f"Updating and returning response with code: {self.code.name}")
-        num_footprints = len(self.response.footprints)
+        log.info(f"Updating and returning response with code: {response.code.name}")
+        num_footprints = len(r.footprints)
         time = get_current_time()
         log.debug("Appending footprints")
-        self.response.append_footprint(
+        response.append_footprint(
             Footprint(
-                code=self.code.name,
+                code=response.code.name,
                 server=self.name,
                 date=time,
                 ver=self.version,
                 id="{}{}".format(time, num_footprints + 1),
-                tstamps=self.tstamps_processed,
-                num_images_processed=len(self.tstamps_processed)
+                tstamps=response.tstamps_processed,
+                num_images_processed=len(response.tstamps_processed)
             )
         )
-        self._update_ids()
-        return self.response
+        self._update_ids(response)
+        self.check_response_state(response=r)==States.PROCESSED
+        return response
 
-    def _update_ids(self):
+
+    def update_and_return_responses(self):
+        """Update footprints, moduleID, propertyIDs
+
+        Note: to be moved into aigumgum
+
+        Returns:
+            list[Response]: output responses
+        """
+        self.responses = []
+        #we move from to_be_processed to processed
+        for r in self.responses_to be_processed:
+            if self.is_already_processed(r):
+                self.responses.append(r)
+        #we remove from to_be_processed the responses already processed
+        filterfalse(lambda x: self.is_already_processed(r), self.responses_to be_processed)
+        for r in self.responses:                          
+            self.update_and_return_response(response=r)
+        return self.responses
+
+    def _update_ids(self,response):
         """Internal method for updating property id and module id 
            in frame_anns and tracks
         """
-        for image_ann in self.response.frame_anns:
+        for image_ann in response.frame_anns:
             for region in image_ann["regions"]:
                 for prop in region["props"]:
                     self._update_property_id(prop)
                     self._update_module_id(prop)
 
-        for video_ann in self.response.tracks:
+        for video_ann in response.tracks:
             for prop in video_ann["props"]:
                 self._update_property_id(prop)
                 self._update_module_id(prop)
 
-        for video_ann in self.response.media_summary:
+        for video_ann in response.media_summary:
             for prop in video_ann["props"]:
                 self._update_property_id(prop)
                 self._update_module_id(prop)

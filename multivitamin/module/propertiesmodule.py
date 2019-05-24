@@ -13,6 +13,8 @@ class PropertiesModule(Module):
         prop_type=None,
         prop_id_map=None,
         module_id_map=None,
+        enable_fsm=False,
+        to_be_processed_buffer_size=1
     ):
         """Module that processes properties, not images
         
@@ -29,19 +31,21 @@ class PropertiesModule(Module):
             prop_type=prop_type,
             prop_id_map=prop_id_map,
             module_id_map=module_id_map,
+            enable_fsm=enable_fsm,
+            to_be_processed_buffer_size=to_be_processed_buffer_size
         )
         log.debug("Creating PropertiesModule")
 
-    def process(self, response):
+    def process(self, responses):
         """Process method called by Server
 
         Args:
-            response (Response): prev_response
+            responses list[Response]: prev_responses
         
         Returns:
             Response: resultant response
         """
-        super().process(response)
+        super().process(responses)
         self.process_properties()
         return self.update_and_return_response()
 
@@ -49,7 +53,7 @@ class PropertiesModule(Module):
     def process_properties(self):
         """Abstract method to be implemented to the child PropertiesModule
 
-        Should populate response with self.response.append_track(...) 
+        Should populate self.responses with append_track(...) 
         or self.response.append_media_summary(...)
         """
         pass
