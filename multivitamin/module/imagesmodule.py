@@ -24,8 +24,8 @@ class ImagesModule(Module):
         prop_id_map=None,
         module_id_map=None,
         batch_size=1,        
-        to_be_processed_buffer_size=1,
-        parallel_downloading=False
+        to_be_processed_buffer_size=10,
+        parallel_downloading=True
     ):
         super().__init__(
             server_name=server_name,
