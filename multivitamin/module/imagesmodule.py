@@ -4,7 +4,6 @@ from abc import abstractmethod
 import traceback
 from collections.abc import Iterable
 import pandas as pd
-import _thread
 import glog as log
 
 from multivitamin.module import Module, Codes
