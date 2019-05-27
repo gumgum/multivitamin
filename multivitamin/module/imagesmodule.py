@@ -6,10 +6,11 @@ from collections.abc import Iterable
 import pandas as pd
 import glog as log
 
-from multivitamin.module import Module, Codes
+
+from multivitamin.module.codes import Codes
 from multivitamin.module.utils import pandas_query_matches_props, batch_generator
 from multivitamin.media import MediaRetriever
-
+from multivitamin.module.module import Module
 
 MAX_PROBLEMATIC_FRAMES = 10
 
