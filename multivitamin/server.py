@@ -93,7 +93,10 @@ class Server(Flask):
         while True:
             try:
                 log.info("Pulling requests")
-                requests = self.input_comm.pull()
+                #we get the number of requests we have to pull
+                module0 =self.modules[0]
+                n=module0.get_required_number_requests()
+                requests = self.input_comm.pull(n)
 
                 responses, end_flag = self._process_requests(requests)                
                 for response in responses:
@@ -138,9 +141,12 @@ class Server(Flask):
             response = Response(request, self.schema_registry_url)
             responses.append(response)
 
-        for module in self.modules:
+        for i_module,module in enumerate(self.modules):
             log.info(f"Processing request for module: {module}")
             responses = module.process(responses)
+            if i_module<len(self.modules)-1:#we set the responses to be processed (by the following module)             
+                for response in responses:
+                    response.set_as_to_be_processed()
             for response in responses:
                 log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
         return responses,end_flag
