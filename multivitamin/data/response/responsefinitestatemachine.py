@@ -1,8 +1,7 @@
 from threading import Lock
 from abc import ABC, abstractmethod
-from multivitamin.module import ImagesModule
 from multivitamin.media import MediaRetriever
-from multivitamin.module import Codes
+from multivitamin.module.codes import Codes
 import _thread
 import time
 
@@ -29,7 +28,7 @@ class ResponseFiniteStateMachine(ABC):
         self._downloading_thread_creation_time=None
         self._downloading_thread_timeout=60
     def __del__(self): 
-        self.stop_downloading_thread())
+        self.stop_downloading_thread()
         
 
     def stop_downloading_thread(self):
