@@ -24,6 +24,7 @@ class ResponseFiniteStateMachine(ABC):
         #we instanciate the lock
         self._lock = Lock()
         self._state=States.IRRELEVANT
+        self.media=None
         self._downloading_thread=None
         self._downloading_thread_creation_time=None
         self._downloading_thread_timeout=60
@@ -108,7 +109,7 @@ class ResponseFiniteStateMachine(ABC):
     def _download_media(self):
         if self.parallel_downloading:            
             self._downloading_thread=_thread.start_new_thread(ResponseFiniteStateMachine._fetch_media,(self))
-            _downloading_thread_cretion_time=#we assign a time
+            self._downloading_thread_creation_time=time.time()
         else:
             self._fetch_media(r)
 
@@ -117,16 +118,14 @@ class ResponseFiniteStateMachine(ABC):
         """Fetches the media from response.request.url
            Careful, you must keep this method threadsafe
         """
-        self._downloading_thread_creation_time=time.time()
         try:
             log.debug("preparing response")
-            log.info(f"Loading media from url: {response.request.url}")
-            response.media = MediaRetriever(response.request.url)
-            if response.media.is_image or response.media.is_video:
-                response.frames_iterator = response.media.get_frames_iterator(
-                    response.request.sample_rate
-                )
-                ImagesModule._update_w_h_in_response(response=response)
+            if not response.media:
+                log.info(f"Loading media from url: {response.request.url}")
+                response.media = MediaRetriever(response.request.url)
+            else:
+                log.info(f"media from url: {response.request.url} was already in place.")
+            ResponseFiniteStateMachine._parse_media(response)
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
@@ -134,3 +133,15 @@ class ResponseFiniteStateMachine(ABC):
             response.set_as_processed()#error downloading the image
         response.set_as_ready_to_be_processed()
         return
+
+    @staticmethod
+    def _parse_media(response):
+        #if it is video or image, we get a frame iterator and we update width and height
+        if response.media.is_image or response.media.is_video:
+            response.frames_iterator = response.media.get_frames_iterator(
+                response.request.sample_rate
+            )             
+        (width, height) = response.media.get_w_h()
+        log.debug(f"Setting in response w: {width} h: {height}")
+        response.width = width
+        response.height = height
