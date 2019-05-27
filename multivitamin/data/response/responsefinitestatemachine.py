@@ -1,5 +1,6 @@
 from threading import Lock
 from abc import ABC, abstractmethod
+from multivitamin.module import ImagesModule
 from multivitamin.media import MediaRetriever
 from multivitamin.module import Codes
 import _thread
@@ -121,10 +122,11 @@ class ResponseFiniteStateMachine(ABC):
             log.debug("preparing response")
             log.info(f"Loading media from url: {response.request.url}")
             response.media = MediaRetriever(response.request.url)
-            response.frames_iterator = response.media.get_frames_iterator(
-                response.request.sample_rate
-            )
-            ImagesModule._update_w_h_in_response(response=response)
+            if response.media.is_image or response.media.is_video:
+                response.frames_iterator = response.media.get_frames_iterator(
+                    response.request.sample_rate
+                )
+                ImagesModule._update_w_h_in_response(response=response)
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
