@@ -56,3 +56,5 @@ tqdm
 dataclasses
 typeguard
 imohash
+opencv-python==3.4.5.20
+pims==0.4.1
