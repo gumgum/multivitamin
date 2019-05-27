@@ -138,13 +138,6 @@ class ImagesModule(Module):
         """Abstract method to be implemented by child module"""
         pass
 
-    @staticmethod
-    def _update_w_h_in_response(response):
-        (width, height) = response.media.get_w_h()
-        log.debug(f"Setting in response w: {width} h: {height}")
-        response.width = width
-        response.height = height
-
     def _region_contains_props(self, region):
         """ Boolean to check if a region's props matches the defined
             previous properties of interest
