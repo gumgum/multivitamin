@@ -72,7 +72,6 @@ class Module(ABC):
         """
         return self.prev_pois
 
-    
     @abstractmethod
     def process(self, responses):
         """Abstract method, public entry point for procesing a response
@@ -86,6 +85,7 @@ class Module(ABC):
             r.code = Codes.SUCCESS            
             r.set_as_to_be_processed()
             self.responses_to_be_processed.append(r)
+
 
     def update_and_return_response(self,response):
         """Update footprints, moduleID, propertyIDs
@@ -122,14 +122,20 @@ class Module(ABC):
         Returns:
             list[Response]: output responses
         """
+        #we clean self.responses
         self.responses = []
-        #we move from to_be_processed to processed
+        #we mark as processed, with a timeout code, the responses from self.responses_to_be_processed that have been there for too long. 
+        for r in self.responses_to_be_processed:
+            r.check_timeout()
+        #we move from to_be_processed to processed the responses already processed
         for r in self.responses_to_be_processed:
             if r.is_already_processed():#if de the children doesn't activate the request's FSM, this will always returns true
                 self.responses.append(r)
         #we remove from to_be_processed the responses already processed
-        # filterfalse(lambda x: x.is_already_processed(), self.responses_to_be_processed)
         self.responses_to_be_processed = [x for x in self.responses_to_be_processed if not x.is_already_processed()]
+        
+
+        #we update the responses
         for r in self.responses:                          
             self.update_and_return_response(response=r)
         return self.responses

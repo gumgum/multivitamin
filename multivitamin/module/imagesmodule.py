@@ -38,29 +38,7 @@ class ImagesModule(Module):
         self.batch_size = batch_size
         self.parallel_downloading=parallel_downloading
         log.debug(f"Creating ImagesModule with batch_size: {batch_size}")
-
-    @staticmethod
-    def _fetch_media(response):
-        """Fetches the media from response.request.url
-           Careful, you must keep this method threadsafe
-        """
-        try:
-            log.debug("preparing response")
-            log.info(f"Loading media from url: {response.request.url}")
-            response.media = MediaRetriever(response.request.url)
-            response.frames_iterator = response.media.get_frames_iterator(
-                response.request.sample_rate
-            )
-            ImagesModule._update_w_h_in_response(response=response)
-        except Exception as e:
-            log.error(e)
-            log.error(traceback.print_exc())
-            response.code = Codes.ERROR_LOADING_MEDIA
-            response.set_as_processed()#error downloading the image
-
-        response.set_as_ready_to_be_processed()
-        return
-
+    
     def process(self, responses):
         """Process the message, calls process_images(batch, tstamps, contours=None)
            which is implemented by the child module
@@ -76,10 +54,7 @@ class ImagesModule(Module):
             if r.is_to_be_processed():
                 if r.set_as_preparing_to_be_processed()==False:
                     continue#if it was already set, we must continue
-                if self.parallel_downloading:
-                    _thread.start_new_thread(_fetch_media,(r))
-                else:
-                    self._fetch_media(r)
+                r._download_media()
                 
         for r in self.responses_to_be_processed:
             if r.is_ready_to_be_processed()==False:
