@@ -24,7 +24,7 @@ class ImagesModule(Module):
         prop_id_map=None,
         module_id_map=None,
         batch_size=1,        
-        to_be_processed_buffer_size=10,
+        to_be_processed_buffer_size=100,
         parallel_downloading=True
     ):
         super().__init__(
@@ -50,7 +50,7 @@ class ImagesModule(Module):
         super().process(responses)
         for r in self.responses_to_be_processed:
             if self.parallel_downloading:
-                log.info("Activating FSM of the request")
+                log.debug("Activating FSM of the request")
                 r.enablefsm()               
             if r.is_to_be_processed():
                 if r.set_as_preparing_to_be_processed()==False:
@@ -101,6 +101,7 @@ class ImagesModule(Module):
             region: The matching region dict
             response: the actual response
         """
+        log.debug('Starting preprocess_input')
         for i, (frame, tstamp) in enumerate(response.frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
@@ -133,7 +134,7 @@ class ImagesModule(Module):
 
                 for region in regions_that_match_props:
                     yield frame, tstamp, region, response
-
+        log.debug('Returning preprocess_input')
     @abstractmethod
     def process_images(self, image_batch, tstamp_batch, responses, prev_region_batch=None):
         """Abstract method to be implemented by child module"""
