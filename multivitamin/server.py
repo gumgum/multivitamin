@@ -86,10 +86,11 @@ class Server(Flask):
         log.info("Starting server...")
         self._start()
 
+    end_flag=False
     def _start(self):
         """Start server. While loop that pulls requests from the input_comm, calls
         _process_request(request), and posts responses to output_comms
-        """
+        """        
         while True:
             try:
                 log.info("Pulling requests")
@@ -98,7 +99,7 @@ class Server(Flask):
                 n=module0.get_required_number_requests()
                 requests = self.input_comm.pull(n)
 
-                responses, end_flag = self._process_requests(requests)                
+                responses, self.end_flag = self._process_requests(requests)                
                 for response in responses:
                     log.info("Pushing reponse to output_comms")
                     for output_comm in self.output_comms:
@@ -108,7 +109,7 @@ class Server(Flask):
                             log.error(e)
                             log.error(traceback.format_exc())
                             log.error(f"Error pushing to output_comm: {output_comm}")
-                if end_flag:
+                if self.end_flag and len(module0.responses_to_be_processed)==0:
                     log.info("Finishing execution. end_flag activated.")
                     exit(0)
             except Exception:
