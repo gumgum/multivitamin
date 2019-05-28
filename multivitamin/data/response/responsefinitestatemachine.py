@@ -45,15 +45,19 @@ class ResponseFiniteStateMachine(ABC):
         self._downloading_thread=None
         self._downloading_thread_timeout=0
 
-    def check_timeout(self):
+    def get_lifetime(self):
+         lifetime=time.time()- self._downloading_thread_creation_time
+         return lifetime
+
+    def check_timeout(self):        
         if not self.enabled:
             return False
         if not self.is_preparing_to_be_processed():
             return False
-        lifetime=time.time()- self._downloading_thread_creation_time
+        lifetime=self.get_lifetime()
         if lifetime>self._downloading_thread_timeout:
-            log.info("self._downloading_thread_creation_time: " + str(self._downloading_thread_creation_time))
-            log.info("lifetime: " + str(lifetime))            
+            log.debug("self._downloading_thread_creation_time: " + str(self._downloading_thread_creation_time))
+            log.debug("lifetime: " + str(lifetime))            
             self.stop_downloading_thread()
             log.warning("ERROR_TIMEOUT")
             self.code = Codes.ERROR_TIMEOUT
@@ -74,12 +78,12 @@ class ResponseFiniteStateMachine(ABC):
         if self._state==state:
             ret=False
         else:
-            log.info('From ' + self._state.name + ' to '+ state.name +'.'+ self.url)
+            log.debug('From ' + self._state.name + ' to '+ state.name +'.'+ self.url)
         self._state=state
         self._lock.release()
         return ret
-    def _check_response_state(self):
-        log.info(self._state.name +'.'+ self.url)
+    def _check_response_state(self):        
+        log.debug(self._state.name +'.'+ self.url)
         if self.enabled==False:
             return States.IRRELEVANT
         self._lock.acquire()
@@ -121,11 +125,11 @@ class ResponseFiniteStateMachine(ABC):
     def _download_media(self):
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
-            log.info("Creating thread at " + str(self._downloading_thread_creation_time))
+            log.debug("Creating thread at " + str(self._downloading_thread_creation_time))
             self._downloading_thread=_thread.start_new_thread(ResponseFiniteStateMachine._fetch_media,(self,))
-            log.info("Thread created")            
+            log.debug("Thread created")            
         else:
-            self._fetch_media(r)
+            self._fetch_media(r)        
 
     @staticmethod
     def _fetch_media(response):
@@ -135,10 +139,10 @@ class ResponseFiniteStateMachine(ABC):
         try:
             log.debug("preparing response")
             if not response.media:
-                log.info(f"Loading media from url: {response.request.url}")
+                log.debug(f"Loading media from url: {response.request.url}")
                 response.media = MediaRetriever(response.request.url)
             else:
-                log.info(f"media from url: {response.request.url} was already in place.")
+                log.debug(f"media from url: {response.request.url} was already in place.")
             ResponseFiniteStateMachine._parse_media(response)
         except Exception as e:
             log.error(e)
@@ -146,6 +150,8 @@ class ResponseFiniteStateMachine(ABC):
             response.code = Codes.ERROR_LOADING_MEDIA
             response.set_as_processed()#error downloading the image
         response.set_as_ready_to_be_processed()
+        lifetime=response.get_lifetime()
+        log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)
         return
 
     @staticmethod
