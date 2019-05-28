@@ -127,7 +127,7 @@ class CaffeClassifier(ImagesModule):
             self.transformer.set_mean("data", meanfile)
         self.transformer.set_transpose("data", (2, 0, 1))
 
-    def process_images(self, images, tstamps,responses, prev_regions):
+    def process_images(self, images, tstamps,prev_regions,responses):
         log.debug("Processing images")
         #log.debug("tstamps: "  + str(tstamps))
         assert len(images) == len(tstamps) == len(prev_regions)
@@ -142,9 +142,9 @@ class CaffeClassifier(ImagesModule):
                 self.net.blobs["data"].data[...] = im
 
                 # TODO : clean this up
-                log.info("Forward pass before")
+                log.info("Forward pass before: " + response.url)
                 probs = self.net.forward()[self.layer_name]
-                log.info("Forward pass after")
+                log.info("Forward pass after: " + response.url)
                 # log.debug("probs: " + str(probs))
                 # log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
