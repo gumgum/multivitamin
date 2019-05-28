@@ -1,10 +1,12 @@
 import os
+import cv2
 import sys
 import glog as log
 import numpy as np
 import traceback
 import importlib
 import numbers
+from datetime import datetime
 
 from multivitamin.module import ImagesModule
 from multivitamin.data.response.utils import (
@@ -116,19 +118,16 @@ class CaffeClassifier(ImagesModule):
             caffe.TEST,
         )
         mean_file = os.path.join(net_data_dir, "mean.binaryproto")
-        self.transformer = caffe.io.Transformer(
-            {"data": self.net.blobs["data"].data.shape}
-        )
+
+        self.mean = None
         if os.path.exists(mean_file):
             blob_meanfile = caffe.proto.caffe_pb2.BlobProto()
             data_meanfile = open(mean_file, "rb").read()
             blob_meanfile.ParseFromString(data_meanfile)
-            meanfile = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
-            self.transformer.set_mean("data", meanfile)
-        self.transformer.set_transpose("data", (2, 0, 1))
+            self.mean = np.squeeze(np.array(caffe.io.blobproto_to_array(blob_meanfile)))
 
     def process_images(self, images, tstamps,prev_regions,responses):
-        log.debug("Processing images")
+        log.info("Processing images")
         #log.debug("tstamps: "  + str(tstamps))
         assert len(images) == len(tstamps) == len(prev_regions)
         for i, (frame, tstamp, prev_region, response) in enumerate(
@@ -137,14 +136,22 @@ class CaffeClassifier(ImagesModule):
             log.debug("caffe classifier tstamp: " + str(tstamp))
             try:
                 if prev_region is not None:
-                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))                
-                im = self.transformer.preprocess("data", frame)
+                    frame = crop_image_from_bbox_contour(frame, prev_region.get("contour"))
+                log.debug("Pre transformer")        
+                cv2_time = datetime.utcnow()
+                im = cv2.resize(frame, self.net.blobs["data"].data.shape[2:])
+                im = im.transpose(2, 0, 1)
+                if self.mean is not None:
+                    im = im - self.mean
+                total_cv2= datetime.utcnow() - cv2_time
+                log.debug("CV2 Time: " + str(total_cv2))
+                log.debug("Post transformer")                
                 self.net.blobs["data"].data[...] = im
 
                 # TODO : clean this up
-                log.info("Forward pass before: " + response.url)
+                log.debug("Forward pass before: " + response.url)
                 probs = self.net.forward()[self.layer_name]
-                log.info("Forward pass after: " + response.url)
+                log.debug("Forward pass after: " + response.url)
                 # log.debug("probs: " + str(probs))
                 # log.debug("probs.shape: " + str(probs.shape))
                 target_shape = (1, len(self.labels))
