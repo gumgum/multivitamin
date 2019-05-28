@@ -2,10 +2,12 @@ from threading import Lock
 from abc import ABC, abstractmethod
 from multivitamin.media import MediaRetriever
 from multivitamin.module.codes import Codes
-import _thread
+from threading import Thread
+import traceback
+
 import time
 
-from threading import Thread
+
 
 from enum import Enum
 
@@ -28,23 +30,31 @@ class ResponseFiniteStateMachine(ABC):
         self.media=None
         self._downloading_thread=None
         self._downloading_thread_creation_time=None
-        self._downloading_thread_timeout=60
+        self._downloading_thread_timeout=240#seconds
     def __del__(self): 
         self.stop_downloading_thread()
         
 
     def stop_downloading_thread(self):
-        log.warning('To be implemented')
-        return True
         if self._downloading_thread:
-            try:
-                self._downloading_thread.exit()                
+            if not self._downloading_thread.is_alive():                
+                return False
+        log.warning('Stopping (NOT IMPLEMENTED) thread id: '+ str(self._downloading_thread.ident))
+        return True
+        #############        
+        if self._downloading_thread:
+            try:            
+                #to be implemented if necessary
+                pass
             except Exception as e:
                 log.error("error exiting self._downloading_thread")
-                log.error(traceback.format_exc())
+                log.error(traceback.format_exc())                
+        log.info("Thread killed")
         self._downloading_thread=None
-        self._downloading_thread_timeout=0
-
+        self._downloading_thread_creation_time=None
+        self.set_as_ready_to_be_processed()
+        return True
+        
     def get_lifetime(self):
          lifetime=time.time()- self._downloading_thread_creation_time
          return lifetime
@@ -59,9 +69,7 @@ class ResponseFiniteStateMachine(ABC):
             log.debug("self._downloading_thread_creation_time: " + str(self._downloading_thread_creation_time))
             log.debug("lifetime: " + str(lifetime))            
             self.stop_downloading_thread()
-            log.warning("ERROR_TIMEOUT")
-            self.code = Codes.ERROR_TIMEOUT
-            self.set_as_processed()
+            log.error("ERROR_TIMEOUT. This thread HAVE BEEN ALIVE FOR TOO LONG")
             return True
 
     def enablefsm(self):
@@ -125,9 +133,10 @@ class ResponseFiniteStateMachine(ABC):
     def _download_media(self):
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
-            log.debug("Creating thread at " + str(self._downloading_thread_creation_time))
-            self._downloading_thread=_thread.start_new_thread(ResponseFiniteStateMachine._fetch_media,(self,))
-            log.debug("Thread created")            
+            log.info("Creating thread at " + str(self._downloading_thread_creation_time))            
+            self._downloading_thread=Thread(group=None, target=ResponseFiniteStateMachine._fetch_media, name=None, args=(self,), kwargs={})
+            self._downloading_thread.start()
+            log.info("Thread created")            
         else:
             self._fetch_media(r)        
 
