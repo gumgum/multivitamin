@@ -50,7 +50,8 @@ class ImagesModule(Module):
         super().process(responses)
         for r in self.responses_to_be_processed:
             if self.parallel_downloading:
-                r.enablefsm()
+                log.info("Activating FSM of the request")
+                r.enablefsm()               
             if r.is_to_be_processed():
                 if r.set_as_preparing_to_be_processed()==False:
                     continue#if it was already set, we must continue
