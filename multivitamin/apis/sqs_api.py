@@ -46,7 +46,7 @@ class SQSAPI(CommAPI):
         while "Messages" not in response:
             log.debug(f"Polling request from queue {self.queue_url}...")
             response = self.sqs.receive_message(
-                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
+                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC, MaxNumberOfMessages=n
             )
         log.debug(f"sqs.receive_message response: {response}")
         requests = []

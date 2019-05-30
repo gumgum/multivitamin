@@ -2,6 +2,7 @@ import os
 import json
 import traceback
 import threading
+import time
 
 import glog as log
 from flask import Flask, jsonify
@@ -110,13 +111,18 @@ class Server(Flask):
                             log.error(traceback.format_exc())
                             log.error(f"Error pushing to output_comm: {output_comm}")
                 if self.end_flag:
+                    log.info("end_flag activated")
+                    #log.info("end_flag activated: Sleeping got 5 secs")
+                    #time.sleep(5)
                     if len(module0.responses_to_be_processed)==0:
                         log.info("Finishing execution. end_flag activated.")
-                        exit(0)
+                        for r in module0.responses:
+                            log.info(str(r.get_lifetime()) + ', module0.responses, potentially problematic url: ' + r.url)
+                        break
                     else:
                         log.info("Trying to end but len(module0.responses_to_be_processed) = "+ str(len(module0.responses_to_be_processed)))
                         for r in module0.responses_to_be_processed:
-                            log.info('potentially problematic url: ' + r.url)
+                            log.info(str(r.get_lifetime()) + ', module0.responses_to_be_processed, potentially problematic url: ' + r.url)
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")
@@ -141,8 +147,8 @@ class Server(Flask):
                 log.info(
                     "Incoming request with kill_flag == True, killing server"
                 )
-                end_flag=True             
-                break
+                end_flag=True 
+                break                            
             log.info(f"Processing url: {request.get('url')}")
             response = Response(request, self.schema_registry_url)
             responses.append(response)

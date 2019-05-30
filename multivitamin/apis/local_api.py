@@ -55,8 +55,9 @@ class LocalAPI(CommAPI):
         for _ in range(n):
             if self.json_queue.empty():
                 log.info("Queue of jsons is empty. Exiting.")
-                return [Request({"kill_flag": "true"})]
-            m = self.json_queue.get()
+                m={"kill_flag": "true"}
+            else:
+                m = self.json_queue.get()
             log.info(f"Appending request: {m}")
             requests.append(Request(m))
         return requests
