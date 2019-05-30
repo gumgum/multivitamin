@@ -156,8 +156,7 @@ class ResponseFiniteStateMachine(ABC):
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
-            response.code = Codes.ERROR_LOADING_MEDIA
-            response.set_as_processed()#error downloading the image
+            response.code = Codes.ERROR_LOADING_MEDIA            
         response.set_as_ready_to_be_processed()
         lifetime=response.get_lifetime()
         log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)

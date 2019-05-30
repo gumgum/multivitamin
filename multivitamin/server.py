@@ -109,9 +109,14 @@ class Server(Flask):
                             log.error(e)
                             log.error(traceback.format_exc())
                             log.error(f"Error pushing to output_comm: {output_comm}")
-                if self.end_flag and len(module0.responses_to_be_processed)==0:
-                    log.info("Finishing execution. end_flag activated.")
-                    exit(0)
+                if self.end_flag:
+                    if len(module0.responses_to_be_processed)==0:
+                        log.info("Finishing execution. end_flag activated.")
+                        exit(0)
+                    else:
+                        log.info("Trying to end but len(module0.responses_to_be_processed) = "+ str(len(module0.responses_to_be_processed)))
+                        for r in module0.responses_to_be_processed:
+                            log.info('potentially problematic url: ' + r.url)
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")

@@ -58,10 +58,15 @@ class ImagesModule(Module):
                 r._download_media()
                 
         for r in self.responses_to_be_processed:
+            if r.code != Codes.SUCCESS:
+                r.set_as_processed()
+                continue
             if r.is_ready_to_be_processed()==False:
                 continue                
             if r.set_as_being_processed()==False:
                 continue#if it was already set, we must continue
+
+
             if self.prev_pois and not r.has_frame_anns():
                     log.warning("NO_PREV_REGIONS_OF_INTEREST")
                     r.code = Codes.NO_PREV_REGIONS_OF_INTEREST
@@ -82,11 +87,10 @@ class ImagesModule(Module):
                         if num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                             log.error(e)
                             self.code = Codes.ERROR_PROCESSING
-                            self.set_as_processed(r)
-                            return self.update_and_return_response()
+                            r.set_as_processed()
+                            continue
                 r.set_as_processed()
-        log.debug("Finished processing.")
-        
+        log.debug("Finished processing.")        
         if self.prev_pois and self.prev_regions_of_interest_count == 0:
             log.warning("NO_PREV_REGIONS_OF_INTEREST, returning...")
             self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
