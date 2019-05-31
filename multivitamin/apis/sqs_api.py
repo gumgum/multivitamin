@@ -40,21 +40,24 @@ class SQSAPI(CommAPI):
             list[Request]: list of requests
         """
         log.info(f"Polling request from queue {self.queue_url}...")
+        n_mess=n
+        if n_mess==0:
+            n_mess=1
+        log.info("Polling " + str(n_mess) + " requests from "+ self.queue_url + "...")        
         response = self.sqs.receive_message(
-            QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC
+            QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC ,MaxNumberOfMessages=n_mess
         )
-        while "Messages" not in response:
-            log.debug(f"Polling request from queue {self.queue_url}...")
-            response = self.sqs.receive_message(
-                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC, MaxNumberOfMessages=n
-            )
-        log.debug(f"sqs.receive_message response: {response}")
-        requests = []
-        for m in response["Messages"]:
-            log.debug(str(m))
-            requests.append(
-                Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
-            )
+        requests =[]
+        if "Messages" in response:
+            log.info(str(len(response["Messages"])) + " requests polled.")
+            log.debug(f"sqs.receive_message response: {response}")
+            for m in response["Messages"]:
+                log.debug(str(m))
+                requests.append(
+                    Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
+                )
+        else:
+            log.info("No messages in the queue.")               
         return requests
 
     def push(self, request):
