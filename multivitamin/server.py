@@ -91,7 +91,8 @@ class Server(Flask):
     def _start(self):
         """Start server. While loop that pulls requests from the input_comm, calls
         _process_request(request), and posts responses to output_comms
-        """        
+        """   
+        requests=[]     
         while True:
             try:
                 log.info("Pulling requests")

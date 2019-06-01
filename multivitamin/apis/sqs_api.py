@@ -43,6 +43,8 @@ class SQSAPI(CommAPI):
         n_mess=n
         if n_mess==0:
             n_mess=1
+        if n_mess>10:
+            n_mess=10
         log.info("Polling " + str(n_mess) + " requests from "+ self.queue_url + "...")        
         response = self.sqs.receive_message(
             QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC ,MaxNumberOfMessages=n_mess
