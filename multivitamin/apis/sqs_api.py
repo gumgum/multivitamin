@@ -40,26 +40,31 @@ class SQSAPI(CommAPI):
             list[Request]: list of requests
         """
         log.info(f"Polling request from queue {self.queue_url}...")
+        n_total=n
         n_mess=n
-        if n_mess==0:
-            n_mess=1
-        if n_mess>10:
+        while n_total>0:        
             n_mess=10
-        log.info("Polling " + str(n_mess) + " requests from "+ self.queue_url + "...")        
-        response = self.sqs.receive_message(
-            QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC ,MaxNumberOfMessages=n_mess
-        )
-        requests =[]
-        if "Messages" in response:
-            log.info(str(len(response["Messages"])) + " requests polled.")
-            log.debug(f"sqs.receive_message response: {response}")
-            for m in response["Messages"]:
-                log.debug(str(m))
-                requests.append(
-                    Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
-                )
-        else:
-            log.info("No messages in the queue.")               
+            if n_total<n_mess:
+                n_mess=n_total
+            log.info("Polling " + str(n_mess) + " requests from "+ self.queue_url + "...")        
+            response = self.sqs.receive_message(
+                QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC ,MaxNumberOfMessages=n_mess
+            )
+            requests =[]
+            if "Messages" in response:
+                n_polled = len(response["Messages"])
+                n_total = n_total - n_polled
+                log.info(str(n_polled) + " requests polled.")
+                log.debug(f"sqs.receive_message response: {response}")
+                for m in response["Messages"]:
+                    log.debug(str(m))
+                    requests.append(
+                        Request(request_input=m["Body"], request_id=m["ReceiptHandle"])
+                    )
+            else:
+                log.info("No messages in the queue.")
+                break
+
         return requests
 
     def push(self, request):
