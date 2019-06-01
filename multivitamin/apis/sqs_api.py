@@ -42,6 +42,7 @@ class SQSAPI(CommAPI):
         log.info(f"Polling request from queue {self.queue_url}...")
         n_total=n
         n_mess=n
+        requests =[]
         while n_total>0:        
             n_mess=10
             if n_total<n_mess:
@@ -49,8 +50,7 @@ class SQSAPI(CommAPI):
             log.info("Polling " + str(n_mess) + " requests from "+ self.queue_url + "...")        
             response = self.sqs.receive_message(
                 QueueUrl=self.queue_url, WaitTimeSeconds=config.SQS_WAIT_TIME_SEC ,MaxNumberOfMessages=n_mess
-            )
-            requests =[]
+            )            
             if "Messages" in response:
                 n_polled = len(response["Messages"])
                 n_total = n_total - n_polled
