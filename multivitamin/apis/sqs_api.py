@@ -80,7 +80,7 @@ class SQSAPI(CommAPI):
 
     @staticmethod       
     def delete_message_thead_safe(request_id,queue_url):
-         """Delete a message from the SQS queue given a request_id
+        """Delete a message from the SQS queue given a request_id
 
         Args:
             request_id: request_id from sqs.receive_message
