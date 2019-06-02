@@ -103,7 +103,7 @@ class Server(Flask):
 
                 responses, self.end_flag = self._process_requests(requests)                
                 for response in responses:
-                    log.info("Pushing reponse to output_comms")
+                    log.info("Pushing response to output_comms")
                     for output_comm in self.output_comms:
                         try:
                             ret = output_comm.push(response)
