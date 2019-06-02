@@ -77,3 +77,14 @@ class SQSAPI(CommAPI):
             request_id: request_id from sqs.receive_message
         """
         self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=request_id)
+
+    @staticmethod       
+    def delete_message_thead_safe(request_id,queue_url):
+         """Delete a message from the SQS queue given a request_id
+
+        Args:
+            request_id: request_id from sqs.receive_message
+            queueurl: the url of the queue from which to delete the message
+        """
+        sqs = boto3.client("sqs")
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=request_id)
