@@ -124,7 +124,7 @@ class ResponseFiniteStateMachine(ABC):
         return self._check_response_state()==States.PUSHED
 
     def _check_response_state(self):        
-        log.info(self._state.name +' '+ self.url)
+        log.debug(self._state.name +' '+ self.url)
         if self.enabled==False:
             return States.IRRELEVANT
         self._lock.acquire()
@@ -169,7 +169,7 @@ class ResponseFiniteStateMachine(ABC):
             self._downloading_thread.start()
             log.info("Thread created")            
         else:            
-            ResponseFiniteStateMachine._fetch_media_thread_safe(r)
+            ResponseFiniteStateMachine._fetch_media_thread_safe(r,media_retriever_type)
 
     @staticmethod
     def _fetch_media_thread_safe(response,media_retriever_type):
@@ -187,7 +187,7 @@ class ResponseFiniteStateMachine(ABC):
             log.error(e)
             log.error(traceback.print_exc())
             response.code = Codes.ERROR_LOADING_MEDIA            
-        lifetime=response.get_lifetime()
+        lifetime=response.get_lifetime_downloading_thread()
         response.set_as_ready_to_be_processed()
         log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)
         return
@@ -221,4 +221,6 @@ class ResponseFiniteStateMachine(ABC):
             parameters=output_comm.prepare_parameters_for_push_thread_safe(response)
             log.info("parameters: " + str(parameters))
             type(output_comm).push_thread_safe(parameters)
+        lifetime=response.get_lifetime_pushing_thread()
         response.set_as_pushed()
+        log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)
