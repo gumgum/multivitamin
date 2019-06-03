@@ -46,7 +46,7 @@ class ImagesModule(Module):
         Returns:
             list[Response]: responses objects
         """
-        log.debug("Processing messages")
+        log.debug("We fecth media for the requests")
         super().process(responses)
         for r in self.responses_to_be_processed:
             if self.parallel_downloading:
@@ -55,6 +55,7 @@ class ImagesModule(Module):
             if r.is_to_be_processed():
                 if r.set_as_preparing_to_be_processed()==False:
                     continue#if it was already set, we must continue
+                log.info("Fetching media")
                 r._fetch_media()
                 
         for r in self.responses_to_be_processed:

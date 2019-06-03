@@ -41,11 +41,9 @@ class ResponseFiniteStateMachine(ABC):
 
     def enablefsm(self):
         self.enabled=True
-        log.info(str(self._state.name))
         if self.is_irrelevant():
             self.set_as_to_be_processed()
-        log.info(str(self._state.name))
-        input()       
+
 
     def get_lifetime_downloading_thread(self):
         if self._downloading_thread_creation_time:
@@ -171,13 +169,14 @@ class ResponseFiniteStateMachine(ABC):
             self._downloading_thread.start()
             log.info("Thread created")            
         else:            
-            self._fetch_media(r)
+            ResponseFiniteStateMachine._fetch_media_thread_safe(r)
 
     @staticmethod
     def _fetch_media_thread_safe(response,media_retriever_type):
         """Fetches the media from response.request.url
            Careful, you must keep this method threadsafe
         """
+        log.info('_fetch_media_thread_safe: ' + str(media_retriever_type))
         try:
             if not response.media:
                 log.debug(f"Loading media from url: {response.request.url}")
