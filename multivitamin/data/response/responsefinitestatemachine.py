@@ -123,7 +123,7 @@ class ResponseFiniteStateMachine(ABC):
         return self._check_response_state()==States.PUSHED
 
     def _check_response_state(self):        
-        log.debug(self._state.name +'.'+ self.url)
+        log.info(self._state.name +' '+ self.url)
         if self.enabled==False:
             return States.IRRELEVANT
         self._lock.acquire()
@@ -146,7 +146,8 @@ class ResponseFiniteStateMachine(ABC):
     def set_as_pushed(self):
         return self._update_response_state(States.PUSHED)
 
-    def _update_response_state(self,state):        
+    def _update_response_state(self,state): 
+        log.info(state.name +' '+ self.url)       
         ret=True
         if self.enabled==False:
             return ret
@@ -159,7 +160,7 @@ class ResponseFiniteStateMachine(ABC):
         self._lock.release()
         return ret
 
-    def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):
+    def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):        
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
             log.info("Creating thread at " + str(self._downloading_thread_creation_time))            
