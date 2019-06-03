@@ -38,11 +38,11 @@ class ResponseFiniteStateMachine(ABC):
         self._pushing_thread=None
         self._pushing_thread_creation_time=None
         self._pushing_thread_timeout=900#seconds
-	
-        def enablefsm(self):
-            self.enabled=True
-            if self.is_irrelevant():
-                self.set_as_to_be_processed()
+
+    def enablefsm(self):
+        self.enabled=True
+        if self.is_irrelevant():
+            self.set_as_to_be_processed()
         
     def get_lifetime_downloading_thread(self):
         lifetime=time.time()- self._downloading_thread_creation_time
