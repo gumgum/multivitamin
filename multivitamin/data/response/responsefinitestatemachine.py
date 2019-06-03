@@ -52,6 +52,10 @@ class ResponseFiniteStateMachine(ABC):
         lifetime=time.time()- self._pushing_thread_creation_time
         return lifetime
 
+    def check_timeouts(self):
+        self.check_timeout_downloading_thread()
+        self.check_timeout_pushing_thread()
+
     def check_timeout_downloading_thread(self):        
         if not self.enabled:
             return False

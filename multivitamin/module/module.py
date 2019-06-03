@@ -128,7 +128,7 @@ class Module(ABC):
         log.debug("We check timeouts")
         #we mark as processed, with a timeout code, the responses from self.responses_to_be_processed that have been there for too long. 
         for r in self.responses_to_be_processed:
-            r.check_timeout()
+            r.check_timeouts()
         #we move from to_be_processed to processed the responses already processed
         log.debug("We move the already processed responses from self.to_be_processed to self.responses")
         log.debug("len(self.responses_to_be_processed): " + str(len(self.responses_to_be_processed)))
