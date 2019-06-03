@@ -164,7 +164,6 @@ class ResponseFiniteStateMachine(ABC):
            Careful, you must keep this method threadsafe
         """
         try:
-            log.debug("preparing response")
             if not response.media:
                 log.debug(f"Loading media from url: {response.request.url}")
                 response.media = media_retriever_type(response.request.url) 
@@ -192,7 +191,7 @@ class ResponseFiniteStateMachine(ABC):
                 log.warning ("output_comms_non_thread_safe: " + str(type(o)) + ". Slowing down execution")
                 o.push(responses=[self])
             if len(output_comms_thread_safe)>0:
-                log.info("Launching one thread for " + str(output_comms_thread_safe) type(o) for o in output_comms_thread_safe             
+                log.info("Launching one thread for " + str(output_comms_thread_safe))
                 self._pushing_thread=Thread(group=None, target=ResponseFiniteStateMachine._push_thread_safe, name=None, args=(self,output_comms_thread_safe), kwargs={})
                 self._pushing_thread.start()               
             else:
