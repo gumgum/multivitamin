@@ -30,27 +30,27 @@ class ResponseFiniteStateMachine(ABC):
         self._lock = Lock()
         self._state=States.IRRELEVANT
         self.media=None
-		
+
         self._downloading_thread=None
         self._downloading_thread_creation_time=None
         self._downloading_thread_timeout=240#seconds
-		
+
         self._pushing_thread=None
         self._pushing_thread_creation_time=None
         self._pushing_thread_timeout=900#seconds
-		
-	 def enablefsm(self):
-        self.enabled=True
-        if self.is_irrelevant():
-            self.set_as_to_be_processed()
+	
+        def enablefsm(self):
+            self.enabled=True
+            if self.is_irrelevant():
+                self.set_as_to_be_processed()
         
     def get_lifetime_downloading_thread(self):
-         lifetime=time.time()- self._downloading_thread_creation_time
-         return lifetime
+        lifetime=time.time()- self._downloading_thread_creation_time
+        return lifetime
     
-	def get_lifetime_pushing_thread(self):
-         lifetime=time.time()- self._pushing_thread_creation_time
-         return lifetime
+    def get_lifetime_pushing_thread(self):
+        lifetime=time.time()- self._pushing_thread_creation_time
+        return lifetime
 
     def check_timeout_downloading_thread(self):        
         if not self.enabled:
@@ -78,37 +78,37 @@ class ResponseFiniteStateMachine(ABC):
 
     def is_irrelevant(self):
         return self._check_response_state()==States.IRRELEVANT
-		
+
     def is_to_be_processed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.TO_BE_PROCESSED
-		
+
     def is_preparing_to_be_processed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.PREPARING_TO_BE_PROCESSED
-		
+
     def is_ready_to_be_processed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.READY_TO_BE_PROCESSED  
-		 
+
     def is_already_processed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.PROCESSED
-		
+
     def is_being_pushed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.BEING_PUSHED
-		
+
     def is_pushed(self):
         if self.enabled==False:
             return True
         return self._check_response_state()==States.PUSHED
-			
+
     def _check_response_state(self):        
         log.debug(self._state.name +'.'+ self.url)
         if self.enabled==False:
@@ -117,8 +117,7 @@ class ResponseFiniteStateMachine(ABC):
         state=self._state
         self._lock.release()
         return state
- 
- 
+
     def set_as_to_be_processed(self):
         return self._update_response_state(States.TO_BE_PROCESSED)
     def set_as_preparing_to_be_processed(self):
@@ -133,7 +132,7 @@ class ResponseFiniteStateMachine(ABC):
         return self._update_response_state(States.BEING_PUSHED)
     def set_as_pushed(self):
         return self._update_response_state(States.PUSHED)
-		 
+
     def _update_response_state(self,state):        
         ret=True
         if self.enabled==False:
@@ -147,7 +146,6 @@ class ResponseFiniteStateMachine(ABC):
         self._lock.release()
         return ret
 
-    
     def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):
         if not self.set_as_preparing_to_be_processed():
             return
