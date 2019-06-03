@@ -60,7 +60,7 @@ class ResponseFiniteStateMachine(ABC):
         try:
             self.check_timeout_downloading_thread()
             self.check_timeout_pushing_thread()
-        Exception as e:
+        except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
 
