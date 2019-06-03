@@ -203,7 +203,7 @@ class ResponseFiniteStateMachine(ABC):
 
     @staticmethod
     def _push_thread_safe(response,output_comms):
-        for output_comm in output_comms:            --        
+        for output_comm in output_comms:
             parameters=output_comm.prepare_parameters_for_push_thread_safe(response)
             log.info("parameters: " + str(parameters))
             type(output_comm).push_thread_safe(parameters)
