@@ -41,9 +41,12 @@ class ResponseFiniteStateMachine(ABC):
 
     def enablefsm(self):
         self.enabled=True
+        log.info(str(self._state.name))
         if self.is_irrelevant():
             self.set_as_to_be_processed()
-        
+        log.info(str(self._state.name))
+        input()       
+
     def get_lifetime_downloading_thread(self):
         if self._downloading_thread_creation_time:
             lifetime=time.time()- self._downloading_thread_creation_time
