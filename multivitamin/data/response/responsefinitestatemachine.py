@@ -45,16 +45,27 @@ class ResponseFiniteStateMachine(ABC):
             self.set_as_to_be_processed()
         
     def get_lifetime_downloading_thread(self):
+        if not self.enabled:
+            return 0
+        if not self.is_preparing_to_be_processed():
+            return 0
         lifetime=time.time()- self._downloading_thread_creation_time
         return lifetime
     
     def get_lifetime_pushing_thread(self):
+        if not self.enabled:
+            return 0
+        if not self.is_being_pushed():
+            return 0
         lifetime=time.time()- self._pushing_thread_creation_time
         return lifetime
 
     def check_timeouts(self):
-        self.check_timeout_downloading_thread()
-        self.check_timeout_pushing_thread()
+        try:
+            self.check_timeout_downloading_thread()
+            self.check_timeout_pushing_thread()
+        except:
+            log.error('Problem checking threads timeouts.')
 
     def check_timeout_downloading_thread(self):        
         if not self.enabled:
