@@ -160,8 +160,6 @@ class ResponseFiniteStateMachine(ABC):
         return ret
 
     def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):
-        if not self.set_as_preparing_to_be_processed():
-            return
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
             log.info("Creating thread at " + str(self._downloading_thread_creation_time))            
