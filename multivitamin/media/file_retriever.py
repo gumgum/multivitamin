@@ -7,7 +7,7 @@ import glog as log
 from imohash import hashfileobject
 from .http_fileobj import HTTPFile
 
-
+TIMEOUT=60
 class FileRetriever:
     """A generic class for retrieving files."""
 
@@ -23,7 +23,7 @@ class FileRetriever:
         self._content_type = None
         self._hash = None
         if url is not None:
-            self.url = url
+            self.url = url        
 
     @property
     def url(self):
@@ -61,7 +61,7 @@ class FileRetriever:
 
     def _does_remote_file_exist(self):
         try:
-            requests.head(self.url)
+            requests.head(self.url, timeout=TIMEOUT)
         except Exception as e:
             log.warning("Failed to retrieve url: {}".format(e))
             return False
@@ -86,7 +86,7 @@ class FileRetriever:
             self._content_type = mime.from_file(self.filepath)
 
         if self._content_type is None and self.is_remote and self.exists:
-            resp = requests.head(self.url)
+            resp = requests.head(self.url, timeout=TIMEOUT)
             self._content_type = resp.headers["Content-Type"]
 
         return self._content_type
@@ -130,7 +130,7 @@ class FileRetriever:
         """
 
         if self.is_remote:
-            response = requests.get(self.url)
+            response = requests.get(self.url, timeout=TIMEOUT)
             filelike_obj = BytesIO(response.content)
         else:
             with open(self.filepath, "rb") as f:
