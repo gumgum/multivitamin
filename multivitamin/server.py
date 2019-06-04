@@ -118,12 +118,12 @@ class Server(Flask):
                     if len(module0.responses_to_be_processed)==0:
                         log.info("Finishing execution. end_flag activated.")
                         for r in module0.responses:
-                            log.info(str(r.get_lifetime()) + ', module0.responses, potentially problematic url: ' + r.url)
+                            log.info('module0.responses, potentially problematic url: ' + r.url)
                         break
                     else:
                         log.info("Trying to end but len(module0.responses_to_be_processed) = "+ str(len(module0.responses_to_be_processed)))
                         for r in module0.responses_to_be_processed:
-                            log.info(str(r.get_lifetime()) + ', module0.responses_to_be_processed, potentially problematic url: ' + r.url)
+                            log.info('module0.responses_to_be_processed, potentially problematic url: ' + r.url)
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")
