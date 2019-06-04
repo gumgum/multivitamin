@@ -168,7 +168,7 @@ class ResponseFiniteStateMachine(ABC):
             self._downloading_thread.start()
             log.debug("Thread created")            
         else:            
-            ResponseFiniteStateMachine._fetch_media_thread_safe(r,media_retriever_type)
+            ResponseFiniteStateMachine._fetch_media_thread_safe(self,media_retriever_type)
 
     @staticmethod
     def _fetch_media_thread_safe(response,media_retriever_type):
