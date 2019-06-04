@@ -36,7 +36,7 @@ class Response(ResponseFiniteStateMachine):
         self._response_internal = None
         self._schema_registry_url = schema_registry_url
         self._tstamp2frameannsidx = {}
-
+        self.media=None
         if isinstance(response_input, Request):
             self._request = response_input
             self._init_from_request()
