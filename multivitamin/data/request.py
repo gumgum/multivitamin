@@ -1,6 +1,6 @@
 import json
 import traceback
-
+import datetime
 import glog as log
 
 
@@ -15,14 +15,13 @@ class Request:
             request_input (dict or str): input request json as str or dict
             request_id (str): ID tied to request (esp from AWS SQS)
         """
-        d = {}
+        d = {"url":"dummy"+str(datetime.datetime.now()),"dst_url":""}        
         if isinstance(request_input, str):
             try:
                 d = json.loads(request_input)
             except ValueError as v:
                 log.error(v)
-                log.error(traceback.format_exc())
-                raise ValueError("Error decoding str into dict")
+                log.error(traceback.format_exc())                
         elif isinstance(request_input, dict):
             d = request_input
         else:
