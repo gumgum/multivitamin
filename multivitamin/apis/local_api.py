@@ -25,7 +25,7 @@ class LocalAPI(CommAPI):
             default_file (bool): write to response.json and overwrite each time
         """
         self.pushing_folder = pushing_folder
-        self.json_queue = Queue()
+        self.requests_queue = Queue()
         self.default_file = default_file
 
         if pulling_folder:
@@ -36,7 +36,10 @@ class LocalAPI(CommAPI):
             for path in paths:
                 with path.open() as rf:
                     for row in rf:
-                        self.json_queue.put(json.loads(row))
+                        log.info(row)
+                        req = Request(request_input=row)
+                        log.info(str(req))
+                        self.requests_queue.put(req)
 
         if not os.path.exists(pushing_folder):
             os.makedirs(pushing_folder)
@@ -53,13 +56,13 @@ class LocalAPI(CommAPI):
         log.info("Pulling local query jsons.")
         requests = []
         for _ in range(n):
-            if self.json_queue.empty():
+            if self.requests_queue.empty():
                 log.info("Queue of jsons is empty. Exiting.")
-                m={"kill_flag": "true"}
+                req = Request(request_input={"kill_flag": "true"})
             else:
-                m = self.json_queue.get()
-            log.info(f"Appending request: {m}")
-            requests.append(Request(m))
+                req = self.requests_queue.get()
+            log.info("Appending request: " + str(req))
+            requests.append(req)
         return requests
 
     def push(self, responses):
