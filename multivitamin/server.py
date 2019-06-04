@@ -104,13 +104,13 @@ class Server(Flask):
                 responses, self.end_flag = self._process_requests(requests)                
                 for response in responses:
                     log.info("Pushing response to output_comms")
-                    for output_comm in self.output_comms:
-                        try:
-                            ret = output_comm.push(response)
-                        except Exception as e:
-                            log.error(e)
-                            log.error(traceback.format_exc())
-                            log.error(f"Error pushing to output_comm: {output_comm}")
+                    try:
+                        ret = response._push(self.output_comms)
+                    except Exception as e:
+                        log.error(e)
+                        log.error(traceback.format_exc())
+                        log.error("Error pushing response to output_comms")               
+
                 if self.end_flag:
                     log.info("end_flag activated")
                     #log.info("end_flag activated: Sleeping got 5 secs")
