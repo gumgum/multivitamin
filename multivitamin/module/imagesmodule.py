@@ -5,6 +5,7 @@ import traceback
 from collections.abc import Iterable
 import pandas as pd
 import glog as log
+import time
 
 
 from multivitamin.module.codes import Codes
@@ -50,24 +51,27 @@ class ImagesModule(Module):
         super().process(responses)
         for r in self.responses_to_be_processed:
             if self.parallel_downloading:
-                log.info("Activating FSM of the request")
+                log.debug("Activating FSM of the request")
                 r.enablefsm()               
             if r.is_to_be_processed():
                 if r.set_as_preparing_to_be_processed()==False:
                     continue#if it was already set, we must continue
-                log.info("Fetching media")
                 r._fetch_media()
-                
+
         for r in self.responses_to_be_processed:
             if r.code != Codes.SUCCESS:
                 r.set_as_processed()
                 continue
             if r.is_ready_to_be_processed()==False:
-                continue                
+                log.debug('Not ready to be processed')
+                continue
+            else:
+                log.debug('Ready to be processed')
             if r.set_as_being_processed()==False:
+                log.debug('being processed')
                 continue#if it was already set, we must continue
-
-
+            else:
+                log.debug('Set to being processed')
             if self.prev_pois and not r.has_frame_anns():
                     log.warning("NO_PREV_REGIONS_OF_INTEREST")
                     r.code = Codes.NO_PREV_REGIONS_OF_INTEREST
@@ -75,8 +79,18 @@ class ImagesModule(Module):
                     continue
             if r.code == Codes.SUCCESS:
                 num_problematic_frames = 0
+                try:
+                    frame_iterator=self.preprocess_input(response=r)
+                except Exception as e:
+                    log.error(e)
+                    log.error(traceback.print_exc())
+                    log.error("Not recovering frame iterator")
+                    r.code = Codes.ERROR_LOADING_MEDIA
+                    r.set_as_processed()
+                    continue
+
                 for image_batch, tstamp_batch, prev_region_batch, responses_batch  in batch_generator(
-                    self.preprocess_input(response=r), batch_size=self.batch_size
+                    frame_iterator, batch_size=self.batch_size
                 ):
                     if image_batch is None or tstamp_batch is None:
                         continue
@@ -107,7 +121,9 @@ class ImagesModule(Module):
             response: the actual response
         """
         log.debug('Starting preprocess_input')
-        for i, (frame, tstamp) in enumerate(response.frames_iterator):
+        frames_iterator = response.media.get_frames_iterator()
+        
+        for i, (frame, tstamp) in enumerate(frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
                 continue
