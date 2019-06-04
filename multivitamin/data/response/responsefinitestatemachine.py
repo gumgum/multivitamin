@@ -201,9 +201,14 @@ class ResponseFiniteStateMachine(ABC):
             for o in output_comms:
                 output_comms_thread_safe=[]
                 output_comms_non_thread_safe=[]
-                push_thread_safe_flag = getattr(o, "push_thread_safe")
-                prepare_parameters_for_push_thread_safe_flag = getattr(o, "prepare_parameters_for_push_thread_safe")
-
+                push_thread_safe_flag=True
+                prepare_parameters_for_push_thread_safe_flag=True
+                try:
+                    push_thread_safe_flag = getattr(o, "push_thread_safe")
+                    prepare_parameters_for_push_thread_safe_flag = getattr(o, "prepare_parameters_for_push_thread_safe")
+                except:
+                    push_thread_safe_flag=False
+                    prepare_parameters_for_push_thread_safe_flag=False
                 log.debug('push_thread_safe_flag: ' + str(push_thread_safe_flag))
                 log.debug('prepare_parameters_for_push_thread_safe_flag: ' + str(prepare_parameters_for_push_thread_safe_flag))
                 if  push_thread_safe_flag and prepare_parameters_for_push_thread_safe_flag:
