@@ -4,7 +4,6 @@ from multivitamin.media import OpenCVMediaRetriever
 from multivitamin.module.codes import Codes
 from threading import Thread
 import traceback
-
 import time
 
 
@@ -148,7 +147,7 @@ class ResponseFiniteStateMachine(ABC):
         return self._update_response_state(States.PUSHED)
 
     def _update_response_state(self,state): 
-        log.info(state.name +' '+ self.url)       
+        log.debug(state.name +' '+ self.url)       
         ret=True
         if self.enabled==False:
             return ret
@@ -164,10 +163,10 @@ class ResponseFiniteStateMachine(ABC):
     def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):        
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
-            log.info("Creating thread at " + str(self._downloading_thread_creation_time))            
+            log.debug("Creating thread at " + str(self._downloading_thread_creation_time))  
             self._downloading_thread=Thread(group=None, target=ResponseFiniteStateMachine._fetch_media_thread_safe, name=None, args=(self,media_retriever_type), kwargs={})
             self._downloading_thread.start()
-            log.info("Thread created")            
+            log.debug("Thread created")            
         else:            
             ResponseFiniteStateMachine._fetch_media_thread_safe(r,media_retriever_type)
 
@@ -176,35 +175,48 @@ class ResponseFiniteStateMachine(ABC):
         """Fetches the media from response.request.url
            Careful, you must keep this method threadsafe
         """
-        log.info('_fetch_media_thread_safe: ' + str(media_retriever_type))
+        log.debug('_fetch_media_thread_safe: ' + str(media_retriever_type))
         try:
             if not response.media:
                 log.debug(f"Loading media from url: {response.request.url}")
-                response.media = media_retriever_type(response.request.url) 
+                log.debug("Creating response.media")                
+                response.media = media_retriever_type(response.request.url)
+                log.debug("response.media created")
             else:
                 log.debug(f"media from url: {response.request.url} was already in place.")
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
-            response.code = Codes.ERROR_LOADING_MEDIA            
+            response.code = Codes.ERROR_LOADING_MEDIA
         lifetime=response.get_lifetime_downloading_thread()
         response.set_as_ready_to_be_processed()
-        log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)
+        if lifetime>0:
+            log.info('Total lifetime of _fetch_media_thread_safe: ' + str(lifetime) + ', ' + response.request.url)       
         return
 
     def _push(self,output_comms):        
         if not self.set_as_being_pushed():
             return
         if self.enabled:            
-            for o in output_comms:                
-                if inspect.ismethod(type(o).push_thread_safe) and inspect.ismethod(type(o).prepare_parameters_for_push_thread_safe):
+            for o in output_comms:
+                output_comms_thread_safe=[]
+                output_comms_non_thread_safe=[]
+                push_thread_safe_flag = getattr(o, "push_thread_safe")
+                prepare_parameters_for_push_thread_safe_flag = getattr(o, "prepare_parameters_for_push_thread_safe")
+
+                log.debug('push_thread_safe_flag: ' + str(push_thread_safe_flag))
+                log.debug('prepare_parameters_for_push_thread_safe_flag: ' + str(prepare_parameters_for_push_thread_safe_flag))
+                if  push_thread_safe_flag and prepare_parameters_for_push_thread_safe_flag:
                     output_comms_thread_safe.append(o)
                 else:
                     output_comms_non_thread_safe.append(o)
+            log.debug("output_comms_thread_safe: " + str(output_comms_thread_safe))
+            log.debug("output_comms_non_thread_safe: " + str(output_comms_non_thread_safe))
             for o in output_comms_non_thread_safe:
                 log.warning ("output_comms_non_thread_safe: " + str(type(o)) + ". Slowing down execution")
                 o.push(responses=[self])
             if len(output_comms_thread_safe)>0:
+                self._pushing_thread_creation_time=time.time()
                 log.info("Launching one thread for " + str(output_comms_thread_safe))
                 self._pushing_thread=Thread(group=None, target=ResponseFiniteStateMachine._push_thread_safe, name=None, args=(self,output_comms_thread_safe), kwargs={})
                 self._pushing_thread.start()               
@@ -219,8 +231,9 @@ class ResponseFiniteStateMachine(ABC):
     def _push_thread_safe(response,output_comms):
         for output_comm in output_comms:
             parameters=output_comm.prepare_parameters_for_push_thread_safe(response)
-            log.info("parameters: " + str(parameters))
-            type(output_comm).push_thread_safe(parameters)
+            log.debug("parameters: " + str(parameters))
+            output_comm.__class__.push_thread_safe(*parameters)
         lifetime=response.get_lifetime_pushing_thread()
         response.set_as_pushed()
-        log.debug('Total lifetime: ' + str(lifetime) + ', ' + response.request.url)
+        if lifetime>0:
+            log.info('Total lifetime of _push_thread_safe: ' + str(lifetime) + ', ' + response.request.url)
