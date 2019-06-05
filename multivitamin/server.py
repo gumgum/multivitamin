@@ -10,16 +10,18 @@ from flask import Flask, jsonify
 from multivitamin.apis import CommAPI
 from multivitamin.module import Module
 from multivitamin.data import Response, Request
-
+from responses_buffer import ResponsesBuffer
 
 HEALTHPORT = os.environ.get("PORT", 5000)
 
 
-class Server(Flask):
+class Server(Flask,ResponsesBuffer):
     def __init__(
         self, 
         modules,
         input_comm,
+        n_parallelism=1,
+        enable_parallelism=True,
         output_comms=None,
         schema_registry_url=None,
     ):
@@ -35,6 +37,9 @@ class Server(Flask):
                                           called for pushing responses to somewhere
             schema_registry_url (str): use schema in registry url instead of local schema
         """
+        super(Flask, self).__init__(__name__)
+        super(ResponsesBuffer,self).__init__(n=n_parallelism,enable_parallelism=enable_parallelism)
+        
         if isinstance(modules, Module):
             modules = [modules]
         assert(isinstance(modules, list))
@@ -56,12 +61,13 @@ class Server(Flask):
         self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
         self.modules = modules
         self.schema_registry_url = schema_registry_url
-
         log.info("Input comm type: {}".format(type(input_comm)))
         for out in output_comms:
             log.info("Output comm type(s): {}".format(type(out)))
-
-        super().__init__(__name__)
+        self._pulling_thread=None
+		self._pulling_thread_creation_time=None
+		self._pushing_thread=None
+		self._pushing_thread_creation_time=None
 
         @self.route("/health", methods=["GET"])
         def health_check():
@@ -87,79 +93,73 @@ class Server(Flask):
         log.info("Starting server...")
         self._start()
 
-    end_flag=False
     def _start(self):
         """Start server. While loop that pulls requests from the input_comm, calls
         _process_request(request), and posts responses to output_comms
-        """   
-        requests=[]     
+        """ 
         while True:
             try:
-                log.info("Pulling requests")
-                #we get the number of requests we have to pull
-                module0 =self.modules[0]
-                n=module0.get_required_number_requests()
-                requests = self.input_comm.pull(n)
-
-                responses, self.end_flag = self._process_requests(requests)                
-                for response in responses:
-                    log.info("Pushing response to output_comms")
-                    try:
-                        ret = response._push(self.output_comms)
-                    except Exception as e:
-                        log.error(e)
-                        log.error(traceback.format_exc())
-                        log.error("Error pushing response to output_comms")               
-
-                if self.end_flag:
-                    log.info("end_flag activated")
-                    #log.info("end_flag activated: Sleeping got 5 secs")
-                    #time.sleep(5)
-                    if len(module0.responses_to_be_processed)==0:
-                        log.info("Finishing execution. end_flag activated.")
-                        for r in module0.responses:
-                            log.info('module0.responses, potentially problematic url: ' + r.url)
-                        break
-                    else:
-                        log.info("Trying to end but len(module0.responses_to_be_processed) = "+ str(len(module0.responses_to_be_processed)))
-                        for r in module0.responses_to_be_processed:
-                            log.info('module0.responses_to_be_processed, potentially problematic url: ' + r.url)
+                self._pull_requests()
+                self._process_requests()
+                self._push_responses()
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")
-            
 
-    def _process_requests(self, requests):
-        """Send request_message through all the modules
+    def _pull_requests(self):
+        if not self._enable_parallelism:
+            self._pull_requests_thread_safe()
+        else:
+            if not self._pulling_thread:
+                self._pulling_thread_creation_time=time.time()
+                log.debug("Creating thread at " + str(self._pulling_thread_creation_time))  
+                self._pulling_thread=Thread(group=None, target=self._pull_requests_thread_safe, name=None)
+                self._pulling_thread.start()
+                log.debug("Thread created")
+            else:
+                log.warning("We shouldn't be here")
 
-        Args:
-            request (Request): incoming request
-
-        Returns:
-            Response: outgoing response message
-        """
-        end_flag=False  
-        if not isinstance(requests, list):
-            raise ValueError(f"request is of type {type(requests)}, not list")
-        responses=[]
+    def _pull_requests_thread_safe(self):
+        n=self.get_required_number_requests()
+        requests = self.input_comm.pull(n)
         for request in requests:
-            log.info(f"Processing: {request}")
-            if request.kill_flag is True:
-                log.info(
-                    "Incoming request with kill_flag == True, killing server"
-                )
-                end_flag=True 
-                break                            
-            log.info(f"Processing url: {request.get('url')}")
             response = Response(request, self.schema_registry_url)
-            responses.append(response)
+            self.add_response(response)
 
+    def _push_responses(self):
+        if not self._enable_parallelism:
+            self._push_responses_thread_safe()
+        else:
+            if not self._pushing_thread:
+                self._pushing_thread_creation_time=time.time()
+                log.debug("Creating thread at " + str(self._pushing_thread_creation_time))  
+                self._pushing_thread=Thread(group=None, target=self._push_responses_thread_safe, name=None)
+                self._pushing_thread.start()
+                log.debug("Thread created")
+            else:
+                log.warning("We shouldn't be here")
+
+    def _push_responses_thread_safe(self):
+        responses=get_responses_to_be_pushed()        
+        for response in responses:
+            response._push(self.output_comms)
+        n_del= self.clean_pushed_responses()
+        log.info(str(n_del) + " responses deleted, they were already pushed")
+
+    def _process_requests(self):        
         for i_module,module in enumerate(self.modules):
             log.info(f"Processing request for module: {module}")
-            responses = module.process(responses)
-            if i_module<len(self.modules)-1:#we set the responses to be processed (by the following module)             
-                for response in responses:
-                    response.set_as_to_be_processed()
+            last_module_flag = (i_module==len(self.modules)-1)
+            responses=self.get_responses_ready_to_be_processed()
+            if responses:
+                module.process(responses)
+            else:
+                log.warning("No messages to be processed among " + str(self.get_current_number_responses))
+            for response  in responses:
+                if last_module_flag:
+                    response.set_as_processed()
+                else:
+                    response.set_as_ready_to_be_processed()
             for response in responses:
                 log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
-        return responses,end_flag
+        return
