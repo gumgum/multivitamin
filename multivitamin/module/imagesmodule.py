@@ -49,38 +49,17 @@ class ImagesModule(Module):
         """
         log.debug("We fecth media for the requests")
         super().process(responses)
-        for r in self.responses_to_be_processed:
-            if self.parallel_downloading:
-                log.debug("Activating FSM of the request")
-                r.enablefsm()               
-            if r.is_to_be_processed():
-                if r.set_as_preparing_to_be_processed()==False:
-                    continue#if it was already set, we must continue
-                r._fetch_media()
-
-        for r in self.responses_to_be_processed:
+        for r in self.responses:
             if r.code != Codes.SUCCESS:
-                r.set_as_processed()
                 continue
-            if r.is_ready_to_be_processed()==False:
-                log.debug('Not ready to be processed')
-                continue
-            else:
-                log.debug('Ready to be processed')
-            if r.set_as_being_processed()==False:
-                log.debug('being processed')
-                continue#if it was already set, we must continue
-            else:
-                log.debug('Set to being processed')
             if self.prev_pois and not r.has_frame_anns():
                     log.warning("NO_PREV_REGIONS_OF_INTEREST")
                     r.code = Codes.NO_PREV_REGIONS_OF_INTEREST
-                    r.set_as_processed()#error, no previous regions of interest
                     continue
             if r.code == Codes.SUCCESS:
                 num_problematic_frames = 0
                 try:
-                    frame_iterator=self.preprocess_input(response=r)
+                    frame_tstamp_prevregion_response_iterator=self.preprocess_input(response=r)
                 except Exception as e:
                     log.error(e)
                     log.error(traceback.print_exc())
@@ -90,7 +69,7 @@ class ImagesModule(Module):
                     continue
 
                 for image_batch, tstamp_batch, prev_region_batch, responses_batch  in batch_generator(
-                    frame_iterator, batch_size=self.batch_size
+                    frame_tstamp_prevregion_response_iterator, batch_size=self.batch_size
                 ):
                     if image_batch is None or tstamp_batch is None:
                         continue
@@ -101,14 +80,9 @@ class ImagesModule(Module):
                         log.warning("Problem processing frames")
                         if num_problematic_frames >= MAX_PROBLEMATIC_FRAMES:
                             log.error(e)
-                            self.code = Codes.ERROR_PROCESSING
-                            r.set_as_processed()
+                            r.code = Codes.ERROR_PROCESSING
                             continue
-                r.set_as_processed()
         log.debug("Finished processing.")        
-        if self.prev_pois and self.prev_regions_of_interest_count == 0:
-            log.warning("NO_PREV_REGIONS_OF_INTEREST, returning...")
-            self.code = Codes.NO_PREV_REGIONS_OF_INTEREST
         return self.update_and_return_responses()
 
     def preprocess_input(self,response):
@@ -121,8 +95,8 @@ class ImagesModule(Module):
             response: the actual response
         """
         log.debug('Starting preprocess_input')
-        frames_iterator = response.media.get_frames_iterator()
-        
+        response.prev_regions_of_interest_count =0
+        frames_iterator = response.media.get_frames_iterator()        
         for i, (frame, tstamp) in enumerate(frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
@@ -151,11 +125,12 @@ class ImagesModule(Module):
                         if self._region_contains_props(i_region):
                             log.debug(f"region: {i_region} contains props of interest")
                             regions_that_match_props.append(i_region)
-                            self.prev_regions_of_interest_count += 1
+                            response.prev_regions_of_interest_count += 1
 
                 for region in regions_that_match_props:
                     yield frame, tstamp, region, response
         log.debug('Returning preprocess_input')
+
     @abstractmethod
     def process_images(self, image_batch, tstamp_batch, responses, prev_region_batch=None):
         """Abstract method to be implemented by child module"""
