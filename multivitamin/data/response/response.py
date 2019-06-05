@@ -32,6 +32,7 @@ class Response(ResponseFiniteStateMachine):
             schema_registry_url (str): whether to use schema registry when serializing to bytes
         """
         super().__init__()
+        self.code = Codes.SUCCESS
         self._request = None
         self._response_internal = None
         self._schema_registry_url = schema_registry_url
