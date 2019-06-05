@@ -29,8 +29,7 @@ class Module(ABC):
         self.prev_pois = None
         self.code = Codes.SUCCESS
         self.prev_regions_of_interest_count = 0
-        self.tstamps_processed = []
-        self.responses_to_be_processed = []
+        self.tstamps_processed = []        
         self.responses = []
 
     def get_required_number_requests(self):
@@ -84,7 +83,7 @@ class Module(ABC):
         for r in responses:                             
             r.tstamps_processed = []
             r.code = Codes.SUCCESS                       
-            self.responses_to_be_processed.append(r)
+            self.responses.append(r)
 
 
     def update_and_return_response(self,response):
@@ -122,24 +121,6 @@ class Module(ABC):
         Returns:
             list[Response]: output responses
         """
-        log.debug("We clean self.responses")
-        #we clean self.responses
-        self.responses = []
-        log.debug("We check timeouts")
-        #we mark as processed, with a timeout code, the responses from self.responses_to_be_processed that have been there for too long. 
-        for r in self.responses_to_be_processed:
-            r.check_timeouts()
-        #we move from to_be_processed to processed the responses already processed
-        log.debug("We move the already processed responses from self.to_be_processed to self.responses")
-        log.debug("len(self.responses_to_be_processed): " + str(len(self.responses_to_be_processed)))
-        log.debug("len(self.responses): " + str(len(self.responses)))
-        for r in self.responses_to_be_processed:
-            if r.is_already_processed():#if de the children doesn't activate the request's FSM, this will always returns true
-                self.responses.append(r)
-        #we remove from to_be_processed the responses already processed
-        self.responses_to_be_processed = [x for x in self.responses_to_be_processed if not x.is_already_processed()]
-        log.debug("len(self.responses_to_be_processed): " + str(len(self.responses_to_be_processed)))
-        log.debug("len(self.responses): " + str(len(self.responses)))        
         #we update the responses
         for r in self.responses:                          
             self.update_and_return_response(response=r)
