@@ -5,6 +5,7 @@ import glog as log
 from dataclasses import asdict
 
 from multivitamin.data import Request
+from multivitamin.module.codes import Codes
 from multivitamin.data.response.io import AvroIO
 from multivitamin.data.response.dtypes import (
     ResponseInternal,
