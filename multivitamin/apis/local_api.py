@@ -36,9 +36,7 @@ class LocalAPI(CommAPI):
             for path in paths:
                 with path.open() as rf:
                     for row in rf:
-                        log.info(row)
                         req = Request(request_input=row)
-                        log.info(str(req))
                         self.requests_queue.put(req)
 
         if not os.path.exists(pushing_folder):
@@ -61,7 +59,6 @@ class LocalAPI(CommAPI):
                 req = Request(request_input={"kill_flag": "true"})
             else:
                 req = self.requests_queue.get()
-            log.info("Appending request: " + str(req))
             requests.append(req)
         return requests
 
