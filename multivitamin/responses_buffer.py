@@ -1,5 +1,6 @@
 from multivitamin.data import Response
 from threading import Lock
+import glog as log
 
 class ResponsesBuffer():
     def __init__(self,n,enable_parallelism):
@@ -14,25 +15,25 @@ class ResponsesBuffer():
     def get_current_number_responses(self):
         n=0
         self._lock.acquire()
-        n= self._n
+        n= len(self._buffer)
         self._lock.release()
         return n
 
     def get_required_number_requests(self):
         n=0
         self._lock.acquire()
-        n= self._n - len(self._buffer)
+        n = self._n - len(self._buffer)
         self._lock.release()
         return n
 
     
-    def add_request(self,response):
+    def add_response(self,response):
         self._lock.acquire()
         if self._enable_parallelism:
             response.enablefsm()
         response.set_as_preparing_to_be_processed()
         response._fetch_media()
-        self._buffer.apppend(response)
+        self._buffer.append(response)
         self._lock.release()
 
     def get_responses_ready_to_be_processed(self):
@@ -50,6 +51,14 @@ class ResponsesBuffer():
         for response in self._buffer:
             if response.is_already_processed():
                 responses.append(response)
+        self._lock.release()
+        return responses
+
+    def get_all_responses(self):
+        responses=[]
+        self._lock.acquire()
+        for response in self._buffer:
+            responses.append(response)
         self._lock.release()
         return responses
 
