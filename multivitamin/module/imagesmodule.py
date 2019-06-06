@@ -95,8 +95,12 @@ class ImagesModule(Module):
             response: the actual response
         """
         log.debug('Starting preprocess_input')
+        if response.media == None:
+            log.warning('The response has no media_retriever')
+            return None, None, None, None
         response.prev_regions_of_interest_count =0
         frames_iterator = response.media.get_frames_iterator()        
+
         for i, (frame, tstamp) in enumerate(frames_iterator):
             if frame is None:
                 log.warning("Invalid frame")
