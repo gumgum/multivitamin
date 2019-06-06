@@ -6,11 +6,12 @@ import time
 
 import glog as log
 from flask import Flask, jsonify
+from threading import Thread
 
 from multivitamin.apis import CommAPI
 from multivitamin.module import Module
 from multivitamin.data import Response, Request
-from responses_buffer import ResponsesBuffer
+from multivitamin.responses_buffer import ResponsesBuffer
 
 HEALTHPORT = os.environ.get("PORT", 5000)
 
@@ -20,9 +21,9 @@ class Server(Flask,ResponsesBuffer):
         self, 
         modules,
         input_comm,
-        n_parallelism=1,
-        enable_parallelism=True,
         output_comms=None,
+        n_parallelism=10,
+        enable_parallelism=True,
         schema_registry_url=None,
     ):
         """Serves as the public interface for CV services through multivitamin
@@ -37,8 +38,8 @@ class Server(Flask,ResponsesBuffer):
                                           called for pushing responses to somewhere
             schema_registry_url (str): use schema in registry url instead of local schema
         """
-        super(Flask, self).__init__(__name__)
-        super(ResponsesBuffer,self).__init__(n=n_parallelism,enable_parallelism=enable_parallelism)
+        Flask.__init__(self,__name__)        
+        ResponsesBuffer.__init__(self,n=n_parallelism,enable_parallelism=enable_parallelism)
         
         if isinstance(modules, Module):
             modules = [modules]
@@ -65,9 +66,9 @@ class Server(Flask,ResponsesBuffer):
         for out in output_comms:
             log.info("Output comm type(s): {}".format(type(out)))
         self._pulling_thread=None
-		self._pulling_thread_creation_time=None
-		self._pushing_thread=None
-		self._pushing_thread_creation_time=None
+        self._pulling_thread_creation_time=None
+        self._pushing_thread=None
+        self._pushing_thread_creation_time=None
 
         @self.route("/health", methods=["GET"])
         def health_check():
@@ -99,7 +100,7 @@ class Server(Flask,ResponsesBuffer):
         """ 
         while True:
             try:
-                self._pull_requests()
+                self._pull_requests()                
                 self._process_requests()
                 self._push_responses()
             except Exception:
@@ -112,54 +113,81 @@ class Server(Flask,ResponsesBuffer):
         else:
             if not self._pulling_thread:
                 self._pulling_thread_creation_time=time.time()
-                log.debug("Creating thread at " + str(self._pulling_thread_creation_time))  
+                log.info("Creating pulling thread at " + str(self._pulling_thread_creation_time))  
                 self._pulling_thread=Thread(group=None, target=self._pull_requests_thread_safe, name=None)
                 self._pulling_thread.start()
-                log.debug("Thread created")
+                log.info("Thread created")                
             else:
-                log.warning("We shouldn't be here")
+                pass
 
     def _pull_requests_thread_safe(self):
-        n=self.get_required_number_requests()
-        requests = self.input_comm.pull(n)
-        for request in requests:
-            response = Response(request, self.schema_registry_url)
-            self.add_response(response)
-
+        while True:
+            n=self.get_required_number_requests()
+            log.info('Pulling ' + str(n) + ' requests')
+            requests = self.input_comm.pull(n)
+            log.info(str(len(requests)) + ' polled')
+            for request in requests:
+                response = Response(request, self.schema_registry_url)
+                log.info('response created')
+                self.add_response(response)
+ 
     def _push_responses(self):
         if not self._enable_parallelism:
             self._push_responses_thread_safe()
         else:
             if not self._pushing_thread:
                 self._pushing_thread_creation_time=time.time()
-                log.debug("Creating thread at " + str(self._pushing_thread_creation_time))  
+                log.info("Creating pushing thread at " + str(self._pushing_thread_creation_time))  
                 self._pushing_thread=Thread(group=None, target=self._push_responses_thread_safe, name=None)
                 self._pushing_thread.start()
-                log.debug("Thread created")
+                log.info("Thread created")                
             else:
-                log.warning("We shouldn't be here")
+                pass
 
     def _push_responses_thread_safe(self):
-        responses=get_responses_to_be_pushed()        
-        for response in responses:
-            response._push(self.output_comms)
-        n_del= self.clean_pushed_responses()
-        log.info(str(n_del) + " responses deleted, they were already pushed")
+        while True:
+            log.info('pushing thread UP')        
+            responses=self.get_responses_to_be_pushed()
+            log.info(str(len(responses)) + " responses to be pushed") 
+            log.info('Total responses: ' + str(self.get_current_number_responses()))
+            for response in responses:
+                response._push(self.output_comms)
+            n_del= self.clean_pushed_responses()
+            log.info(str(n_del) + " responses deleted, if any, it was already pushed")
+            log.info('Total responses: ' + str(self.get_current_number_responses()))
+        
 
     def _process_requests(self):        
         for i_module,module in enumerate(self.modules):
             log.info(f"Processing request for module: {module}")
             last_module_flag = (i_module==len(self.modules)-1)
             responses=self.get_responses_ready_to_be_processed()
+            #for response in responses:
+            #    log.info(response._check_response_state().name)
             if responses:
                 module.process(responses)
             else:
-                log.warning("No messages to be processed among " + str(self.get_current_number_responses))
+                time.sleep(1) 
+                return
+                #log.warning("No messages ready to be processed among " + str(self.get_current_number_responses()))
+                #log.info('Press any key.')
+                #input()
+                #time.sleep(1)                
+            #for response in responses:
+            #    log.info(response._check_response_state().name)
             for response  in responses:
                 if last_module_flag:
                     response.set_as_processed()
                 else:
                     response.set_as_ready_to_be_processed()
-            for response in responses:
+            log.info(str(len(responses)) + " were processed")
+            #for response in responses:
+            #    log.info(response._check_response_state().name)
+            responses_buffer = self.get_all_responses()
+            #for response in responses_buffer:
+            #    log.info(response._check_response_state().name)            
+            
+            for response in responses:                
                 log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
+            log.info('----------------')
         return
