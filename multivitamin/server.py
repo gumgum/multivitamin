@@ -22,7 +22,7 @@ class Server(Flask,ResponsesBuffer):
         modules,
         input_comm,
         output_comms=None,
-        n_parallelism=10,
+        n_parallelism=100,
         enable_parallelism=True,
         schema_registry_url=None,
     ):
