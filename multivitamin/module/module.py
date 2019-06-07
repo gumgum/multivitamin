@@ -78,7 +78,8 @@ class Module(ABC):
         Args:
             responses list[Response]: responses
         """  
-        log.debug("PROCESS***************")             
+        log.debug("PROCESS***************")
+        self.responses=[]            
         assert isinstance(responses, list)                
         for r in responses:                             
             r.tstamps_processed = []                       

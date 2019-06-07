@@ -74,7 +74,7 @@ class ResponseFiniteStateMachine(ABC):
         if lifetime>self._downloading_thread_timeout:
             log.debug("self._downloading_thread_creation_time: " + str(self._downloading_thread_creation_time))
             log.debug("lifetime: " + str(lifetime))            
-            log.error("ERROR_TIMEOUT. The downloading thread HAS BEEN ALIVE FOR TOO LONG")
+            log.error("ERROR_TIMEOUT. The downloading thread HAS BEEN ALIVE FOR TOO LONG: " + str(lifetime))
             return True
 
     def check_timeout_pushing_thread(self):        
@@ -86,7 +86,7 @@ class ResponseFiniteStateMachine(ABC):
         if lifetime>self._pushing_thread_timeout:
             log.debug("self._pushing_thread_creation_time: " + str(self._pushing_thread_creation_time))
             log.debug("lifetime: " + str(lifetime))            
-            log.error("ERROR_TIMEOUT. The pushing thread HAS BEEN ALIVE FOR TOO LONG")
+            log.error("ERROR_TIMEOUT. The pushing thread HAS BEEN ALIVE FOR TOO LONG: " + str(lifetime))
             return True
 
     def is_irrelevant(self):
@@ -160,7 +160,9 @@ class ResponseFiniteStateMachine(ABC):
         self._lock.release()
         return ret
 
-    def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):        
+    def _fetch_media(self,media_retriever_type=OpenCVMediaRetriever):
+        if not self.set_as_preparing_to_be_processed():
+            return    
         if self.enabled:
             self._downloading_thread_creation_time=time.time()
             log.debug("Creating thread at " + str(self._downloading_thread_creation_time))  
@@ -191,7 +193,7 @@ class ResponseFiniteStateMachine(ABC):
         lifetime=response.get_lifetime_downloading_thread()
         response.set_as_ready_to_be_processed()
         if lifetime>0:
-            log.info('Total lifetime of _fetch_media_thread_safe: ' + str(lifetime) + ', ' + response.request.url)       
+            log.debug('Total lifetime of _fetch_media_thread_safe: ' + str(lifetime) + ', ' + response.request.url)       
         return
 
     def _push(self,output_comms):        
@@ -222,7 +224,7 @@ class ResponseFiniteStateMachine(ABC):
                 o.push(responses=[self])
             if len(output_comms_thread_safe)>0:
                 self._pushing_thread_creation_time=time.time()
-                log.info("Launching one thread for " + str(output_comms_thread_safe))
+                log.debug("Launching one thread for " + str(output_comms_thread_safe))
                 self._pushing_thread=Thread(group=None, target=ResponseFiniteStateMachine._push_thread_safe, name=None, args=(self,output_comms_thread_safe), kwargs={})
                 self._pushing_thread.start()               
             else:
@@ -241,4 +243,4 @@ class ResponseFiniteStateMachine(ABC):
         lifetime=response.get_lifetime_pushing_thread()
         response.set_as_pushed()
         if lifetime>0:
-            log.info('Total lifetime of _push_thread_safe: ' + str(lifetime) + ', ' + response.request.url)
+            log.debug('Total lifetime of _push_thread_safe: ' + str(lifetime) + ', ' + response.request.url)

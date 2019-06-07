@@ -100,9 +100,13 @@ class Server(Flask,ResponsesBuffer):
         """ 
         while True:
             try:
-                self._pull_requests()                
+                self._pull_requests()
                 self._process_requests()
-                self._push_responses()
+                self._push_responses()                
+                #log.info('stats pre clean: ' + str(self.get_stats()))
+                self.clean_pushed_responses()
+                #log.info('stats post clean: ' + str(self.get_stats()))
+                time.sleep(0.01)                
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")
@@ -123,14 +127,17 @@ class Server(Flask,ResponsesBuffer):
     def _pull_requests_thread_safe(self):
         while True:
             n=self.get_required_number_requests()
-            log.info('Pulling ' + str(n) + ' requests')
-            requests = self.input_comm.pull(n)
-            log.info(str(len(requests)) + ' polled')
+            log.debug('Pulling ' + str(n) + ' requests')
+            requests = self.input_comm.pull(n)            
+            log.debug(str(len(requests)) + ' polled')
             for request in requests:
                 response = Response(request, self.schema_registry_url)
-                log.info('response created')
+                log.debug('response created')
+                if self._enable_parallelism:
+                    response.enablefsm()
                 self.add_response(response)
- 
+            time.sleep(.1)
+
     def _push_responses(self):
         if not self._enable_parallelism:
             self._push_responses_thread_safe()
@@ -146,28 +153,26 @@ class Server(Flask,ResponsesBuffer):
 
     def _push_responses_thread_safe(self):
         while True:
-            log.info('pushing thread UP')        
+            #log.info('pushing thread UP')        
             responses=self.get_responses_to_be_pushed()
-            log.info(str(len(responses)) + " responses to be pushed") 
-            log.info('Total responses: ' + str(self.get_current_number_responses()))
+            #log.info(str(len(responses)) + " responses to be pushed") 
+            #log.info('Total responses: ' + str(self.get_current_number_responses()))
             for response in responses:
-                response._push(self.output_comms)
-            n_del= self.clean_pushed_responses()
-            log.info(str(n_del) + " responses deleted, if any, it was already pushed")
-            log.info('Total responses: ' + str(self.get_current_number_responses()))
-        
+                response._push(self.output_comms)                       
+            #log.info('Total responses: ' + str(self.get_current_number_responses()))
+            time.sleep(.1)        
 
     def _process_requests(self):        
         for i_module,module in enumerate(self.modules):
-            log.info(f"Processing request for module: {module}")
+            log.debug(f"Processing request for module: {module}")
             last_module_flag = (i_module==len(self.modules)-1)
             responses=self.get_responses_ready_to_be_processed()
-            #for response in responses:
-            #    log.info(response._check_response_state().name)
+            for response in responses:
+                response.set_as_being_processed()
             if responses:
                 module.process(responses)
             else:
-                time.sleep(1) 
+                #log.warning("No responses ready to be processed")
                 return
                 #log.warning("No messages ready to be processed among " + str(self.get_current_number_responses()))
                 #log.info('Press any key.')
@@ -180,14 +185,14 @@ class Server(Flask,ResponsesBuffer):
                     response.set_as_processed()
                 else:
                     response.set_as_ready_to_be_processed()
+            time.sleep(.001)
             log.info(str(len(responses)) + " were processed")
             #for response in responses:
             #    log.info(response._check_response_state().name)
-            responses_buffer = self.get_all_responses()
+            #responses_buffer = self.get_all_responses()
             #for response in responses_buffer:
             #    log.info(response._check_response_state().name)            
             
             for response in responses:                
-                log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
-            log.info('----------------')
+                log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")            
         return

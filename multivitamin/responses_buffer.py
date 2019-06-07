@@ -12,6 +12,21 @@ class ResponsesBuffer():
     def is_parallelism_enabled(self):
         return self._enable_parallelism
 
+    def get_stats(self):
+        self._lock.acquire()
+        stats = self._get_stats()        
+        self._lock.release()
+        return stats
+
+    def _get_stats(self):
+        stats={}
+        for response in self._buffer:
+           state=response. _check_response_state()
+           count=stats.get(state.name,0)
+           count = count +1
+           stats[state.name]=count
+        return stats
+
     def get_current_number_responses(self):
         n=0
         self._lock.acquire()
@@ -28,20 +43,21 @@ class ResponsesBuffer():
 
     
     def add_response(self,response):
-        self._lock.acquire()
-        if self._enable_parallelism:
-            response.enablefsm()
-        response.set_as_preparing_to_be_processed()
+        self._lock.acquire()        
         response._fetch_media()
         self._buffer.append(response)
         self._lock.release()
 
-    def get_responses_ready_to_be_processed(self):
+    def get_responses_ready_to_be_processed(self,n=None):
         responses=[]
+        if not n:
+            n=self._n
         self._lock.acquire()
         for response in self._buffer:
             if response.is_ready_to_be_processed():
                 responses.append(response)
+            if len(responses)>=n:
+                break
         self._lock.release()
         return responses
 
@@ -63,11 +79,11 @@ class ResponsesBuffer():
         return responses
 
     def clean_pushed_responses(self):
-        responses=[]
+        responses=[]     
         self._lock.acquire()
         buffer_aux = [x for x in self._buffer if not x.is_pushed()]
         n_del = len(self._buffer) - len(buffer_aux)
-        self._buffer=buffer_aux        
+        self._buffer=buffer_aux
         self._lock.release()
         return n_del
 
