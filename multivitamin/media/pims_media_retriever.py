@@ -37,16 +37,13 @@ class PIMSMediaRetriever(AbstractMediaRetriever):
 
         return self._cap
 
-    @property
     def _get_fps_from_video_capture(self):
         return self.video_capture.frame_rate
 
-    @property
     def _get_num_frames(self):
         """Get the total number of frames."""
         return len(self.video_capture)
 
-    @property
     def _get_video_frame_shape(self):
         """Get height by width by channels for frames."""
         shape = self.video_capture.frame_shape

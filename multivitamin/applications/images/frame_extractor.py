@@ -249,11 +249,9 @@ class FrameExtractor(PropertiesModule):
         if self._local_dir is not None:
             self._add_contents_to_local(contents)
 
-        self.response.url_original = self.video_url
         new_url = self._s3_url_format.format(
             bucket=self._s3_bucket, s3_key=self.contents_file_key
         )
-        self.response.url = new_url
         p = Property(
             server=self.name,
             ver=self.version,
