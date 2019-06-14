@@ -195,7 +195,7 @@ class FrameExtractor(PropertiesModule):
             log.error(e)
             log.error(traceback.print_exc())
             self.code = Codes.ERROR_LOADING_MEDIA
-            return self.update_and_return_response()
+            return
 
         self.contents_file_key = get_contents_file_s3_key(self.video_url,
                                                           self._sample_rate)
