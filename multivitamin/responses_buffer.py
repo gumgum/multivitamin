@@ -48,10 +48,11 @@ class ResponsesBuffer():
         self._buffer.append(response)
         self._lock.release()
 
-    def get_responses_ready_to_be_processed(self,n=None):
+    def get_responses_ready_to_be_processed(self,nmax=None):
         responses=[]
-        if not n:
-            n=self._n
+        n=self._n
+        if nmax and nmax<self._n:
+            n=nmax
         self._lock.acquire()
         for response in self._buffer:
             if response.is_ready_to_be_processed():

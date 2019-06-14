@@ -102,11 +102,12 @@ class Server(Flask,ResponsesBuffer):
             try:
                 self._pull_requests()
                 self._process_requests()
-                self._push_responses()                
-                #log.info('stats pre clean: ' + str(self.get_stats()))
-                self.clean_pushed_responses()
-                #log.info('stats post clean: ' + str(self.get_stats()))
-                time.sleep(0.01)                
+                self._push_responses()
+                stats_pre=self.get_stats()
+                if bool(stats_pre)==True:
+                    log.info('stats pre clean: ' + str(stats_pre))
+                    self.clean_pushed_responses()
+                    log.info('stats post clean: ' + str(self.get_stats()))                    
             except Exception:
                 log.error(traceback.format_exc())
                 log.error(f"Error processing requests: {requests}")
@@ -160,13 +161,13 @@ class Server(Flask,ResponsesBuffer):
             for response in responses:
                 response._push(self.output_comms)                       
             #log.info('Total responses: ' + str(self.get_current_number_responses()))
-            time.sleep(.1)        
+            time.sleep(.001)        
 
     def _process_requests(self):        
         for i_module,module in enumerate(self.modules):
             log.debug(f"Processing request for module: {module}")
             last_module_flag = (i_module==len(self.modules)-1)
-            responses=self.get_responses_ready_to_be_processed()
+            responses=self.get_responses_ready_to_be_processed(nmax=10)
             for response in responses:
                 response.set_as_being_processed()
             if responses:
@@ -185,8 +186,9 @@ class Server(Flask,ResponsesBuffer):
                     response.set_as_processed()
                 else:
                     response.set_as_ready_to_be_processed()
-            time.sleep(.001)
             log.info(str(len(responses)) + " were processed")
+            time.sleep(.001)
+            
             #for response in responses:
             #    log.info(response._check_response_state().name)
             #responses_buffer = self.get_all_responses()
