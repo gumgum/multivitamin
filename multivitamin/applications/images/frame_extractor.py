@@ -5,9 +5,11 @@ from io import BytesIO
 import boto3
 import glog as log
 import numpy as np
+import traceback
 from PIL import Image
 
-from multivitamin.module import PropertiesModule
+
+from multivitamin.module import PropertiesModule, Codes
 from multivitamin.utils.work_handler import WorkerManager
 from multivitamin.media import MediaRetriever
 from multivitamin.data.response.utils import get_current_time
@@ -186,7 +188,15 @@ class FrameExtractor(PropertiesModule):
         # log.info('Getting hash')
         # video_hash = hashfileobject(filelike, hexdigest=True)
         self.video_url = self.response.request.url
-        self.med_ret = MediaRetriever(self.video_url)
+        try:
+            log.info(f"Loading media from url: {self.response.request.url}")
+            self.media = MediaRetriever(self.video_url)
+        except Exception as e:
+            log.error(e)
+            log.error(traceback.print_exc())
+            self.code = Codes.ERROR_LOADING_MEDIA
+            return self.update_and_return_response()
+
         self.contents_file_key = get_contents_file_s3_key(self.video_url,
                                                           self._sample_rate)
         video_id = self.contents_file_key.split("/")[0]
