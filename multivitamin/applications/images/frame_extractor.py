@@ -190,7 +190,7 @@ class FrameExtractor(PropertiesModule):
         self.video_url = self.response.request.url
         try:
             log.info(f"Loading media from url: {self.response.request.url}")
-            self.media = MediaRetriever(self.video_url)
+            self.med_ret = MediaRetriever(self.video_url)
         except Exception as e:
             log.error(e)
             log.error(traceback.print_exc())
