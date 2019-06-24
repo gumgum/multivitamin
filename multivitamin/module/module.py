@@ -120,6 +120,11 @@ class Module(ABC):
                 self._update_property_id(prop)
                 self._update_module_id(prop)
 
+        for video_ann in self.response.media_summary:
+            for prop in video_ann["props"]:
+                self._update_property_id(prop)
+                self._update_module_id(prop)
+
     def _update_property_id(self, prop):
         """Internal method for updating property id in a property
         """
@@ -133,7 +138,7 @@ class Module(ABC):
     def _update_module_id(self, prop):
         """Internal method for updating module id in a property
         """
-        log.debug("Updating module ids")
+        log.debug("Updating module ids")        
         if self.module_id_map is None:
             return
         if prop["module_id"] == 0:

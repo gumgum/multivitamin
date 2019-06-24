@@ -12,13 +12,13 @@ with open("requirements.txt") as rf:
     reqs = rf.readlines()
 
 # Install CuPy if CUDA is installed
-if os.path.exists("/usr/local/cuda/version.txt"):
-    with open("/usr/local/cuda/version.txt") as cuda:
-        cuda_ver = cuda.readlines()[0].split()[-1].rsplit(".", 1)[0]
-
-    cupy_supported_cuda_vers = ["8.0", "9.0", "9.1", "9.2"]
-    if cuda_ver in cupy_supported_cuda_vers:
-        reqs.append("cupy-cuda" + cuda_ver.replace(".", ""))
+# if os.path.exists("/usr/local/cuda/version.txt"):
+#     with open("/usr/local/cuda/version.txt") as cuda:
+#         cuda_ver = cuda.readlines()[0].split()[-1].rsplit(".", 1)[0]
+#
+#     cupy_supported_cuda_vers = ["8.0", "9.0", "9.1", "9.2"]
+#     if cuda_ver in cupy_supported_cuda_vers:
+#         reqs.append("cupy-cuda" + cuda_ver.replace(".", ""))
 
 
 # Install PIMS if PyAV is installed
