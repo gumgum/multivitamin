@@ -88,6 +88,11 @@ class MMDetector(ImagesModule):
             raise ValueError("config_file and/or model_file does not exist")
         try:
             self.model = init_detector(config_file, model_file, device="cuda:{}".format(gpuid))
+            dummy_image= np.zeros((720, 1280, 3), dtype = "uint8")
+            images=[dummy_image]
+            tstamps=[0.0]
+            self.process_images(images, tstamps)
+            log.info('dummy forward pass successful')
         except:
             raise ValueError("Could not init_detector")
 
