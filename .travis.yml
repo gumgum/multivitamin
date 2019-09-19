@@ -1,25 +1,16 @@
 language: python
-
 python:
 - '3.6'
-
 script:
-  - touch test_runner_placeholder
-
+- touch test_runner_placeholder
 deploy:
-  provider: script
+  provider: pypi
   script: python3 setup.py verify
   on:
     tags: true
     repo: gumgum/multivitamin
     branch: master
-
-  provider: pypi
-  user: gregorious10
-  password:
-    secure: kmibTJZgchDOu25swwlLQWWcMp9zPBdDw17m2EqVJXZtF74oLngU+emHFQo1RpNxpznKX2HW4AeY3vSvagcwDaEDBYXEWalkhlXDHlxt37WPPZhpwVbLZJ1qYcSZsu2aQwit7kmu+oYWgKFcxvCqe8JVL4AOo+iphZOOUR18+dRvMopJ3Vrt4w+kHym/2wW4umtwlUCy96NJtqNJJiz6ZWGcbJkJQUPL0G9vcq+tdB32x4f03I3kqCHhBS1rRZn9+xQJl433aedGNp9RG/CVtGNlX68QjXzttYIxd4fjcu79mdQfyiPIGmw2URkAipnkn8ll6wYoOmbIiQQKvFjOd4k66HttFnAa3tC/WUpHhzN8xadQguVolyvpC30gmVRHdQZNkj71blFwGZStHf4HigRiL7ZSYxvjRoU2y+m3o6Bp3sKisxdbkLswLBG7f7Zrfmd2JvUZdoWmFdoDhx8SQwVt5aeOii7CPP9zryBUq0xwiWqurc16Be0V99nXujFKwUESTzP3au9mUfxGA0RGF1sM6DeIOMqnpfRn5TQKzcOQM2zMqlnMtkIzyhEjLSVaCHK1lzn2GkNpC5l8AVmBcxTvOlJTF7k6wgRVAG///N1hoHtoy4F14v8hzKkgXwg4sEbPWtJmivSD6Tt1PKXZP5Woy4ulcRe7iRH+eDb/k3s=
-  on:
-    tags: true
-    repo: gumgum/multivitamin
-    branch: master
     distributions: sdist bdist_wheel
+  user: mgreenberg1
+  password:
+    secure: hKYYw3H1gvR7PwDbL04U4kC2KoGfM7xPhagrSAYqbwoCURMv9L7gn2P1ZqUo5qpjnQYK16+gZJ5I01tfaIaixgTzDbsEdykQLtD4IflXeuS+NtotNBUAwNN4j4C7JWhmapoF7iELYhUlfrW+JdI8nHuJCBYZXfcxNi8uE9DdcE4SC36PNCYq9zR+na9W+ZFJyqP1I9C2BtQbJStdvzC7iPlBVGUIbCtDB3q+jIeX+VeVefw7WuLxOc/J/yQlPAHF5/VLDzGP/oLV90WUkvOFko54WppRf4CW+i26pCWJCoLpWe2Y9+qZjuxNDeaLBEMzpkTe8/L0XePqgXsxcEDFaP5L05MJ49XOvFb/O6CxKFnIaLR9/wucuMLDiu8OgBo0abq/9hKFreoKDRCPrgfiTyvDnMY0HcPjFMur2y4LEzpYflXsBsiaYEyNG+pFoEptig0EKh2IvEOjXIKkJEHRh3AAKZDYDuHYkSPxRmkt9JTZLztzNZ+uaTTHiAmlsxWNs4Yr5PhJ5Sw9/Z1Dz5SiPJI9BTs//ag+XrgEH8iRaqpvjCXR3iZ9sFp/HTZUfPSV47G/jvTOIcG6MdjREueUnFneVqcznOUIiZlkopzc0zUyMc54vrYugLi6mqj1WNLVy7ENvfQIDyqYj8HUT0y4pvxdOxCFHSmIcCksoUoECG8=
