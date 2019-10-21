@@ -44,7 +44,7 @@ scipy==1.1.0
 six==1.11.0
 tabulate==0.8.2
 urllib3==1.23
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 yarg==0.1.9
 matplotlib==2.2.2
 colour==0.1.5
