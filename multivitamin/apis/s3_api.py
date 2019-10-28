@@ -4,6 +4,7 @@ import glog as log
 import tempfile
 import shutil
 import boto3
+import hashlib
 
 from multivitamin.apis.comm_api import CommAPI
 from multivitamin.data import Response
@@ -15,7 +16,7 @@ INDENTATION = 2
 class S3API(CommAPI):
     def __init__(self, s3_bucket, s3_key, bin_encoding=False):
         """ S3API is a CommAPI object that pushes responses to an
-            s3_bucket/s3_key or pushing_folder
+            s3_bucket/s3_keyget_fn or pushing_folder
 
         Args:
             s3_bucket (str): s3 bucket
@@ -79,4 +80,5 @@ class S3API(CommAPI):
         ext = ".json"
         if bin_encoding is True:
             ext = ".avro"
-        return os.path.basename(media_url) + ext
+        hash = hashlib.md5(media_url.encode()).hexdigest()
+        return os.path.basename(media_url) + "_" + hash +  ext
