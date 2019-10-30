@@ -9,7 +9,7 @@ deploying:artifactory:
   variables:
     TWINE_USERNAME: $ARTIFACTORY_USERNAME
     TWINE_PASSWORD: $ARTIFACTORY_PASSWORD
-    TWINE_REPOSITORY: https://$ARTIFACTORY_PYPI
+    TWINE_REPOSITORY_URL: https://$ARTIFACTORY_PYPI
   script:
     - python setup.py sdist
     - twine upload dist/*
