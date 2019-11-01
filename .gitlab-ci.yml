@@ -30,7 +30,7 @@ deploying:artifactory:
 #   only:
 #     - tags
 
-deploying:pages:
+pages:
   stage: deploy
   image: python:3.6
   before_script:
