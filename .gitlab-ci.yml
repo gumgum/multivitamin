@@ -37,7 +37,7 @@ pages:
     - pip install sphinx sphinx-rtd-theme sphinx-pypi-upload
   script:
     - python setup.py build_sphinx
-    - mv docs/build/sphinx/html/ public/
+    - mv docs/build/html/ public/
   artifacts:
     paths:
     - public
