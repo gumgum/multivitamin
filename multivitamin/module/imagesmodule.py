@@ -4,9 +4,9 @@ import pandas as pd
 import glog as log
 
 from .module import Module, Codes
-from .module.utils import (pandas_query_matches_props,
-                           batch_generator)
-from .media import MediaRetriever
+from .utils import (pandas_query_matches_props,
+                    batch_generator)
+from ..media import MediaRetriever
 
 
 MAX_PROBLEMATIC_FRAMES = 10

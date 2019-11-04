@@ -6,9 +6,9 @@ import threading
 import glog as log
 from flask import Flask, jsonify
 
-from multivitamin.apis import CommAPI
-from multivitamin.module import Module
-from multivitamin.data import Response, Request
+from .apis import CommAPI
+from .module import Module
+from .data import Response, Request
 
 
 HEALTHPORT = os.environ.get("PORT", 5000)
