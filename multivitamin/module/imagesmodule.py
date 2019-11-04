@@ -1,14 +1,12 @@
-import sys
-import json
 from abc import abstractmethod
 import traceback
-from collections.abc import Iterable
 import pandas as pd
 import glog as log
 
-from multivitamin.module import Module, Codes
-from multivitamin.module.utils import pandas_query_matches_props, batch_generator
-from multivitamin.media import MediaRetriever
+from .module import Module, Codes
+from .module.utils import (pandas_query_matches_props,
+                           batch_generator)
+from .media import MediaRetriever
 
 
 MAX_PROBLEMATIC_FRAMES = 10
@@ -141,7 +139,7 @@ class ImagesModule(Module):
     def _region_contains_props(self, region):
         """ Boolean to check if a region's props matches the defined
             previous properties of interest
-        
+
         Args:
             props (list): list of properties for a region
         Returns:
