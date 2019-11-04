@@ -44,7 +44,8 @@ class ImagesModule(Module):
         super().process(response)
 
         try:
-            log.info(f"Loading media from url: {self.response.request.url}")
+            log.info(f"Loading media from {self.response.request}:"
+                     f" {self.response.request.url}")
             self.media = MediaRetriever(self.response.request.url)
             self.frames_iterator = self.media.get_frames_iterator(
                 self.response.request.sample_rate
@@ -106,7 +107,8 @@ class ImagesModule(Module):
             self.tstamps_processed.append(tstamp)
             log.debug(f"tstamp: {tstamp}")
             if i % 100 == 0:
-                log.info(f"tstamp: {tstamp}")
+                log.info(f"Processing {self.response.request} inprogress:"
+                         f" tstamp={tstamp}")
 
             if not self.prev_pois:
                 yield frame, tstamp, None

@@ -63,7 +63,7 @@ class Module(ABC):
             "Setting previous properties of interest: "
             f"{json.dumps(pois, indent=2)}"
         )
-        log.info(f"bool exp: {self.prev_pois_bool_exp}")
+        log.info(f"POIs for {self}: {self.prev_pois_bool_exp}")
 
     def get_prev_props_of_interest(self):
         """Getter for properties of interest
@@ -95,7 +95,8 @@ class Module(ABC):
             Response: output response
         """
         log.info(
-            f"Updating and returning response with code: {self.code.name}"
+            f"{self} updating and returning response with code:"
+            f" {self.code.name}"
         )
         num_footprints = len(self.response.footprints)
         time = get_current_time()
@@ -155,4 +156,4 @@ class Module(ABC):
             prop["module_id"] = self.module_id_map.get(server, 0)
 
     def __repr__(self):
-        return f"{self.name} {self.version}"
+        return f"{self.__class__}(name={self.name}, version={self.version})"

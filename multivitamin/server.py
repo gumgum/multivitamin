@@ -102,7 +102,7 @@ class Server(Flask):
         """
         while True:
             try:
-                log.info("Pulling requests")
+                log.debug("Pulling requests")
                 requests = self.input_comm.pull()
                 for request in requests:
                     try:
@@ -113,15 +113,19 @@ class Server(Flask):
                             )
                             return
                         response = self._process_request(request)
-                        log.info("Pushing reponse to output_comms")
+                        log.info(
+                            f"Pushing reponse for {request} to output_comms"
+                        )
                         for output_comm in self.output_comms:
                             try:
                                 ret = output_comm.push(response)
                             except Exception as e:
                                 log.error(e)
                                 log.error(traceback.format_exc())
-                                log.error("Error pushing to output_comm:"
-                                          f" {output_comm}")
+                                log.error(
+                                    f"Error pushing response for {request}"
+                                    f" to output_comm: {output_comm}"
+                                )
                     except Exception:
                         log.error(traceback.format_exc())
                         log.error(f"Error processing request: {request}")
@@ -140,17 +144,17 @@ class Server(Flask):
             Response: outgoing response message
         """
         if not isinstance(request, Request):
-            raise ValueError(f"request is of type {type(request)},"
-                             " not Request")
+            raise ValueError(f"{request} is of type {type(request)},"
+                             f" not {Request}")
         log.debug(f"Processing: {request}")
-        log.info(f"Processing url: {request.get('url')}")
 
         response = Response(request, self.schema_registry_url)
 
         for module in self.modules:
-            log.info(f"Processing request for module: {module}")
+            log.info(f"Processing {request} in module: {module}")
             response = module.process(response)
+            log.info(f"Processing {request} in module: {module}"
+                     f" ...Status: {module.code}")
             log.debug("response.to_dict():"
                       f" {json.dumps(response.to_dict(), indent=2)}")
-
         return response
