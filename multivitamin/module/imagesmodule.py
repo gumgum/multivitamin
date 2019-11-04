@@ -69,7 +69,9 @@ class ImagesModule(Module):
             if image_batch is None or tstamp_batch is None:
                 continue
             try:
-                self.process_images(image_batch, tstamp_batch, prev_region_batch)
+                self.process_images(image_batch,
+                                    tstamp_batch,
+                                    prev_region_batch)
             except ValueError as e:
                 num_problematic_frames += 1
                 log.warning("Problem processing frames")
@@ -112,13 +114,17 @@ class ImagesModule(Module):
                 log.debug("Processing with previous response")
                 log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
                 regions_that_match_props = []
-                regions_at_tstamp = self.response.get_regions_from_tstamp(tstamp)
+                regions_at_tstamp = self.response.get_regions_from_tstamp(
+                    tstamp
+                )
                 log.debug(f"Finding regions at tstamp: {tstamp}")
                 if regions_at_tstamp is not None:
-                    log.debug(f"len(regions_at_tstamp): {len(regions_at_tstamp)}")
+                    log.debug(f"len(regions_at_tstamp):"
+                              f" {len(regions_at_tstamp)}")
                     for i_region in regions_at_tstamp:
                         if self._region_contains_props(i_region):
-                            log.debug(f"region: {i_region} contains props of interest")
+                            log.debug(f"region: {i_region} contains props"
+                                      " of interest")
                             regions_that_match_props.append(i_region)
                             self.prev_regions_of_interest_count += 1
 
@@ -126,7 +132,10 @@ class ImagesModule(Module):
                     yield frame, tstamp, region
 
     @abstractmethod
-    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
+    def process_images(self,
+                       image_batch,
+                       tstamp_batch,
+                       prev_region_batch=None):
         """Abstract method to be implemented by child module"""
         pass
 
@@ -148,4 +157,6 @@ class ImagesModule(Module):
         props = region.get("props")
         if props is None:
             return False
-        return pandas_query_matches_props(self.prev_pois_bool_exp, pd.DataFrame(props))
+        return pandas_query_matches_props(
+            self.prev_pois_bool_exp,
+            pd.DataFrame(props))
