@@ -1,7 +1,7 @@
 stages:
   - deploy
 
-deploying:artifactory:
+deploy:artifactory:
   image: python:3.6
   stage: deploy
   before_script:
@@ -16,19 +16,19 @@ deploying:artifactory:
   only:
     - tags
 
-# deploying_to_pypi:
-#   image: python:3.6
-#   stage: deploy
-#   before_script:
-#     - pip install twine
-#   variables:
-#     TWINE_USERNAME: $TWINE_USERNAME
-#     TWINE_PASSWORD: $TWINE_PASSWORD
-#   script:
-#     - python setup.py sdist
-#     - twine upload dist/*
-#   only:
-#     - tags
+deploy:pypi:
+  image: python:3.6
+  stage: deploy
+  before_script:
+    - pip install twine
+  variables:
+    TWINE_USERNAME: $PYPI_USERNAME
+    TWINE_PASSWORD: $PYPI_PASSWORD
+  script:
+    - python setup.py sdist
+    - twine upload dist/*
+  only:
+    - tags
 
 pages:
   stage: deploy

@@ -1,14 +1,12 @@
-import sys
-import json
 from abc import abstractmethod
 import traceback
-from collections.abc import Iterable
 import pandas as pd
 import glog as log
 
-from multivitamin.module import Module, Codes
-from multivitamin.module.utils import pandas_query_matches_props, batch_generator
-from multivitamin.media import MediaRetriever
+from .module import Module, Codes
+from .utils import (pandas_query_matches_props,
+                    batch_generator)
+from ..media import MediaRetriever
 
 
 MAX_PROBLEMATIC_FRAMES = 10
@@ -46,7 +44,8 @@ class ImagesModule(Module):
         super().process(response)
 
         try:
-            log.info(f"Loading media from url: {self.response.request.url}")
+            log.info(f"Loading media from {self.response.request}:"
+                     f" {self.response.request.url}")
             self.media = MediaRetriever(self.response.request.url)
             self.frames_iterator = self.media.get_frames_iterator(
                 self.response.request.sample_rate
@@ -71,7 +70,9 @@ class ImagesModule(Module):
             if image_batch is None or tstamp_batch is None:
                 continue
             try:
-                self.process_images(image_batch, tstamp_batch, prev_region_batch)
+                self.process_images(image_batch,
+                                    tstamp_batch,
+                                    prev_region_batch)
             except ValueError as e:
                 num_problematic_frames += 1
                 log.warning("Problem processing frames")
@@ -106,7 +107,8 @@ class ImagesModule(Module):
             self.tstamps_processed.append(tstamp)
             log.debug(f"tstamp: {tstamp}")
             if i % 100 == 0:
-                log.info(f"tstamp: {tstamp}")
+                log.info(f"Processing {self.response.request} inprogress:"
+                         f" tstamp={tstamp}")
 
             if not self.prev_pois:
                 yield frame, tstamp, None
@@ -114,13 +116,17 @@ class ImagesModule(Module):
                 log.debug("Processing with previous response")
                 log.debug(f"Querying on self.prev_pois: {self.prev_pois}")
                 regions_that_match_props = []
-                regions_at_tstamp = self.response.get_regions_from_tstamp(tstamp)
+                regions_at_tstamp = self.response.get_regions_from_tstamp(
+                    tstamp
+                )
                 log.debug(f"Finding regions at tstamp: {tstamp}")
                 if regions_at_tstamp is not None:
-                    log.debug(f"len(regions_at_tstamp): {len(regions_at_tstamp)}")
+                    log.debug(f"len(regions_at_tstamp):"
+                              f" {len(regions_at_tstamp)}")
                     for i_region in regions_at_tstamp:
                         if self._region_contains_props(i_region):
-                            log.debug(f"region: {i_region} contains props of interest")
+                            log.debug(f"region: {i_region} contains props"
+                                      " of interest")
                             regions_that_match_props.append(i_region)
                             self.prev_regions_of_interest_count += 1
 
@@ -128,7 +134,10 @@ class ImagesModule(Module):
                     yield frame, tstamp, region
 
     @abstractmethod
-    def process_images(self, image_batch, tstamp_batch, prev_region_batch=None):
+    def process_images(self,
+                       image_batch,
+                       tstamp_batch,
+                       prev_region_batch=None):
         """Abstract method to be implemented by child module"""
         pass
 
@@ -141,7 +150,7 @@ class ImagesModule(Module):
     def _region_contains_props(self, region):
         """ Boolean to check if a region's props matches the defined
             previous properties of interest
-        
+
         Args:
             props (list): list of properties for a region
         Returns:
@@ -150,4 +159,6 @@ class ImagesModule(Module):
         props = region.get("props")
         if props is None:
             return False
-        return pandas_query_matches_props(self.prev_pois_bool_exp, pd.DataFrame(props))
+        return pandas_query_matches_props(
+            self.prev_pois_bool_exp,
+            pd.DataFrame(props))

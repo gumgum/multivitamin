@@ -12,7 +12,12 @@ from multivitamin.module.utils import convert_props_to_pandas_query
 
 class Module(ABC):
     def __init__(
-        self, server_name, version, prop_type=None, prop_id_map=None, module_id_map=None
+        self,
+        server_name,
+        version,
+        prop_type=None,
+        prop_id_map=None,
+        module_id_map=None
     ):
         """Abstract base class that defines interface inheritance
 
@@ -31,19 +36,20 @@ class Module(ABC):
         self.tstamps_processed = []
 
     def set_prev_props_of_interest(self, pois):
-        """If this Module is meant to be one in a sequence of Modules and is looking for a 
-        particular set of properties of interest from the previous module.
+        """If this Module is meant to be one in a sequence of Modules and is
+        looking for a particular set of properties of interest from the
+        previous module.
 
         E.g.
             [
-                {"property_type":"object", "value":"face"}, 
+                {"property_type":"object", "value":"face"},
                 {"value":"car"}
             ]
-            
+
             is equivalent to
-            
+
             '(property_type == "object") & (value == "face") | (value == "car")'
-        
+
         Args:
             pois (list[dict]): previous properties of interest
         """
@@ -54,9 +60,10 @@ class Module(ABC):
         self.prev_pois = pois
         self.prev_pois_bool_exp = convert_props_to_pandas_query(pois)
         log.info(
-            f"Setting previous properties of interest: {json.dumps(pois, indent=2)}"
+            "Setting previous properties of interest: "
+            f"{json.dumps(pois, indent=2)}"
         )
-        log.info(f"bool exp: {self.prev_pois_bool_exp}")
+        log.info(f"POIs for {self}: {self.prev_pois_bool_exp}")
 
     def get_prev_props_of_interest(self):
         """Getter for properties of interest
@@ -87,7 +94,10 @@ class Module(ABC):
         Returns:
             Response: output response
         """
-        log.info(f"Updating and returning response with code: {self.code.name}")
+        log.info(
+            f"{self} updating and returning response with code:"
+            f" {self.code.name}"
+        )
         num_footprints = len(self.response.footprints)
         time = get_current_time()
         log.debug("Appending footprints")
@@ -106,7 +116,7 @@ class Module(ABC):
         return self.response
 
     def _update_ids(self):
-        """Internal method for updating property id and module id 
+        """Internal method for updating property id and module id
            in frame_anns and tracks
         """
         for image_ann in self.response.frame_anns:
@@ -138,7 +148,7 @@ class Module(ABC):
     def _update_module_id(self, prop):
         """Internal method for updating module id in a property
         """
-        log.debug("Updating module ids")        
+        log.debug("Updating module ids")
         if self.module_id_map is None:
             return
         if prop["module_id"] == 0:
@@ -146,4 +156,4 @@ class Module(ABC):
             prop["module_id"] = self.module_id_map.get(server, 0)
 
     def __repr__(self):
-        return f"{self.name} {self.version}"
+        return f"{self.__class__}(name={self.name}, version={self.version})"

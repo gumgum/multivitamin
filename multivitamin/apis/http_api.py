@@ -1,6 +1,5 @@
 import traceback
 import glog as log
-import credstash
 import requests as sender
 
 from multivitamin.apis import CommAPI

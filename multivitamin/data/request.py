@@ -38,7 +38,7 @@ class Request:
         Args:
             key (str): key in request dict
             default (Any): default value if key not in dict
-        
+
         Returns:
             Any: value
         """
@@ -65,7 +65,7 @@ class Request:
     @property
     def bin_encoding(self):
         """Getter for bin_encoding flag. Defaults to False
-        
+
         Returns:
             bool: bin_encoding flag
         """
@@ -79,7 +79,7 @@ class Request:
     @property
     def bin_decoding(self):
         """Getter for bin_decoding flag. Defaults to False
-        
+
         Returns:
             bool: bin_decoding flag
         """
@@ -93,7 +93,7 @@ class Request:
     @property
     def base64_encoding(self):
         """Getter for base64_encoding flag. Defaults to False
-        
+
         Returns:
             bool: base64_encoding flag
         """
@@ -107,7 +107,7 @@ class Request:
     @property
     def prev_response(self):
         """Getter for prev_response
-        
+
         Returns:
             str: prev_response
         """
@@ -116,7 +116,7 @@ class Request:
     @prev_response.setter
     def prev_response(self, prev_response):
         """Getter for prev_response
-        
+
         Returns:
             str: prev_response
         """
@@ -125,7 +125,7 @@ class Request:
     @property
     def prev_response_url(self):
         """Getter for prev_response_url
-        
+
         Returns:
             str: prev_response_url
         """
@@ -134,7 +134,7 @@ class Request:
     @property
     def dst_url(self):
         """Getter for destination url for response
-        
+
         Returns:
             str: destination url
         """
@@ -143,7 +143,7 @@ class Request:
     @property
     def flags(self):
         """Getter for arbitrary flags
-        
+
         Returns:
             dict: flags
         """
@@ -152,7 +152,7 @@ class Request:
     @property
     def kill_flag(self):
         """Getter for kill flag
-        
+
         Returns:
             bool: kill flag
         """
@@ -164,4 +164,4 @@ class Request:
         return kf
 
     def __repr__(self):
-        return f"request: {self.request}; request_id: {self.request_id}"
+        return f"Request({self.request}) <ID {self.request_id}>"

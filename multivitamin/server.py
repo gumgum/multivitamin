@@ -6,9 +6,9 @@ import threading
 import glog as log
 from flask import Flask, jsonify
 
-from multivitamin.apis import CommAPI
-from multivitamin.module import Module
-from multivitamin.data import Response, Request
+from .apis import CommAPI
+from .module import Module
+from .data import Response, Request
 
 
 HEALTHPORT = os.environ.get("PORT", 5000)
@@ -16,23 +16,28 @@ HEALTHPORT = os.environ.get("PORT", 5000)
 
 class Server(Flask):
     def __init__(
-        self, 
+        self,
         modules,
         input_comm,
         output_comms=None,
         schema_registry_url=None,
     ):
-        """Serves as the public interface for CV services through multivitamin
+        """Serves as the public interface for CV services through multivitamin.
 
-        It's role is to start the healthcheck endpoint and initiate the services
+        It's role is to start the healthcheck endpoint and initiate the
+        services.
 
         Args:
-            modules (list[Module]): list of concrete child implementation of Module
-            input_comm (CommAPI): Concrete child implementation of CommAPI, called for pulling 
-                                  responses to process
-            output_comms (list[CommAPI]): List of concrete child implementations of CommAPI, 
-                                          called for pushing responses to somewhere
-            schema_registry_url (str): use schema in registry url instead of local schema
+            modules (list[Module]): list of concrete child implementation
+                                    of Module
+            input_comm (CommAPI): Concrete child implementation of CommAPI,
+                                  called for pulling responses to process
+            output_comms (list[CommAPI]): List of concrete child
+                                          implementations of CommAPI,
+                                          called for pushing responses to
+                                          somewhere
+            schema_registry_url (str): use schema in registry url instead of
+                                       local schema
         """
         if isinstance(modules, Module):
             modules = [modules]
@@ -52,7 +57,9 @@ class Server(Flask):
 
         self.input_comm = input_comm
         self.output_comms = output_comms
-        self.modules_info = [{"name": x.name, "version": x.version} for x in modules]
+        self.modules_info = [
+            {"name": mod.name, "version": mod.version} for mod in modules
+        ]
         self.modules = modules
         self.schema_registry_url = schema_registry_url
 
@@ -69,10 +76,13 @@ class Server(Flask):
     def start(self):
         """Public entry point for starting a server.
 
-        Starts a healthcheck endpoint in a separate thread and calls self._start() which
-        runs the actual server, pulling, processing, and posting requests
+        Starts a healthcheck endpoint in a separate thread and calls
+        self._start() which runs the actual server, pulling, processing,
+        and posting requests
         """
-        log.info(f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}")
+        log.info(
+            f"Starting HealthCheck endpoint at /health on port {HEALTHPORT}"
+        )
         try:
             threading.Thread(
                 target=self.run,
@@ -87,29 +97,35 @@ class Server(Flask):
         self._start()
 
     def _start(self):
-        """Start server. While loop that pulls requests from the input_comm, calls
-        _process_request(request), and posts responses to output_comms
+        """Start server. While loop that pulls requests from the input_comm,
+        calls _process_request(request), and posts responses to output_comms
         """
         while True:
             try:
-                log.info("Pulling requests")
+                log.debug("Pulling requests")
                 requests = self.input_comm.pull()
                 for request in requests:
                     try:
                         if request.kill_flag is True:
                             log.info(
-                                "Incoming request with kill_flag == True, killing server"
+                                "Incoming request with kill_flag == True,"
+                                " killing server"
                             )
                             return
                         response = self._process_request(request)
-                        log.info("Pushing reponse to output_comms")
+                        log.info(
+                            f"Pushing reponse for {request} to output_comms"
+                        )
                         for output_comm in self.output_comms:
                             try:
                                 ret = output_comm.push(response)
                             except Exception as e:
                                 log.error(e)
                                 log.error(traceback.format_exc())
-                                log.error(f"Error pushing to output_comm: {output_comm}")
+                                log.error(
+                                    f"Error pushing response for {request}"
+                                    f" to output_comm: {output_comm}"
+                                )
                     except Exception:
                         log.error(traceback.format_exc())
                         log.error(f"Error processing request: {request}")
@@ -128,15 +144,17 @@ class Server(Flask):
             Response: outgoing response message
         """
         if not isinstance(request, Request):
-            raise ValueError(f"request is of type {type(request)}, not Request")
+            raise ValueError(f"{request} is of type {type(request)},"
+                             f" not {Request}")
         log.debug(f"Processing: {request}")
-        log.info(f"Processing url: {request.get('url')}")
 
         response = Response(request, self.schema_registry_url)
 
         for module in self.modules:
-            log.info(f"Processing request for module: {module}")
+            log.info(f"Processing {request} in module: {module}")
             response = module.process(response)
-            log.debug(f"response.to_dict(): {json.dumps(response.to_dict(), indent=2)}")
-
+            log.info(f"Processing {request} in module: {module}"
+                     f" ...Status: {module.code}")
+            log.debug("response.to_dict():"
+                      f" {json.dumps(response.to_dict(), indent=2)}")
         return response
