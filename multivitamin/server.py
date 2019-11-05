@@ -155,6 +155,7 @@ class Server(Flask):
             response = module.process(response)
             log.info(f"Processing {request} in module: {module}"
                      f" ...Status: {module.code}")
-            log.debug("response.to_dict():"
-                      f" {json.dumps(response.to_dict(), indent=2)}")
+            if response is not None:
+                log.debug("response.to_dict():"
+                          f" {json.dumps(response.to_dict(), indent=2)}")
         return response
