@@ -123,7 +123,7 @@ docker run --runtime=nvidia multivitamin:cuda9-cudnn7 /bin/bash
 
 ## Documentation
 
-For API documentation and full details, see [https://multivitamin.readthedocs.io](https://multivitamin.readthedocs.io)
+For API documentation and full details, see [https://gumgum-sports.gitlab.io/computer-vision/multivitamin/](https://gumgum-sports.gitlab.io/computer-vision/multivitamin/)
 
 ### High-level overview
 
