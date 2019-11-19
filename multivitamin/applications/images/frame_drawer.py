@@ -15,7 +15,7 @@ from multivitamin.data import Response
 from multivitamin.data.response.utils import p0p1_from_bbox_contour, get_current_time
 from multivitamin.data.response.dtypes import Property, VideoAnn
 from multivitamin.media import MediaRetriever
-
+import hashlib
 
 COLORS = [
     'darkorchid', 'darkgreen', 'coral', 'darkseagreen',
@@ -32,6 +32,10 @@ def get_rand_bgr():
 def get_props_from_region(region):
     prop_strs = []
     for prop in region["props"]:
+        try:
+           prop["value"] = "{:.2f}".format(float(prop["value"]))
+        except:
+            pass
         out = "{}_{:.2f}".format(prop["value"], prop["confidence"])
         prop_strs.append(out)
     return prop_strs
@@ -99,28 +103,28 @@ class FrameDrawer(PropertiesModule):
         self.dump_video = None
         self.dump_images = None
         try:
-            self.dump_video = self.request.get("dump_video")
-            self.dump_images = self.request.get("dump_images")
+            self.dump_video = self.request.get("dump_video") and self.med_ret.is_video
+            self.dump_images = self.request.get("dump_images") or self.med_ret.is_image
         except Exception:
             log.error("Unable to get flags from request dump_video or dump_images")
             pass
         
-        if self.dump_video is None:
-            self.dump_video = dump_video
+        if self.dump_video is None :
+            self.dump_video = dump_video and self.med_ret.is_video
         if self.dump_images is None:
-            self.dump_images = dump_images
+            self.dump_images = dump_images or self.med_ret.is_image
         if self.dump_video is False and self.dump_images is False:
             log.warning("Not dumping anything--you might want to dump something.")
             return
 
-        dump_folder = self.pushing_folder + '/' + self.media_id + '/'
+        dump_folder = self.pushing_folder + '/'
         self.dumping_folder_url = dump_folder
         if dump_folder:
             if not os.path.exists(dump_folder):
                 os.makedirs(dump_folder)
-
-        if self.dump_video:
-            filename = dump_folder + '/video.mp4'
+        hash = hashlib.md5(self.med_ret.url.encode()).hexdigest()
+        if self.dump_video:            
+            filename = dump_folder + self.media_id + "_" + hash + ".mp4"
             fps = 1
             frameSize = self.med_ret.shape
             frameSize = (self.w, self.h)
@@ -134,6 +138,8 @@ class FrameDrawer(PropertiesModule):
             log.info("type(frameSize): " + str(type(frameSize)))
             vid = cv2.VideoWriter(filename, fourcc, fps, frameSize)
             self.content_type_map[os.path.basename(filename)] = 'video/mp4'
+        elif self.dump_images and self.med_ret.is_image:
+            filename = dump_folder + self.media_id + "_" + hash + ".jpeg"
         face = cv2.FONT_HERSHEY_SIMPLEX
         scale = 0.65
         thickness = 2
@@ -205,10 +211,11 @@ class FrameDrawer(PropertiesModule):
                 vid.write(img)
             if self.dump_images:
                 # we dump the frame
-                outfn = "{}/{}.jpg".format(dump_folder, tstamp)
-                log.debug("Writing to file: {}".format(outfn))
-                cv2.imwrite(outfn, img)
-                self.content_type_map[os.path.basename(outfn)] = 'image/jpeg'
+                if self.med_ret.is_video:
+                    filename = "{}/{}_{}.jpg".format(dump_folder, media_id,tstamp)
+                log.debug("Writing to file: {}".format(filename))
+                cv2.imwrite(filename, img)
+                self.content_type_map[os.path.basename(filename)] = 'image/jpeg'
 
         if self.dump_video:
             vid.release()
@@ -223,17 +230,20 @@ class FrameDrawer(PropertiesModule):
 
         props = []
         if self.dump_images:
+            val = filename
+            if self.med_ret.is_video:
+                val= "{}/{}_*.jpg".format(dump_folder, media_id)
             props.append(
                 Property(
                     server=self.name,
                     ver=self.version,
-                    value=self.dumping_folder_url,
+                    value=self.val,
                     property_type="dumped_images",
                     property_id=1,
                 )
             )
         if self.dump_video:
-            dumped_video_url = self.dumping_folder_url + '/video.mp4'
+            dumped_video_url = filename
             dumped_video_url = dumped_video_url.replace('//', '/')
             dumped_video_url = dumped_video_url.replace('https:/', 'https://')
             props.append(
