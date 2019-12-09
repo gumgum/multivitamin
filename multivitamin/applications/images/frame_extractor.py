@@ -6,15 +6,13 @@ import boto3
 import glog as log
 import numpy as np
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 
 
 from multivitamin.module import PropertiesModule, Codes
-from multivitamin.utils.work_handler import WorkerManager
 from multivitamin.media import MediaRetriever
-from multivitamin.data.response.utils import get_current_time
 from multivitamin.data.response.dtypes import (
-    Footprint,
     VideoAnn,
     Property,
 )
@@ -164,20 +162,6 @@ class FrameExtractor(PropertiesModule):
         return result
 
     def process_properties(self):
-        self._s3_write_manager = WorkerManager(
-            func=self._upload_frame_helper,
-            n=self.n_threads,
-            max_queue_size=100,
-            parallelization="thread",
-        )
-
-        self._local_write_manager = WorkerManager(
-            func=self._write_frame_helper,
-            n=self.n_threads,
-            max_queue_size=100,
-            parallelization="thread",
-        )
-
         self.last_tstamp = 0.0
         log.info("Processing")
         # filelike = self.media_api.download(return_filelike=True)
@@ -223,39 +207,37 @@ class FrameExtractor(PropertiesModule):
             )
             track = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
             self.response.append_track(track)
-            self._s3_write_manager.kill_workers_on_completion()
-            self._local_write_manager.kill_workers_on_completion()
             return
-        except:
+        except Exception:
             pass
 
         contents = []
         log.info("Getting frames")
-        for i, (frame, tstamp_secs) in enumerate(
-            self.med_ret.get_frames_iterator(sample_rate=self._sample_rate)
-        ):
-            tstamp = int(tstamp_secs * 1000)
-            # self._upload_frame(frame, tstamp, video_hash)
-            if i % 100 == 0:
-                log.info("...tstamp: " + str(tstamp))
-            log.debug("tstamp: " + str(tstamp))
-            if frame is None:
-                continue
-            frame = np.ascontiguousarray(frame[:, :, ::-1])  # RGB to BGR
-            self.last_tstamp = tstamp
-            data = {"frame": frame, "tstamp": tstamp, "video_id": video_id}
-            contents.append((video_id, tstamp))
+        with ThreadPoolExecutor(max_workers=self.n_threads) as writer:
+            for i, (frame, tstamp_secs) in enumerate(
+                self.med_ret.get_frames_iterator(sample_rate=self._sample_rate)
+            ):
+                tstamp = int(tstamp_secs * 1000)
+                # self._upload_frame(frame, tstamp, video_hash)
+                if i % 100 == 0:
+                    log.info("...tstamp: " + str(tstamp))
+                log.debug("tstamp: " + str(tstamp))
+                if frame is None:
+                    continue
+                frame = np.ascontiguousarray(frame[:, :, ::-1])  # RGB to BGR
+                self.last_tstamp = tstamp
+                data = {"frame": frame, "tstamp": tstamp, "video_id": video_id}
+                contents.append((video_id, tstamp))
 
-            if self._local_dir is not None:
-                self._local_write_manager.queue.put(data)
+                if self._local_dir is not None:
+                    writer.submit(self._write_frame_helper, data)
 
-            if self._s3_bucket is not None:
-                self._s3_write_manager.queue.put(data)
+                if self._s3_bucket is not None:
+                    writer.submit(self._upload_frame_helper, data)
 
-        # self._s3_write_manager.kill_workers_on_completion()
-        # self._local_write_manager.kill_workers_on_completion()
         if self._s3_bucket is not None:
-            result = self._add_contents_to_s3(contents)
+            _ = self._add_contents_to_s3(contents)
+
         if self._local_dir is not None:
             self._add_contents_to_local(contents)
 
@@ -271,5 +253,3 @@ class FrameExtractor(PropertiesModule):
         )
         track = VideoAnn(t1=0.0, t2=float(self.last_tstamp), props=[p])
         self.response.append_track(track)
-        self._s3_write_manager.kill_workers_on_completion()
-        self._local_write_manager.kill_workers_on_completion()
