@@ -1,5 +1,6 @@
 import os
 import shutil
+import hashlib
 import random
 import traceback
 
@@ -13,8 +14,8 @@ from multivitamin.data import Response
 from multivitamin.data.response.utils import p0p1_from_bbox_contour
 from multivitamin.data.response.dtypes import Property, VideoAnn
 from multivitamin.media import MediaRetriever
-import hashlib
-
+from tempfile import TemporaryDirectory, NamedTemporaryFile
+from glob import iglob
 
 COLORS = [
     'darkorchid', 'darkgreen', 'coral', 'darkseagreen',
@@ -95,14 +96,6 @@ class FrameDrawer(PropertiesModule):
         assert(isinstance(self.response, Response))
         self.med_ret = MediaRetriever(self.response.url)
 
-        video_width, video_height = self.med_ret.get_w_h()
-        media_id = os.path.basename(self.response.url).rsplit(".", 1)[0]
-
-        media_id = "".join(
-            [e for e in media_id if e.isalnum() or e in ["/", "."]]
-        )
-        content_type_map = {}
-
         dump_video = (self.request.get("dump_video") or dump_video) and \
             self.med_ret.is_video
         dump_images = (self.request.get("dump_images") or dump_images) or \
@@ -118,41 +111,6 @@ class FrameDrawer(PropertiesModule):
 
         log.debug(f"Dumping Video: {dump_video}")
         log.debug(f"Dumping Frames: {dump_images}")
-
-        dump_folder = f"{self.local_dir}/"
-        self.dumping_folder_url = dump_folder
-
-        if dump_folder and not os.path.exists(dump_folder):
-            os.makedirs(dump_folder)
-
-        hash = hashlib.md5(self.med_ret.url.encode()).hexdigest()
-        if dump_video:
-            filename = os.path.join(dump_folder, f"{media_id}_{hash}.mp4")
-            fps = 1
-            frameSize = (video_width, video_height)
-            fourcc = cv2.VideoWriter_fourcc(*'H264')
-
-            log.debug("filename: " + filename)
-            log.debug("fourcc: " + str(fourcc))
-            log.debug("type(fourcc): " + str(type(fourcc)))
-            log.debug("fps: " + str(fps))
-            log.debug("type(fps): " + str(type(fps)))
-            log.debug("frameSize: " + str(frameSize))
-            log.debug("type(frameSize): " + str(type(frameSize)))
-
-            vid = cv2.VideoWriter(filename, fourcc, fps, frameSize)
-            content_type_map[os.path.basename(filename)] = 'video/mp4'
-        elif dump_images and self.med_ret.is_image:
-            filename = dump_folder + media_id + "_" + hash + ".jpeg"
-        face = cv2.FONT_HERSHEY_SIMPLEX
-        scale = 0.65
-        thickness = 2
-
-        # we get the image_annotation tstamps
-        tstamps = self.response.get_timestamps()
-        tstamp_frame_anns = self.response.get_timestamps_from_frames_ann()
-        log.debug('tstamps: ' + str(tstamps))
-        log.debug('tstamps_dets: ' + str(tstamp_frame_anns))
 
         # we get the frame iterator
         frames_iterator = []
@@ -170,11 +128,181 @@ class FrameDrawer(PropertiesModule):
                 log.error(traceback.format_exc())
                 raise Exception("Error loading media")
 
+        vid_file, images_dir, max_tstamp = self.dump_data(
+            frames_iterator,
+            dump_video=dump_video,
+            dump_images=dump_images
+        )
+
+        props = []
+        if self.local_dir is not None and dump_video:
+            local_vid_path = self.copy_video(vid_file.name)
+            p = Property(
+                server=self.name,
+                ver=self.version,
+                value=local_vid_path,
+                property_type="dumped_video_local",
+                property_id=4,
+            )
+            props.append(p)
+
+        if self.local_dir is not None and dump_images:
+            local_frames_paths = self.copy_frames(images_dir.name)
+            ps = [Property(
+                server=self.name,
+                ver=self.version,
+                value=path,
+                property_type="dumped_image_local",
+                property_id=3,
+            ) for path in local_frames_paths]
+            props.extend(ps)
+
+        if self.s3_bucket is not None and dump_video:
+            s3_vid_url = self.upload_video(vid_file.name)
+            p = Property(
+                server=self.name,
+                ver=self.version,
+                value=s3_vid_url,
+                property_type="dumped_video_remote",
+                property_id=2,
+            )
+            props.append(p)
+
+        if self.s3_bucket is not None and dump_images:
+            s3_frames_urls = self.upload_frames(images_dir.name)
+            ps = [Property(
+                server=self.name,
+                ver=self.version,
+                value=url,
+                property_type="dumped_image_remote",
+                property_id=1,
+            ) for url in s3_frames_urls]
+            props.extend(ps)
+
+        images_dir.cleanup()
+        vid_file.close()
+
+        media_summary = VideoAnn(t1=0.0, t2=max_tstamp, props=props)
+        self.response.append_media_summary(media_summary)
+
+    def copy_video(self, video_file_path):
+        assert(os.path.isfile(video_file_path))
+
+        media_id = self.create_media_id()
+        filename = f"{media_id}.mp4"
+        target_dir = os.path.join(self.local_dir, media_id)
+        target_filepath = os.path.join(target_dir, filename)
+
+        if not os.path.isdir(target_dir):
+            os.makedirs(target_dir)
+
+        shutil.copyfile(video_file_path, target_filepath)
+        return target_filepath
+
+    def copy_images(self, image_directory):
+        assert(os.path.isdir(image_directory))
+
+        media_id = self.create_media_id()
+        target_dir = os.path.join(self.local_dir, media_id, "frames")
+
+        if not os.path.isdir(target_dir):
+            os.makedirs(target_dir)
+
+        for image_path in iglob(os.path.join(image_directory, "*")):
+            image_name = os.path.basename(image_path)
+            target_filepath = os.path.join(target_dir, image_name)
+            shutil.copyfile(image_path, target_filepath)
+
+        return target_dir
+
+    def upload_video(self, video_file_path):
+        assert(os.path.isfile(video_file_path))
+
+        media_id = self.create_media_id()
+        s3_key = f"{self.s3_key_prefix}/{media_id}/{media_id}.mp4"
+
+        print(video_file_path)
+        input()
+
+        client = boto3.client("s3")
+        client.upload_file(
+            video_file_path,
+            self.s3_bucket,
+            s3_key
+        )
+
+        s3_url = client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': self.s3_bucket,
+                'Key': s3_key
+            },
+            ExpiresIn=3600
+        )
+        return s3_url.split("?")[0]
+
+    def upload_frames(self, image_directory):
+        assert(os.path.isdir(image_directory))
+
+        media_id = self.create_media_id()
+        s3_key_prefix = f"{self.s3_key_prefix}/{media_id}/frames"
+        client = boto3.client("s3")
+
+        s3_urls = []
+        for image_path in iglob(os.path.join(image_directory, "*")):
+            image_name = os.path.basename(image_path)
+            s3_key = f"{s3_key_prefix}/{image_name}"
+            client.upload_file(
+                image_path,
+                self.s3_bucket,
+                s3_key
+            )
+
+            s3_url = client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': self.s3_bucket,
+                    'Key': s3_key
+                },
+                ExpiresIn=3600
+            )
+            s3_urls.append(s3_url.split("?")[0])
+
+        return s3_urls
+
+    def create_media_id(self):
+        media_id = os.path.basename(self.response.url).rsplit(".", 1)[0]
+
+        media_id = "".join(
+            [e for e in media_id if e.isalnum() or e in ["/", "."]]
+        )
+        hash = hashlib.md5(self.med_ret.url.encode()).hexdigest()
+        return f"{media_id}_{hash}"
+
+    def dump_data(self,
+                  frames_iterator,
+                  dump_video=False,
+                  dump_images=False):
+        face = cv2.FONT_HERSHEY_SIMPLEX
+        scale = 0.65
+        thickness = 2
+        fps = 1
+
+        vid = None
+
+        image_dir = TemporaryDirectory()
+        vid_file = NamedTemporaryFile(suffix=".mp4")
+
+        tstamps = set(self.response.get_timestamps())
+        tstamp_frame_anns = set(self.response.get_timestamps_from_frames_ann())
+        video_width, video_height = self.med_ret.get_w_h()
+
         for i, (img, tstamp) in enumerate(frames_iterator):
-            if img is None or tstamp is None:
-                m = f"frame at tstamp={tstamp}" if img is None else "tstamp"
-                log.warning(f"Invalid {m}")
-                continue
+            if vid is None:
+                fourcc = cv2.VideoWriter_fourcc(*'H264')
+                vid = cv2.VideoWriter(
+                    vid_file.name, fourcc, fps, (video_width, video_height)
+                )
 
             if tstamp in tstamp_frame_anns:
                 log.debug(f"drawing frame for tstamp: {tstamp}")
@@ -203,14 +331,13 @@ class FrameDrawer(PropertiesModule):
                             thickness
                         )
             elif tstamp in tstamps:
-                log.debug("Making frame gray")
+                log.debug(f"Making frame at {tstamp} gray")
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             else:
-                log.debug("No processed frame")
+                log.debug(f"No frame at {tstamp}")
                 continue
 
-            # Add timestamp to frame
             img = cv2.putText(
                 img,
                 str(tstamp),
@@ -221,95 +348,10 @@ class FrameDrawer(PropertiesModule):
             )
 
             if dump_video:
-                # we add the frame
-                log.debug("Adding frame")
                 vid.write(img)
 
             if dump_images:
-                # we dump the frame
-                if self.med_ret.is_video:
-                    filename = os.path.join(
-                        dump_folder,
-                        f"{media_id}_{tstamp}.jpg"
-                    )
+                cv2.imwrite(f"{tstamp}.jpeg", img)
 
-                log.debug(f"Writing to file: {filename}")
-                cv2.imwrite(filename, img)
-
-                content_type_map[os.path.basename(filename)] = 'image/jpeg'
-
-        if dump_video:
-            vid.release()
-
-        s3_url_root = None
-        if self.s3_bucket:
-            s3_url_root = self.upload_files(
-                dump_folder, content_type_map, media_id
-            )
-
-        if self.local_dir == DEFAULT_DUMP_FOLDER:
-            log.info('Removing files in ' + dump_folder)
-            shutil.rmtree(dump_folder)
-
-        props = []
-        if dump_images:
-            val = filename
-
-            if self.med_ret.is_video:
-                val = f"{dump_folder}/{media_id}_*.jpg"
-
-            props.append(
-                Property(
-                    server=self.name,
-                    ver=self.version,
-                    value=val,
-                    property_type="dumped_images",
-                    property_id=1,
-                )
-            )
-        if dump_video and s3_url_root is not None:
-            dumped_video_url = os.path.basename(filename)
-            props.append(
-                Property(
-                    server=self.name,
-                    ver=self.version,
-                    value=f"{s3_url_root}/{dumped_video_url}",
-                    property_type="dumped_video",
-                    property_id=2,
-                )
-            )
-        media_summary = VideoAnn(t1=0.0, t2=tstamp, props=props)
-        self.response.append_media_summary(media_summary)
-
-    def upload_files(self, source, content_type_map, media_id):
-        log.info("Uploading files")
-        session = boto3.Session()
-        s3 = session.resource('s3')
-        bucket = s3.Bucket(self.s3_bucket)
-        key_root = f"{self.s3_key_prefix}/{media_id}"
-        # https://<bucket-name>.s3.amazonaws.com/<key>
-        s3_url_root = \
-            f"https://s3.amazonaws.com/{self.s3_bucket}/{key_root}"
-
-        for subdir, dirs, files in os.walk(source):
-            for file in files:
-                full_path = os.path.join(subdir, file)
-                with open(full_path, 'rb') as data:
-                    rel_path = os.path.basename(full_path)
-                    key = f"{key_root}/{rel_path}"
-                    log.info('Pushing ' + full_path + ' to ' + s3_url_root)
-                    try:
-                        content_type = content_type_map[
-                            os.path.basename(full_path)
-                        ]
-                    except Exception:
-                        # File is not intended to be uploaded.
-                        # It was not generated in this execution.
-                        content_type = None
-
-                    if content_type:
-                        bucket.put_object(
-                            Key=key, Body=data, ContentType=content_type
-                        )
-
-        return s3_url_root
+        vid.release()
+        return vid_file, image_dir, tstamp
