@@ -296,7 +296,7 @@ class FrameDrawer(PropertiesModule):
                 full_path = os.path.join(subdir, file)
                 with open(full_path, 'rb') as data:
                     rel_path = os.path.basename(full_path)
-                    key = key_root + rel_path
+                    key = f"{key_root}/{rel_path}"
                     log.info('Pushing ' + full_path + ' to ' + s3_url_root)
                     try:
                         content_type = content_type_map[
