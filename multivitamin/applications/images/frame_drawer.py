@@ -15,7 +15,6 @@ from multivitamin.data.response.dtypes import Property, VideoAnn
 from multivitamin.media import MediaRetriever
 import hashlib
 
-from tqdm import tqdm
 
 COLORS = [
     'darkorchid', 'darkgreen', 'coral', 'darkseagreen',
@@ -171,7 +170,7 @@ class FrameDrawer(PropertiesModule):
                 log.error(traceback.format_exc())
                 raise Exception("Error loading media")
 
-        for i, (img, tstamp) in tqdm(enumerate(frames_iterator)):
+        for i, (img, tstamp) in enumerate(frames_iterator):
             if img is None or tstamp is None:
                 m = f"frame at tstamp={tstamp}" if img is None else "tstamp"
                 log.warning(f"Invalid {m}")
