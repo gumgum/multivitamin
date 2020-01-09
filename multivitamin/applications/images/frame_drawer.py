@@ -243,12 +243,9 @@ class FrameDrawer(PropertiesModule):
 
         s3_url_root = None
         if self.s3_bucket:
-            try:
-                s3_url_root = self.upload_files(
-                    dump_folder, content_type_map, media_id
-                )
-            except Exception:
-                log.error(traceback.format_exc())
+            s3_url_root = self.upload_files(
+                dump_folder, content_type_map, media_id
+            )
 
         if self.local_dir == DEFAULT_DUMP_FOLDER:
             log.info('Removing files in ' + dump_folder)
@@ -270,7 +267,7 @@ class FrameDrawer(PropertiesModule):
                     property_id=1,
                 )
             )
-        if dump_video:
+        if dump_video and s3_url_root is not None:
             dumped_video_url = os.path.basename(filename)
             props.append(
                 Property(
