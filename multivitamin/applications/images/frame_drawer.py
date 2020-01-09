@@ -15,6 +15,7 @@ from multivitamin.data.response.dtypes import Property, VideoAnn
 from multivitamin.media import MediaRetriever
 import hashlib
 
+
 COLORS = [
     'darkorchid', 'darkgreen', 'coral', 'darkseagreen',
     'forestgreen', 'firebrick', 'olivedrab', 'steelblue',
@@ -102,17 +103,10 @@ class FrameDrawer(PropertiesModule):
         )
         content_type_map = {}
 
-        # if there is no flag in the request of not request_api we'll get None.
-        dump_video = False
-        dump_images = False
-        try:
-            dump_video = self.request.get("dump_video") and \
-                self.med_ret.is_video
-            dump_images = self.request.get("dump_images") or \
-                self.med_ret.is_image
-        except Exception:
-            log.error("Unable to get flags from request "
-                      "dump_video or dump_images")
+        dump_video = (self.request.get("dump_video") or dump_video) and \
+            self.med_ret.is_video
+        dump_images = (self.request.get("dump_images") or dump_images) or \
+            self.med_ret.is_image
 
         if dump_images is False and self.med_ret.is_image:
             dump_images = True
@@ -122,6 +116,9 @@ class FrameDrawer(PropertiesModule):
                         " Unable to proceed.")
             return
 
+        log.debug(f"Dumping Video: {dump_video}")
+        log.debug(f"Dumping Frames: {dump_images}")
+
         dump_folder = f"{self.local_dir}/"
         self.dumping_folder_url = dump_folder
 
@@ -129,8 +126,8 @@ class FrameDrawer(PropertiesModule):
             os.makedirs(dump_folder)
 
         hash = hashlib.md5(self.med_ret.url.encode()).hexdigest()
-        if self.dump_video:
-            filename = f"{dump_folder}{media_id}_{hash}.mp4"
+        if dump_video:
+            filename = os.path.join(dump_folder, f"{media_id}_{hash}.mp4")
             fps = 1
             frameSize = (video_width, video_height)
             fourcc = cv2.VideoWriter_fourcc(*'H264')
@@ -145,8 +142,8 @@ class FrameDrawer(PropertiesModule):
 
             vid = cv2.VideoWriter(filename, fourcc, fps, frameSize)
             content_type_map[os.path.basename(filename)] = 'video/mp4'
-        elif self.dump_images and self.med_ret.is_image:
-            filename = dump_folder + self.media_id + "_" + hash + ".jpeg"
+        elif dump_images and self.med_ret.is_image:
+            filename = dump_folder + media_id + "_" + hash + ".jpeg"
         face = cv2.FONT_HERSHEY_SIMPLEX
         scale = 0.65
         thickness = 2
@@ -223,12 +220,12 @@ class FrameDrawer(PropertiesModule):
                 thickness
             )
 
-            if self.dump_video:
+            if dump_video:
                 # we add the frame
                 log.debug("Adding frame")
                 vid.write(img)
 
-            if self.dump_images:
+            if dump_images:
                 # we dump the frame
                 if self.med_ret.is_video:
                     filename = os.path.join(
@@ -241,7 +238,7 @@ class FrameDrawer(PropertiesModule):
 
                 content_type_map[os.path.basename(filename)] = 'image/jpeg'
 
-        if self.dump_video:
+        if dump_video:
             vid.release()
 
         s3_url_root = None
@@ -253,12 +250,12 @@ class FrameDrawer(PropertiesModule):
             except Exception:
                 log.error(traceback.format_exc())
 
-        if self.pushing_folder == DEFAULT_DUMP_FOLDER:
+        if self.local_dir == DEFAULT_DUMP_FOLDER:
             log.info('Removing files in ' + dump_folder)
             shutil.rmtree(dump_folder)
 
         props = []
-        if self.dump_images:
+        if dump_images:
             val = filename
 
             if self.med_ret.is_video:
@@ -273,7 +270,7 @@ class FrameDrawer(PropertiesModule):
                     property_id=1,
                 )
             )
-        if self.dump_video:
+        if dump_video:
             dumped_video_url = os.path.basename(filename)
             props.append(
                 Property(
@@ -292,7 +289,7 @@ class FrameDrawer(PropertiesModule):
         session = boto3.Session()
         s3 = session.resource('s3')
         bucket = s3.Bucket(self.s3_bucket)
-        key_root = f"{self.s3_key_prefix}/{media_id}/"
+        key_root = f"{self.s3_key_prefix}/{media_id}"
         # https://<bucket-name>.s3.amazonaws.com/<key>
         s3_url_root = \
             f"https://s3.amazonaws.com/{self.s3_bucket}/{key_root}"
