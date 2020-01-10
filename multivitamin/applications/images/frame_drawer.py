@@ -221,9 +221,6 @@ class FrameDrawer(PropertiesModule):
         media_id = self.create_media_id()
         s3_key = f"{self.s3_key_prefix}/{media_id}/{media_id}.mp4"
 
-        print(video_file_path)
-        input()
-
         client = boto3.client("s3")
         client.upload_file(
             video_file_path,
