@@ -225,7 +225,10 @@ class FrameDrawer(PropertiesModule):
         client.upload_file(
             video_file_path,
             self.s3_bucket,
-            s3_key
+            s3_key,
+            ExtraArgs={
+                'ContentType': 'video/mp4'
+            }
         )
 
         s3_url = client.generate_presigned_url(
@@ -252,7 +255,10 @@ class FrameDrawer(PropertiesModule):
             client.upload_file(
                 image_path,
                 self.s3_bucket,
-                s3_key
+                s3_key,
+                ExtraArgs={
+                    'ContentType': 'image/jpeg'
+                }
             )
 
             s3_url = client.generate_presigned_url(
