@@ -9,6 +9,7 @@ from flask import Flask, jsonify
 from .apis import CommAPI
 from .module import Module
 from .data import Response, Request
+from .module.codes import Codes
 
 
 HEALTHPORT = os.environ.get("PORT", 5000)
@@ -152,7 +153,15 @@ class Server(Flask):
 
         for module in self.modules:
             log.info(f"Processing {request} in module: {module}")
-            response = module.process(response)
+            try:
+                response = module.process(response)
+            except Exception as e:
+                log.error(traceback.format_exc())
+                log.error(f"Processing {request} in {module} FAILED. "
+                          f"Setting error code to {Codes.ERROR_PROCESSING}.")
+                module.code = Codes.ERROR_PROCESSING
+                response = module.update_and_return_response()
+
             log.info(f"Processing {request} in module: {module}"
                      f" ...Status: {module.code}")
             if response is not None:
