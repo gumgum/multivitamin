@@ -64,10 +64,10 @@ def p0p1_from_bbox_contour(contour, w=1, h=1, dtype=int):
 
 def compute_box_area(contour):
     """Function to compute the spatial fraction based on the contour
-    
+
     Args:
         contour (List[Point]): contour
-    
+
     Returns:
         float: fraction
     """
@@ -78,11 +78,11 @@ def compute_box_area(contour):
 
 def crop_image_from_bbox_contour(image, contour):
     """Crop an image given a bounding box contour
-    
-    Args:  
+
+    Args:
         image (np.array): image
         contour (dict[float]): points of a bounding box countour
-    
+
     Returns:
         np.array: image
     """
@@ -92,6 +92,13 @@ def crop_image_from_bbox_contour(image, contour):
     h = image.shape[0]
     w = image.shape[1]
     (x0, y0), (x1, y1) = p0p1_from_bbox_contour(contour, w=w, h=h)
+
+    if x1 - x0 < 1:
+        x1 = x0 + 1
+
+    if y1 - y0 < 1:
+        y1 = y0 + 1
+
     return image[y0:y1, x0:x1]
 
 
@@ -100,7 +107,7 @@ def round_float(val):
 
     Args:
         val (float): input value
-    
+
     Returns:
         float: rounded float value
     """
@@ -112,7 +119,7 @@ def round_float_to_str(val):
 
     Args:
         val (float): input value
-    
+
     Returns:
         float: rounded float value
     """
@@ -139,7 +146,7 @@ def round_all_pts_in_contour_to_str(contour):
 
     Args:
         contour (list): list of dicts with keys x, y
-    
+
     Returns:
         list: of dicts of points
     """
@@ -157,7 +164,7 @@ def points_equal(val0, val1):
     Args:
         val0 (float): first value
         val1 (float): second value
-    
+
     Returns:
         bool: equality
     """
@@ -170,7 +177,7 @@ def times_equal(val0, val1, eps=config.TIME_EPS):
     Args:
         val0 (float): first value
         val1 (float): second value
-    
+
     Returns:
         bool: equality
     """
