@@ -141,7 +141,7 @@ class FrameDrawer(PropertiesModule):
                 server=self.name,
                 ver=self.version,
                 value=local_vid_path,
-                property_type="dumped_video_local",
+                property_type="dumped_video",
                 property_id=4,
             )
             props.append(p)
@@ -152,7 +152,7 @@ class FrameDrawer(PropertiesModule):
                 server=self.name,
                 ver=self.version,
                 value=path,
-                property_type="dumped_image_local",
+                property_type="dumped_image",
                 property_id=3,
             ) for path in local_frames_paths]
             props.extend(ps)
@@ -163,7 +163,7 @@ class FrameDrawer(PropertiesModule):
                 server=self.name,
                 ver=self.version,
                 value=s3_vid_url,
-                property_type="dumped_video_remote",
+                property_type="dumped_video",
                 property_id=2,
             )
             props.append(p)
@@ -174,7 +174,7 @@ class FrameDrawer(PropertiesModule):
                 server=self.name,
                 ver=self.version,
                 value=url,
-                property_type="dumped_image_remote",
+                property_type="dumped_image",
                 property_id=1,
             ) for url in s3_frames_urls]
             props.extend(ps)
@@ -199,7 +199,7 @@ class FrameDrawer(PropertiesModule):
         shutil.copyfile(video_file_path, target_filepath)
         return target_filepath
 
-    def copy_images(self, image_directory):
+    def copy_frames(self, image_directory):
         assert(os.path.isdir(image_directory))
 
         media_id = self.create_media_id()
@@ -354,7 +354,7 @@ class FrameDrawer(PropertiesModule):
                 vid.write(img)
 
             if dump_images:
-                cv2.imwrite(f"{tstamp}.jpeg", img)
+                cv2.imwrite(f"{image_dir.name}/{tstamp}.jpeg", img)
 
         vid.release()
         return vid_file, image_dir, tstamp
