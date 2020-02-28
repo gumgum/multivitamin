@@ -217,7 +217,9 @@ class FrameExtractor(PropertiesModule):
             for i, (frame, tstamp_secs) in enumerate(
                 self.med_ret.get_frames_iterator(sample_rate=self._sample_rate)
             ):
-                tstamp = int(tstamp_secs * 1000)
+                # int(16.016 * 1000) == 16015, but round(16.016) == 16016
+                tstamp = round(tstamp_secs * 1000)
+
                 # self._upload_frame(frame, tstamp, video_hash)
                 if i % 100 == 0:
                     log.info("...tstamp: " + str(tstamp))
