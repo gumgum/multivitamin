@@ -373,7 +373,8 @@ class Response():
         else:
             log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
-        self.url = self._request.url
+        if self.url is None:
+            self.url = self._request.url
 
     def _init_tstamp2frameannsidx(self):
         """If there is a previous response, we want to store the tstamp 2 frame_anns idx dict
