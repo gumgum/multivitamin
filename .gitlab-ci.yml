@@ -7,9 +7,9 @@ include:
 
 variables:
   REPO_PYTHON_LIB_LINT: "false"
-  REPO_DOCKER_BUILD: "true"
+  REPO_DOCKER_BUILD: "false"
   REPO_PYTHON_LIB_TEST: "false"
-  REPO_PYTHON_LIB_DEPLOY: "false"
+  REPO_PYTHON_LIB_DEPLOY: "true"
   REPO_PYTHON_LIB_DOCS: "false"
 
   # Override these vars in UI
