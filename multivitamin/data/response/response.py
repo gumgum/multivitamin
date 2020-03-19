@@ -20,7 +20,7 @@ from multivitamin.media.file_retriever import FileRetriever
 class Response():
     def __init__(self, response_input=None, schema_registry_url=None):
         """ Class for a Response object
-        
+
         2 cases for construction:
 
                 1) constructed from a request with a previous Response
@@ -73,7 +73,7 @@ class Response():
 
         Args:
             base64 (bool): flag for converting to base64 encoding
-        
+
         Returns:
             bytes: response as bytes
         """
@@ -146,7 +146,7 @@ class Response():
 
         Args:
             t (float): tstamp
-        
+
         Returns:
             List[Region]: regions
         """
@@ -209,10 +209,10 @@ class Response():
 
     def get_timestamps(self, server=None):
         """Get timestamps from footprints. Option for querying on module name
-        
+
         Args:
             server (str): module name
-        
+
         Returns:
             List[float]: unique timestamps
         """
@@ -227,7 +227,7 @@ class Response():
     # Modifiers
 
     def append_region(self, t, region):
-        """Append a region given a timestamp. 
+        """Append a region given a timestamp.
 
         If tstamp exists in frame_anns, appends region, otherwise, creates new ImageAnn
 
@@ -312,11 +312,11 @@ class Response():
         )
 
     def _init_from_request(self):
-        """Construct from a request. 
-        
-        Request object has a field for "prev_response", if not None, 
+        """Construct from a request.
+
+        Request object has a field for "prev_response", if not None,
         convert prev_response into a Response
-        
+
         prev_responses can come in the following forms
 
             1) prev_response_url
@@ -373,7 +373,7 @@ class Response():
         else:
             log.debug("No prev_response, constructing empty response_internal")
             self._response_internal = ResponseInternal()
-        if self.url is None:
+        if not self.url:
             self.url = self._request.url
 
     def _init_tstamp2frameannsidx(self):
