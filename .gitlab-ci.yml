@@ -1,36 +1,41 @@
-stages:
-  - deploy
+include:
+  - project: "gumgum-sports/computer-vision/devops/ci-pipeline/\
+              pipeline-framework"
+    ref: 0.0.12
+    file: .gitlab-ci-template.yml
 
-deploy:artifactory:
-  image: python:3.6
-  stage: deploy
-  before_script:
-    - pip install twine
-    - pip install .
-  variables:
-    TWINE_USERNAME: $ARTIFACTORY_USERNAME
-    TWINE_PASSWORD: $ARTIFACTORY_PASSWORD
-    TWINE_REPOSITORY_URL: https://$ARTIFACTORY_PYPI
-  script:
-    - python setup.py sdist
-    - twine upload dist/*
-  only:
-    - tags
 
-deploy:pypi:
-  image: python:3.6
-  stage: deploy
-  before_script:
-    - pip install twine
-    - pip install .
-  variables:
-    TWINE_USERNAME: $PYPI_USERNAME
-    TWINE_PASSWORD: $PYPI_PASSWORD
-  script:
-    - python setup.py sdist
-    - twine upload dist/*
-  only:
-    - tags
+variables:
+  REPO_PYTHON_LIB_LINT: "false"
+  REPO_DOCKER_BUILD: "true"
+  REPO_PYTHON_LIB_TEST: "false"
+  REPO_PYTHON_LIB_DEPLOY: "false"
+  REPO_PYTHON_LIB_DOCS: "false"
+
+  # Override these vars in UI
+  PYPI_USERNAME: none
+  PYPI_PASSWORD: none
+  PYPI_ENDPOINT: none
+
+  # Set these vars in UI
+  # ARTIFACTORY_USERNAME: $ARTIFACTORY_USERNAME
+  # ARTIFACTORY_PASSWORD: $ARTIFACTORY_PASSWORD
+  # ARTIFACTORY_ENDPOINT: $ARTIFACTORY_ENDPOINT
+
+# deploy:pypi:
+#   image: python:3.6
+#   stage: deploy
+#   before_script:
+#     - pip install twine
+#     - pip install .
+#   variables:
+#     TWINE_USERNAME: $PYPI_USERNAME
+#     TWINE_PASSWORD: $PYPI_PASSWORD
+#   script:
+#     - python setup.py sdist
+#     - twine upload dist/*
+#   only:
+#     - tags
 
 pages:
   stage: deploy
